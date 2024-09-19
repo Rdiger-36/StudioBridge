@@ -26,6 +26,7 @@ import java.awt.Insets;
 import javax.swing.JMenuBar;
 import javax.swing.JMenu;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JMenuItem;
 
 public class MainMenu {
 		
@@ -49,6 +50,8 @@ public class MainMenu {
 		
 		UI.changeLAF(darkmode);
 
+		ProfilesDir = Config.customProfilePath();
+		
 		JFrame frmStudioBridge = new JFrame();
 		frmStudioBridge.setResizable(false);
 		frmStudioBridge.getContentPane().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -142,12 +145,36 @@ public class MainMenu {
 		JMenuBar menuBar = new JMenuBar();
 		frmStudioBridge.setJMenuBar(menuBar);
 		
+		JMenu mnSettings = new JMenu("Settings");
+		menuBar.add(mnSettings);
+		
+		JMenuItem mntmChangeProfilesPath = new JMenuItem("Set custom profiles path");
+		mnSettings.add(mntmChangeProfilesPath);
+		
 		JMenu mnDesign = new JMenu("Design");
-		menuBar.add(mnDesign);
+		mnSettings.add(mnDesign);
 		
 		JCheckBoxMenuItem cbxmntmDarkmode = new JCheckBoxMenuItem("Darkmode");
 		mnDesign.add(cbxmntmDarkmode);
 		cbxmntmDarkmode.setSelected(darkmode);
+		
+		mntmChangeProfilesPath.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				new ProfilesPath(frmStudioBridge).changePath();
+			}
+		});
+		
+		cbxmntmDarkmode.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				UI.changeLAF(cbxmntmDarkmode.isSelected());
+				new MainMenu(cbxmntmDarkmode.isSelected(), frmStudioBridge);
+				frmStudioBridge.setVisible(false);
+			}
+		});
 		
 		btnCopy.addActionListener(new ActionListener() {
 			
@@ -184,16 +211,6 @@ public class MainMenu {
 					}
 				}
 				UDPPackage.send(frmStudioBridge, txtIP.getText(), txtSerial.getText(), getModel(cbxModel.getSelectedItem().toString()), txtName.getText());
-			}
-		});
-		
-		cbxmntmDarkmode.addItemListener(new ItemListener() {
-
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				UI.changeLAF(cbxmntmDarkmode.isSelected());
-				new MainMenu(cbxmntmDarkmode.isSelected(), frmStudioBridge);
-				frmStudioBridge.setVisible(false);
 			}
 		});
 		
