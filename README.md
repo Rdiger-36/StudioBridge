@@ -10,6 +10,11 @@ Once all the data has been entered, it can be sent to BambuStudio, making the pr
 
 With StudioBridge all printers of the Bambulab assortment can be added to Bambu Studio. It is also possible to create and save a profile for each printer.
 
+It should work on all Platforms with Java (Windows, Linux, MacOS...)
+
+# Requirements
+- min. Java 1.8
+
 # Preview
 Lightmode
 
