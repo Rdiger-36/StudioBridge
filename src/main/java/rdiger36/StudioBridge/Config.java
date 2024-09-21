@@ -128,6 +128,8 @@ public class Config {
 		
 		config.append("enableDarkmode=" + FlatLaf.isLafDark());
 		config.append(System.getProperty("line.separator"));
+		config.append("customProfilesPath=" + MainMenu.ProfilesDir);
+		config.append(System.getProperty("line.separator"));
 				
 		/** 
 		 * FileOutputStream für das Erstellen und Schreiben des Inhaltes des StringBuilders config
@@ -166,5 +168,31 @@ public class Config {
 			}	
 		}
 		return darkmode;
+	}
+	
+	public static String customProfilePath() {
+		
+		String userSettings = MainMenu.savePath + System.getProperty("file.separator") + "settings";
+		
+		String customProfilePath = MainMenu.savePath + System.getProperty("file.separator") + "Profiles";
+		
+		if (new File(userSettings).exists()) {
+		
+			try {
+				String line;
+				try (BufferedReader inputStream = new BufferedReader(new FileReader(userSettings))) {
+					while((line = inputStream.readLine()) != null) {
+						if (line.split("=")[0].equals("customProfilesPath")) {				
+							customProfilePath = line.split("=")[1];
+						}
+					}	
+					inputStream.close();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}	
+		}
+		return customProfilePath;
+		
 	}
 }
