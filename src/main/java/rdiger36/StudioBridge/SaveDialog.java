@@ -10,43 +10,56 @@ import javax.swing.text.AbstractDocument;
 
 import net.miginfocom.swing.MigLayout;
 
+/**
+ * A dialog for saving a profile name.
+ * <p>
+ * This class creates a modal dialog that prompts the user to enter a profile name
+ * and provides a save button to confirm the action.
+ * </p>
+ */
 public class SaveDialog {
-	private JDialog dial;
-	private JTextField textField;
-	
-	private String response;
-	
+    private JDialog dial;
+    private JTextField textField;
+    
+    private String response;
+    
+    /**
+     * Constructs a SaveDialog instance.
+     *
+     * @param mainFrame   The parent JFrame for positioning the dialog.
+     * @param profileName The default profile name to display in the text field.
+     */
     public SaveDialog(JFrame mainFrame, String profileName) {
-        	
-    	dial = new JDialog();
-    	dial.setResizable(false);
-    	dial.setTitle("StudioBridge");
-    	dial.setIconImage(Toolkit.getDefaultToolkit().getImage(SaveDialog.class.getResource("/icon.png")));
-    	dial.setModal(true);
-    	dial.setAlwaysOnTop(true);
-    	dial.addWindowListener(new WindowAdapter() {
-    		public void windowClosing(WindowEvent e) {
-    			response = "";
-    			dial.dispose();
-    		}
-    	});
+        
+        dial = new JDialog();
+        dial.setResizable(false);
+        dial.setTitle("StudioBridge");
+        dial.setIconImage(Toolkit.getDefaultToolkit().getImage(SaveDialog.class.getResource("/icon.png")));
+        dial.setModal(true);
+        dial.setAlwaysOnTop(true);
+        dial.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                response = "";
+                dial.dispose();
+            }
+        });
         dial.setSize(276, 167);
         if (mainFrame != null) {
-        	dial.setLocationRelativeTo(mainFrame);
+            dial.setLocationRelativeTo(mainFrame);
         } else {
-        	dial.setLocationRelativeTo(null);
+            dial.setLocationRelativeTo(null);
         }
-    	
+        
         JLabel lblProfilename = new JLabel("Profilename:");
         lblProfilename.setHorizontalAlignment(SwingConstants.CENTER);
-             
+        
         dial.getContentPane().setLayout(new MigLayout("", "[grow][87px][grow][87px][grow]", "[14px,grow][23px,grow]"));
         dial.getContentPane().add(lblProfilename, "cell 0 0 2 1,alignx center,aligny center");
         
         JButton btn1 = new JButton("Save");
         btn1.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                response = textField.getText().toString();
+                response = textField.getText();
                 dial.dispose();
             }
         });
@@ -61,8 +74,13 @@ public class SaveDialog {
         dial.setLocationRelativeTo(mainFrame);
     }
 
-	public String saveProfile() {
-        dial.setVisible(true); // Zeige den Dialog an (blockierend)
-        return response; // Gebe den Zustand des Dialogs zurück
+    /**
+     * Displays the dialog and waits for the user to enter a profile name.
+     *
+     * @return The profile name entered by the user.
+     */
+    public String saveProfile() {
+        dial.setVisible(true); // Show the dialog (blocking)
+        return response; // Return the dialog's response
     }
 }

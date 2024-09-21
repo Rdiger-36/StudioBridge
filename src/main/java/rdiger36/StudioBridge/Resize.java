@@ -3,22 +3,28 @@ package rdiger36.StudioBridge;
 import java.awt.Image;
 import javax.swing.ImageIcon;
 
+/**
+ * A utility class for resizing image icons.
+ * <p>
+ * This class provides methods to scale image icons to specified dimensions.
+ * </p>
+ */
 public class Resize {
 
-	/**
-	 * Skaliert ein ImageIcon auf eine neue Breite und Höhe.
-	 * 
-	 * @param originalIcon Das ursprüngliche ImageIcon, das skaliert werden soll.
-	 * @param width        Die neue Breite des skalierten Icons.
-	 * @param height       Die neue Höhe des skalierten Icons.
-	 * @return             Das skalierte ImageIcon.
-	 */
-	public static ImageIcon setNewImageIconSize(ImageIcon originalIcon, int width, int heigth)	{
-		
-		Image originalImage = originalIcon.getImage(); // Transformiere es in ein Image
-		Image resizedImage = originalImage.getScaledInstance(width, heigth, Image.SCALE_SMOOTH); // Skaliere das Image
-		ImageIcon resizedIcon = new ImageIcon(resizedImage); // Transformiere es zurück in ein ImageIcon
-		
-		return resizedIcon;
-	}	
+    /**
+     * Scales an ImageIcon to a new width and height.
+     *
+     * @param originalIcon The original ImageIcon to be scaled.
+     * @param width        The new width of the scaled icon.
+     * @param height       The new height of the scaled icon.
+     * @return            The scaled ImageIcon.
+     */
+    public static ImageIcon setNewImageIconSize(ImageIcon originalIcon, int width, int height) {
+        
+        Image originalImage = originalIcon.getImage(); // Transform the ImageIcon to an Image
+        Image resizedImage = originalImage.getScaledInstance(width, height, Image.SCALE_SMOOTH); // Scale the image
+        ImageIcon resizedIcon = new ImageIcon(resizedImage); // Transform back to an ImageIcon
+        
+        return resizedIcon;
+    }   
 }
