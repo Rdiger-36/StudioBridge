@@ -36,6 +36,9 @@ public class Update {
 	        int onlineVersion = Integer.parseInt(onlineVersionString);
 	        int localVersion = Integer.parseInt(MainMenu.version);
 	        
+	        System.out.println(onlineVersionString);
+	        System.out.println(localVersion);
+	        
 	        // Check if the local version is less than the online version
 	        if (localVersion < onlineVersion) {
 	            // Prompt user with update dialog
@@ -68,7 +71,7 @@ public class Update {
         try {
             // Create a URL object pointing to the GitHub API releases endpoint
             @SuppressWarnings("deprecation") //This variant must be used so that the project is compatible with Java 1.8
-            URL url = new URL("https://api.github.com/repos/Rdiger-36/StudioBridge/releases");
+            URL url = new URL("https://api.github.com/repos/Rdiger-36/StudioBridge/releases/latest");
             
             // Establish HTTPS connection
             HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
@@ -91,10 +94,6 @@ public class Update {
                 in.close();
                 conn.disconnect();
                 
-                // Clean up the response content
-                content.delete(0, 1); // Remove the first character (often a bracket)
-                content.delete(content.length() - 1, content.length()); // Remove the last character (often a bracket)
-                
                 // Parse the JSON response
                 JSONObject jsonResponse = new JSONObject(content.toString());
                 String releaseName = jsonResponse.getString("name"); // Get the release name
@@ -103,6 +102,7 @@ public class Update {
                 return "error"; // Return error if the response code is not 200
             }
         } catch (Exception e) {
+        	e.printStackTrace();
             return "error"; // Return error if an exception occurs
         }
     }
