@@ -35,6 +35,7 @@ public class DialogTwoButtons {
         dial.setTitle("StudioBridge");
         dial.setIconImage(Toolkit.getDefaultToolkit().getImage(DialogTwoButtons.class.getResource("/icon.png")));
         dial.setModal(true);
+        dial.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         dial.setAlwaysOnTop(true);
 
         // Close action for the dialog

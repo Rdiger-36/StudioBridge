@@ -29,7 +29,7 @@ public class SaveDialog {
      * @param mainFrame   The parent JFrame for positioning the dialog.
      * @param profileName The default profile name to display in the text field.
      */
-    public SaveDialog(JFrame mainFrame, String profileName) {
+    public SaveDialog(JFrame mainFrame, String profileName, String btnText) {
         
         dial = new JDialog();
         dial.setResizable(false);
@@ -56,7 +56,7 @@ public class SaveDialog {
         dial.getContentPane().setLayout(new MigLayout("", "[grow][87px][grow][87px][grow]", "[14px,grow][23px,grow]"));
         dial.getContentPane().add(lblProfilename, "cell 0 0 2 1,alignx center,aligny center");
         
-        JButton btn1 = new JButton("Save");
+        JButton btn1 = new JButton(btnText);
         btn1.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 response = textField.getText();

@@ -61,10 +61,10 @@ public class Config {
 	    if (response == 0) {
 	        // Get the profile name by showing a save dialog.
 	        // The text from the 'txtName' field is used as the initial suggestion for the profile name.
-	        String profileName = new SaveDialog(mainFrame, txtName.getText()).saveProfile();
+	        String profileName = new SaveDialog(mainFrame, txtName.getText(), "Save").saveProfile().trim();
 	        
-	        // Save the profile with the entered name and associated details (model, IP, serial number).
-	        saveProfile(mainFrame, profileName, comboBox, cbxModel, txtIP, txtSerial, txtName);
+	        // Save the profile with the entered name and associated details (model, IP, serial number), when the profile name is set.
+	        if (!profileName.equals("")) saveProfile(mainFrame, profileName, comboBox, cbxModel, txtIP, txtSerial, txtName);
 	        
 	        // Return the name of the saved profile.
 	        return profileName;
@@ -187,13 +187,10 @@ public class Config {
 	 * @param txtSerial The text field for entering the serial number of the printer.
 	 * @param txtName The text field for entering the name of the printer.
 	 */
-	public static void loadProfile(JFrame mainFrame, String profile, JComboBox<String> cbxModel, JTextField txtIP, JTextField txtSerial, JTextField txtName) {
-	    
-	    // Construct the path to the profile configuration file.
-	    String configPath = MainMenu.ProfilesDir + System.getProperty("file.separator") + profile + ".sbp";        
+	public static void loadProfile(JFrame mainFrame, String profile, JComboBox<String> cbxModel, JTextField txtIP, JTextField txtSerial, JTextField txtName) {   
 	    
 	    // Create a File object representing the configuration file.
-	    File configFile = new File(configPath);        
+	    File configFile = new File(profile);        
 	    
 	    // Variable to hold each line read from the configuration file.
 	    String line = "";
@@ -492,7 +489,7 @@ public class Config {
 	                    // Check if the line corresponds to the last used profile name setting.
 	                    if (line.split("=")[0].equals("lastUsedProfile")) {                
 	                        // Set the last used profile with the value from the settings file.
-	                    	profile = line.split("=")[1];
+	                    	if (!line.split("=")[1].equals("Import profile")) profile = line.split("=")[1];
 	                    }
 	                }    
 	                // The BufferedReader is automatically closed here.

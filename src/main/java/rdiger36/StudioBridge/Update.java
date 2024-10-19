@@ -36,9 +36,6 @@ public class Update {
 	        int onlineVersion = Integer.parseInt(onlineVersionString);
 	        int localVersion = Integer.parseInt(MainMenu.version);
 	        
-	        System.out.println(onlineVersionString);
-	        System.out.println(localVersion);
-	        
 	        // Check if the local version is less than the online version
 	        if (localVersion < onlineVersion) {
 	            // Prompt user with update dialog
@@ -70,7 +67,6 @@ public class Update {
     private static String getVersion() {
         try {
             // Create a URL object pointing to the GitHub API releases endpoint
-            @SuppressWarnings("deprecation") //This variant must be used so that the project is compatible with Java 1.8
             URL url = new URL("https://api.github.com/repos/Rdiger-36/StudioBridge/releases/latest");
             
             // Establish HTTPS connection

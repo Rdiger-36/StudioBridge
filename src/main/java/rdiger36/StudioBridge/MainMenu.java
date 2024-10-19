@@ -18,6 +18,10 @@ import net.miginfocom.swing.MigLayout;
 import javax.swing.JButton;
 import javax.swing.JTextField;
 import javax.swing.text.AbstractDocument;
+
+import jnafilechooser.api.JnaFileChooser;
+import jnafilechooser.api.JnaFileChooser.Mode;
+
 import javax.swing.JComboBox;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
@@ -44,7 +48,7 @@ public class MainMenu {
     static String PrinterIP, PrinterName, PrinterSerial, PrinterType;
     
     // Application version
-    static String version = "99";
+    static String version = "101";
     
     // Control over the use of the last selected profile
     static boolean rememberLastUsedProfile = false;
@@ -85,6 +89,7 @@ public class MainMenu {
         frmStudioBridge.setTitle("StudioBridge");
         frmStudioBridge.setBounds(100, 100, 299, 235);
         frmStudioBridge.setLocationRelativeTo(frame);
+        frmStudioBridge.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frmStudioBridge.getContentPane().setLayout(new MigLayout("", "[76.00px][9.00px][][grow][right][right]", "[35px:n,grow][10px:n][][][][][][10px:n][35px:n,grow]"));
 
         // Add informational label
@@ -101,7 +106,7 @@ public class MainMenu {
         
         JComboBox<String> cbxProfile = new JComboBox<>();
         cbxProfile.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        cbxProfile.setModel(new DefaultComboBoxModel<>(new String[]{"New profile"}));
+        cbxProfile.setModel(new DefaultComboBoxModel<String>(new String[] {"New profile", "Import profile", "---"}));
         frmStudioBridge.getContentPane().add(cbxProfile, "cell 2 2 2 1,growx");
 
         // Buttons for profile actions
@@ -209,8 +214,6 @@ public class MainMenu {
             @Override
             public void itemStateChanged(ItemEvent e) {
                 rememberLastUsedProfile = cbxmntmRememberLastProfile.isSelected();
-                
-                System.out.println(rememberLastUsedProfile);
             }
         });
         
@@ -227,6 +230,8 @@ public class MainMenu {
                     ProfilesDir = newProfilesDir;
                     cbxProfile.removeAllItems();
                     cbxProfile.addItem("New profile");
+                    cbxProfile.addItem("Import profile");
+                    cbxProfile.addItem("---");
                     getAllProfiles(cbxProfile);
                     frmStudioBridge.pack();    
                 }
@@ -283,7 +288,7 @@ public class MainMenu {
                 String profileName = cbxProfile.getSelectedItem().toString();
                 
                 if (profileName.equals("New profile")) {
-                    profileName = new SaveDialog(frmStudioBridge, txtName.getText()).saveProfile();
+                    profileName = new SaveDialog(frmStudioBridge, txtName.getText(), "Save").saveProfile();
                 }
                 
                 if (profileName.length() > 0 && !profileName.equals("New profile")) {
@@ -311,20 +316,26 @@ public class MainMenu {
         btnDeleteProfile.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                int response = new DialogTwoButtons(frmStudioBridge, null,new ImageIcon(MainMenu.class.getResource("/achtung.png")), "Attention! Do you want to delete the profile: \"" + cbxProfile.getSelectedItem() + "\"?", "Yes", "No").showDialog();
-                
-                if (response == 0) {
-                    new File(ProfilesDir + System.getProperty("file.separator") + cbxProfile.getSelectedItem() + ".sbp").delete();
-                    cbxProfile.removeItem(cbxProfile.getSelectedItem());
-                    cbxProfile.setSelectedIndex(0);
+            	
+            	String profile = cbxProfile.getSelectedItem().toString();
+            	
+            	if (!profile.equals("New profile") || !profile.equals("Import profile") || !profile.equals("---")) {
+            	
+                    int response = new DialogTwoButtons(frmStudioBridge, null,new ImageIcon(MainMenu.class.getResource("/achtung.png")), "Attention! Do you want to delete the profile: \"" + cbxProfile.getSelectedItem() + "\"?", "Yes", "No").showDialog();
                     
-                    PrinterIP = txtIP.getText();
-                    PrinterName = txtName.getText();
-                    PrinterSerial = txtSerial.getText();
-                    PrinterType = cbxModel.getSelectedItem().toString();
-                    
-                    frmStudioBridge.pack();    
-                }
+                    if (response == 0) {
+                        new File(ProfilesDir + System.getProperty("file.separator") + cbxProfile.getSelectedItem() + ".sbp").delete();
+                        cbxProfile.removeItem(cbxProfile.getSelectedItem());
+                        cbxProfile.setSelectedIndex(0);
+                        
+                        PrinterIP = txtIP.getText();
+                        PrinterName = txtName.getText();
+                        PrinterSerial = txtSerial.getText();
+                        PrinterType = cbxModel.getSelectedItem().toString();
+                        
+                        frmStudioBridge.pack();    
+                    }
+            	}
             }
         });
         
@@ -332,16 +343,57 @@ public class MainMenu {
         cbxProfile.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (cbxProfile.getSelectedItem() != null) {
-                    Config.loadProfile(frmStudioBridge, cbxProfile.getSelectedItem().toString(), cbxModel, txtIP, txtSerial, txtName);
-                    PrinterIP = txtIP.getText();
-                    PrinterName = txtName.getText();
-                    PrinterSerial = txtSerial.getText();
-                    PrinterType = cbxModel.getSelectedItem().toString();
-                    
-    	            MainMenu.lastUsedProfile = cbxProfile.getSelectedItem().toString();
+                            	
+            	if (cbxProfile.getSelectedItem() != null) {
+                                	
+                	if (cbxProfile.getSelectedItem().toString().equals("Import profile")) {
+                	                		
+                		JnaFileChooser fc = new JnaFileChooser();
+                        fc.setMode(Mode.Files);
+                        fc.setTitle("Choose profile save directory");
+
+                        boolean returnValue = fc.showOpenDialog(frame);
+                        if (returnValue) {
+                        	String profilePath = fc.getSelectedFile().getAbsolutePath();
+                        	String profileName = fc.getSelectedFile().getName().replace(".sbp", "");
+                    		
+                        	profileName = new SaveDialog(frmStudioBridge, "New imported profile", "Set profile name").saveProfile();
+                        	if (profileName.equals("")) profileName = "New imported profile";
+                        	
+                        	setProfile(profilePath);
+                        	cbxProfile.addItem(profileName);
+                        	cbxProfile.setSelectedItem(profileName);
+                        }
+                		
+                	} else if (cbxProfile.getSelectedItem().toString().equals("---")) {
+                    	
+                    	if (!MainMenu.lastUsedProfile.equals("New profile") && !MainMenu.lastUsedProfile.equals("Import profile") && !MainMenu.lastUsedProfile.equals("---")) {
+                    		cbxProfile.setSelectedItem(MainMenu.lastUsedProfile);
+                    	} else {
+                    		cbxProfile.setSelectedItem("New profile");
+                    	}
+                		
+                	} else {
+                	    // Construct the path to the profile configuration file.
+                	    String profilePath = MainMenu.ProfilesDir + System.getProperty("file.separator") + cbxProfile.getSelectedItem().toString() + ".sbp";   
+                        setProfile(profilePath);
+                	}
                 }
+                
+                frmStudioBridge.pack();
             }
+                        
+            private void setProfile(String profile) {
+            	
+            	Config.loadProfile(frmStudioBridge, profile, cbxModel, txtIP, txtSerial, txtName);
+                PrinterIP = txtIP.getText();
+                PrinterName = txtName.getText();
+                PrinterSerial = txtSerial.getText();
+                PrinterType = cbxModel.getSelectedItem().toString();
+                
+	            MainMenu.lastUsedProfile = cbxProfile.getSelectedItem().toString();	
+            }
+            
         });
         
         // Window listener for handling close event
@@ -381,7 +433,7 @@ public class MainMenu {
             File[] filesList = directory.listFiles();
             if (filesList != null) {
                 for (File file : filesList) {
-                    if (file.isFile() && file.getName().endsWith(".sbp")) {
+                    if (file.isFile() && file.getName().endsWith(".sbp") && !file.getName().startsWith(".")) {
                         comboBox.addItem(file.getName().replace(".sbp", ""));
                     }
                 }
