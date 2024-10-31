@@ -48,7 +48,7 @@ public class MainMenu {
     static String PrinterIP, PrinterName, PrinterSerial, PrinterType;
     
     // Application version
-    static String version = "101";
+    static String version = "102";
     
     // Control over the use of the last selected profile
     static boolean rememberLastUsedProfile = false;
