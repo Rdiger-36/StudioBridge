@@ -32,3 +32,35 @@ Darkmode
 # Demo
 
 ![StudioBridgeDemo](https://github.com/user-attachments/assets/e5e197ab-54bf-4a6d-bc40-dd46607597f8)
+
+# Installing Java and Running the JAR File
+
+StudioBridge is built in Java, so a Java Runtime Environment (JRE) is required to run the program. Below are simple instructions for installing Java on Windows, macOS, and Linux, as well as for launching the StudioBridge GUI.
+
+Java Installation
+
+Windows:
+
+	1.	Visit the official Java website and download the latest Java Runtime Environment (JRE) for Windows.
+	2.	Run the downloaded installer file and follow the on-screen instructions to complete the installation.
+	3.	To confirm that Java is installed, you can search for “Java” in the Start menu. You should see options like “Java Control Panel” if installation was successful.
+
+macOS:
+
+	1.	Visit the official Java website and download the latest Java Runtime Environment (JRE) for macOS.
+	2.	Open the downloaded .dmg file and follow the instructions to install Java by dragging it into the Applications folder.
+	3.	After installation, open “System Preferences,” then “Java” to verify Java is installed and configured correctly.
+
+Linux:
+
+	1.	Most Linux distributions offer Java in their software repositories. Open the Software Center or Package Manager for your distribution and search for “OpenJDK” or “Java Runtime Environment.”
+	2.	Select the version you need (Java 8 or later) and install it.
+	3.	You can check if Java is installed by searching for it in the applications menu or checking for “Java” in system settings.
+
+Running the StudioBridge GUI
+
+	1.	Download the StudioBridge.jar file from the GitHub releases page.
+	2.	Locate the StudioBridge.jar file in your Downloads or specified folder.
+	3.	Double-click the .jar file to launch StudioBridge. This should open the GUI, allowing you to configure and use your 3D printers with Bambu Studio over LAN.
+
+If the .jar file does not open directly, ensure Java is properly installed, and check your system’s default settings for opening .jar files.
