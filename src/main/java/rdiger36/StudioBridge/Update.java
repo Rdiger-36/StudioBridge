@@ -25,48 +25,48 @@ public class Update {
      * @param mainFrame The parent JFrame used for displaying dialogs.
      */
     public static void checkVersion(JFrame mainFrame) {
-        // Retrieve and process the online version string
-        String onlineVersionString = getVersion().replace("Version ", "")
-                                                  .replace(".", "")
-                                                  .replace("BETA", "")
-                                                  .trim();
-        
-        // If the online source is not available, skip the update process
-        if (!onlineVersionString.equals("error")) {
-        
-	        // Convert version strings to integers for comparison
-	        int onlineVersion = Integer.parseInt(onlineVersionString);
-	        int localVersion = Integer.parseInt(MainMenu.version);
-	        
-	        // Check if the local version is less than the online version
-	        if (localVersion < onlineVersion) {
-	            // Prompt user with update dialog
-	            int response = new DialogTwoButtons(mainFrame, null, 
-	                new ImageIcon(MainMenu.class.getResource("/achtung.png")), 
-	                "An update for StudioBridge is available!", 
-	                "Download", 
-	                "Continue without update").showDialog();
-	            
-	            // If user chooses to download, open the download link
-	            if (response == 0) {
-	                try {
-	                    Desktop.getDesktop().browse(new URI("https://github.com/Rdiger-36/StudioBridge/releases/download/latest/StudioBridge.jar"));
-	                } catch (Exception e) {
-	                    // Print stack trace if an error occurs while opening the URL
-	                    e.printStackTrace();
-	                }
-	                System.exit(0); // Exit the application after opening the download link
-	            }
-	        }
-	    }
+        // Retrieve the release info (version and browser download URL)
+        ReleaseInfo releaseInfo = getReleaseInfo();
+
+        if (releaseInfo != null) {
+            // Extract the version string from the release info
+            String onlineVersionString = releaseInfo.getVersion().replace("Version ", "")
+                                                               .replace(".", "")
+                                                               .replace("BETA", "")
+                                                               .trim();
+
+            // Convert version strings to integers for comparison
+            int onlineVersion = Integer.parseInt(onlineVersionString);
+            int localVersion = Integer.parseInt(MainMenu.version);
+
+            // Check if the local version is outdated
+            if (localVersion < onlineVersion) {
+                // Prompt user with update dialog
+                int response = new DialogTwoButtons(mainFrame, null, 
+                    new ImageIcon(MainMenu.class.getResource("/achtung.png")), 
+                    "An update for StudioBridge is available!", 
+                    "Download", 
+                    "Continue without update").showDialog();
+                
+                // If the user chooses to download, open the browser download URL
+                if (response == 0) {
+                    try {
+                        Desktop.getDesktop().browse(new URI(releaseInfo.getBrowserDownloadUrl()));
+                    } catch (Exception e) {
+                        e.printStackTrace(); // Print stack trace if an error occurs while opening the URL
+                    }
+                    System.exit(0); // Exit the application after opening the download link
+                }
+            }
+        }
     }
 
     /**
-     * Retrieves the latest release version name from the GitHub API.
+     * Retrieves the latest release information (version and browser download URL) from the GitHub API.
      *
-     * @return The release version name or "error" if an exception occurs.
+     * @return A ReleaseInfo object containing the version and browser download URL, or null if an error occurs.
      */
-    private static String getVersion() {
+    private static ReleaseInfo getReleaseInfo() {
         try {
             // Create a URL object pointing to the GitHub API releases endpoint
             URL url = new URL("https://api.github.com/repos/Rdiger-36/StudioBridge/releases/latest");
@@ -76,32 +76,88 @@ public class Update {
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Accept", "application/vnd.github.v3+json");
             
-            // Check response code
+            // Check the response code
             int responseCode = conn.getResponseCode();
             if (responseCode == 200) { // Successful request
                 BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                String inputLine;
                 StringBuilder content = new StringBuilder();
-                
-                // Read the response from the input stream
+                String inputLine;
+
+                // Read the response line by line
                 while ((inputLine = in.readLine()) != null) {
                     content.append(inputLine);
                 }
-                
+
                 // Close the streams
                 in.close();
                 conn.disconnect();
                 
                 // Parse the JSON response
                 JSONObject jsonResponse = new JSONObject(content.toString());
-                String releaseName = jsonResponse.getString("name"); // Get the release name
-                return releaseName; // Return the release name
+                String releaseName = jsonResponse.getString("name"); // Extract the release name
+                
+                // Extract the browser download URL from the assets array
+                String browserDownloadUrl = null;
+                if (jsonResponse.has("assets")) {
+                    for (Object assetObj : jsonResponse.getJSONArray("assets")) {
+                        JSONObject asset = (JSONObject) assetObj;
+                        if (asset.has("browser_download_url")) {
+                            browserDownloadUrl = asset.getString("browser_download_url");
+                            break; // Use the first download URL found
+                        }
+                    }
+                }
+
+                // Validate that browserDownloadUrl was found
+                if (browserDownloadUrl == null) {
+                    throw new Exception("No browser_download_url found in the response.");
+                }
+
+                // Return the parsed release info
+                return new ReleaseInfo(releaseName, browserDownloadUrl);
             } else {
-                return "error"; // Return error if the response code is not 200
+                return null; // Return null if the response code is not 200
             }
         } catch (Exception e) {
-        	e.printStackTrace();
-            return "error"; // Return error if an exception occurs
+            e.printStackTrace(); // Log any exceptions
+            return null; // Return null if an exception occurs
         }
+    }
+}
+
+/**
+ * A simple class to encapsulate release information from the GitHub API.
+ */
+class ReleaseInfo {
+    private final String version; // The version name of the release
+    private final String browserDownloadUrl; // The browser download URL for the release
+
+    /**
+     * Constructs a ReleaseInfo object with the specified version and download URL.
+     *
+     * @param version The version name of the release.
+     * @param browserDownloadUrl The browser download URL for the release.
+     */
+    public ReleaseInfo(String version, String browserDownloadUrl) {
+        this.version = version;
+        this.browserDownloadUrl = browserDownloadUrl;
+    }
+
+    /**
+     * Gets the version name of the release.
+     *
+     * @return The version name.
+     */
+    public String getVersion() {
+        return version;
+    }
+
+    /**
+     * Gets the browser download URL for the release.
+     *
+     * @return The browser download URL.
+     */
+    public String getBrowserDownloadUrl() {
+        return browserDownloadUrl;
     }
 }

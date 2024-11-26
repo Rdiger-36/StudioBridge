@@ -47,7 +47,7 @@ public class MainMenu {
     static String PrinterIP, PrinterName, PrinterSerial, PrinterType;
     
     // Application version
-    static String version = "103";
+    static String version = "102";
     
     // Set boolean for checking updates on startup
     static boolean checkForUpdate = true;
