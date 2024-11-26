@@ -3,6 +3,7 @@ package rdiger36.StudioBridge;
 import java.awt.Cursor;
 import java.awt.EventQueue;
 import java.awt.Font;
+import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -12,25 +13,23 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import net.miginfocom.swing.MigLayout;
-import javax.swing.JButton;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.text.AbstractDocument;
 
 import jnafilechooser.api.JnaFileChooser;
 import jnafilechooser.api.JnaFileChooser.Mode;
-
-import javax.swing.JComboBox;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.ImageIcon;
-import javax.swing.JSeparator;
-import java.awt.Insets;
-import javax.swing.JMenuBar;
-import javax.swing.JMenu;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JMenuItem;
+import net.miginfocom.swing.MigLayout;
 
 /**
  * The MainMenu class serves as the main graphical user interface (GUI) 
@@ -48,7 +47,10 @@ public class MainMenu {
     static String PrinterIP, PrinterName, PrinterSerial, PrinterType;
     
     // Application version
-    static String version = "102";
+    static String version = "103";
+    
+    // Set boolean for checking updates on startup
+    static boolean checkForUpdate = true;
     
     // Control over the use of the last selected profile
     static boolean rememberLastUsedProfile = false;
@@ -57,7 +59,12 @@ public class MainMenu {
     static String lastUsedProfile;
     
     public static void main(String[] args) {
-        EventQueue.invokeLater(new Runnable() {
+    	
+    	if (args.length > 0) {
+    		if(args[0].toString().contains("--noupdate")) checkForUpdate = false;
+    	}
+    	
+    	EventQueue.invokeLater(new Runnable() {
             public void run() {
                 try {
                     new MainMenu(Config.lastTheme(null), null);
@@ -411,7 +418,7 @@ public class MainMenu {
         PrinterSerial = txtSerial.getText();
         PrinterType = cbxModel.getSelectedItem().toString();
         
-        Update.checkVersion(frmStudioBridge); // Check for updates
+        if(checkForUpdate) Update.checkVersion(frmStudioBridge); // Check for updates, if it is not disabled by --noupdate argument at startup
         
         frmStudioBridge.pack();    
         frmStudioBridge.setVisible(true);    

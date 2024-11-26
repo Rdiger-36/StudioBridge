@@ -1,25 +1,26 @@
 package rdiger36.StudioBridge;
 
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Desktop;
+import java.awt.Dialog.ModalExclusionType;
+import java.awt.Font;
+import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.URI;
-import java.awt.Toolkit;
-import javax.swing.JLabel;
+
+import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
-import java.awt.Font;
-import java.awt.Color;
-import java.awt.Dialog.ModalExclusionType;
-import javax.swing.GroupLayout;
+import javax.swing.JLabel;
 import javax.swing.JSeparator;
 import javax.swing.LayoutStyle;
 import javax.swing.SwingConstants;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.Cursor;
-import java.awt.Desktop;
 
 /**
  * A dialog displaying information about the StudioBridge application.

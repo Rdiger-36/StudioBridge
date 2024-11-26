@@ -13,8 +13,14 @@ With StudioBridge all printers of the Bambulab assortment can be added to Bambu 
 It should work on all platforms with Java.
 Successfully tested on:
 - Windows 10/11
-- Linux Ubuntu 24.04 LTS
-- MacOS 14.7
+- Linux Ubuntu 24.04 LTS/24.10
+- MacOS 14.7/15.1
+
+# Skip update check on startup
+To skip the update process, you can simply add the "--noupdate" argument
+```bash
+  java -jar ./StudioBridge.jar --noupdate
+```
 
 # Requirements
 - min. Java 1.8
