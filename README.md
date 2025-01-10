@@ -70,3 +70,6 @@ Running the StudioBridge GUI
 	3.	Double-click the .jar file to launch StudioBridge. This should open the GUI, allowing you to configure and use your 3D printers with Bambu Studio over LAN.
 
 If the .jar file does not open directly, ensure Java is properly installed, and check your system’s default settings for opening .jar files.
+
+## Support Me
+[![Buy Me a Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/Rdiger36)
