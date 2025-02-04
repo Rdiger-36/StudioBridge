@@ -36,6 +36,11 @@ Darkmode
 
 ![image](https://github.com/user-attachments/assets/215f3f50-676c-4d53-805c-7010c3879ecd) ![image](https://github.com/user-attachments/assets/a958b601-67c7-4de7-bbbf-c0678b7c1930)
 
+Multiple Printer Setup
+
+![Bildschirmfoto 2025-02-05 um 00 04 00](https://github.com/user-attachments/assets/3a295a9c-2ca2-4d1d-ad1e-8e68909f9f84)
+![Bildschirmfoto 2025-02-05 um 00 03 04](https://github.com/user-attachments/assets/62ed0dd8-000d-4682-8399-c5b6229204ed)
+
 
 # Demo
 
