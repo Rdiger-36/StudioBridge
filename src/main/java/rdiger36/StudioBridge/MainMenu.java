@@ -47,7 +47,7 @@ public class MainMenu {
     static String PrinterIP, PrinterName, PrinterSerial, PrinterType;
     
     // Application version
-    static String version = "102";
+    static String version = "105";
     
     // Set boolean for checking updates on startup
     static boolean checkForUpdate = true;
@@ -245,6 +245,18 @@ public class MainMenu {
             }
         });
         
+        JMenuItem mntmMultiPrinterSetup = new JMenuItem("Multiple Printer Setup");
+        mnSettings.add(mntmMultiPrinterSetup);
+        
+        mntmMultiPrinterSetup.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				 new MultiPrinterSetup(frmStudioBridge);
+				
+			}
+		});
+        
         // Action listener for copyright button
         btnCopy.addActionListener(new ActionListener() {
             @Override
@@ -284,7 +296,17 @@ public class MainMenu {
                     }
                 } 
                 
-                UDPPackage.send(frmStudioBridge, txtIP.getText(), txtSerial.getText(), getModel(cbxModel.getSelectedItem().toString()), txtName.getText());
+        		// Determine which UDP port (2021 or 1990) is in use, or set to 0 if none is available
+                int remoteUdpPort = UDPPackage.getAvailableUDPPort();
+
+                // Check if a valid port was assigned to remoteUdpPort
+                if (remoteUdpPort > 0) {
+                
+                	UDPPackage.send(frmStudioBridge, txtIP.getText(), txtSerial.getText(), getModel(cbxModel.getSelectedItem().toString()), txtName.getText(), remoteUdpPort, false);
+                } else {
+                    // Show a warning if Bambu Studio is not running
+                	new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Bambu Studio is not running!</html>", "Ok").showDialog();
+                }
             }                        
         });
         
@@ -326,7 +348,7 @@ public class MainMenu {
             	
             	String profile = cbxProfile.getSelectedItem().toString();
             	
-            	if (!profile.equals("New profile") || !profile.equals("Import profile") || !profile.equals("---")) {
+            	if (!profile.equals("New profile") && !profile.equals("Import profile") && !profile.equals("---")) {
             	
                     int response = new DialogTwoButtons(frmStudioBridge, null,new ImageIcon(MainMenu.class.getResource("/achtung.png")), "Attention! Do you want to delete the profile: \"" + cbxProfile.getSelectedItem() + "\"?", "Yes", "No").showDialog();
                     
@@ -370,15 +392,24 @@ public class MainMenu {
                         	setProfile(profilePath);
                         	cbxProfile.addItem(profileName);
                         	cbxProfile.setSelectedItem(profileName);
+                        } else {
+                        	cbxProfile.setSelectedItem("New profile");
                         }
                 		
                 	} else if (cbxProfile.getSelectedItem().toString().equals("---")) {
                     	
-                    	if (!MainMenu.lastUsedProfile.equals("New profile") && !MainMenu.lastUsedProfile.equals("Import profile") && !MainMenu.lastUsedProfile.equals("---")) {
-                    		cbxProfile.setSelectedItem(MainMenu.lastUsedProfile);
-                    	} else {
-                    		cbxProfile.setSelectedItem("New profile");
-                    	}
+                		if (MainMenu.lastUsedProfile != null) {
+                		
+                        	if (!MainMenu.lastUsedProfile.equals("New profile") && !MainMenu.lastUsedProfile.equals("Import profile") && !MainMenu.lastUsedProfile.equals("---")) {
+                        		cbxProfile.setSelectedItem(MainMenu.lastUsedProfile);
+                        	} else {
+                        		cbxProfile.setSelectedItem("New profile");
+                        	}
+                			
+                		} else {
+                			cbxProfile.setSelectedItem("New profile");
+                		}
+                		
                 		
                 	} else {
                 	    // Construct the path to the profile configuration file.
@@ -465,7 +496,7 @@ public class MainMenu {
      * @param model The model name as selected by the user.
      * @return The formatted model name.
      */
-    private String getModel(String model) {
+    public static String getModel(String model) {
         switch (model) {
             case "A1": model = "N2S"; break;
             case "A1 Mini": model = "N1"; break;
