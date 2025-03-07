@@ -16,13 +16,7 @@ It should work on all platforms with Java.
 Successfully tested on:
 - Windows 10/11
 - Linux Ubuntu 24.04 LTS/24.10
-- MacOS 14.7/15.1
-
-# Skip update check on startup
-To skip the update process, you can simply add the "--noupdate" argument
-```bash
-  java -jar ./StudioBridge.jar --noupdate
-```
+- MacOS 14.7/15.3
 
 # Requirements
 - min. Java 1.8
@@ -78,5 +72,19 @@ Running the StudioBridge GUI
 
 If the .jar file does not open directly, ensure Java is properly installed, and check your system’s default settings for opening .jar files.
 
-## Support Me
+# Arguments
+
+### Skip update check on startup
+To skip the update process, you can simply add the "--noupdate" argument
+```bash
+java -jar ./StudioBridge.jar --noupdate
+```
+
+### Only send profiles without GUI
+To only send the already set up profiles without GUI, you can use the argument "--sendonly". This also will skip the update check
+```bash
+java -jar ./StudioBridge.jar --sendonly
+```
+
+# Support Me
 [![Buy Me a Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/Rdiger36)
