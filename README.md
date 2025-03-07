@@ -85,6 +85,18 @@ To only send the already set up profiles without GUI, you can use the argument "
 ```bash
 java -jar ./StudioBridge.jar --sendonly
 ```
+The output should look like this:
+```bash
+*** StudioBridge by Rdiger-36 ***
+
+Found 2 profiles!
+Try to send all of them to Bambu Studio
+
+Successfully sended Test Bambu X1E - 192.168.XXX.XXX - X1E to Bambu Studio
+Successfully sended Bambu Lab P1S - 192.168.XXX.XXX - P1S to Bambu Studio
+All Packages successfully sent to Bambu Studio
+```
+
 
 # Support Me
 [![Buy Me a Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/Rdiger36)
