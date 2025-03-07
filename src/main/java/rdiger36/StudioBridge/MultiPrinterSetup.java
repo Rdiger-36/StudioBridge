@@ -183,7 +183,7 @@ public class MultiPrinterSetup {
      * @param model The model code as a string.
      * @return The corresponding model name.
      */
-    private String getModel(String model) {
+    public static String getModel(String model) {
         switch (model) {
             case "0": return "A1";
             case "1": return "A1 Mini";

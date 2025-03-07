@@ -12,7 +12,10 @@ import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Properties;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -26,7 +29,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.text.AbstractDocument;
-
 import jnafilechooser.api.JnaFileChooser;
 import jnafilechooser.api.JnaFileChooser.Mode;
 import net.miginfocom.swing.MigLayout;
@@ -47,7 +49,7 @@ public class MainMenu {
     static String PrinterIP, PrinterName, PrinterSerial, PrinterType;
     
     // Application version
-    static String version = "105";
+    static String version = "106";
     
     // Set boolean for checking updates on startup
     static boolean checkForUpdate = true;
@@ -59,11 +61,105 @@ public class MainMenu {
     static String lastUsedProfile;
     
     public static void main(String[] args) {
+        boolean sendOnly = false;
+        int argCount = args.length;
+        
+        for (int i = 0; i < argCount; i++) {
+            if (args[i].equals("--noupdate")) {
+                checkForUpdate = false;
+            }
+            if (args[i].startsWith("--sendonly")) {
+                sendOnly = true;
+                startNoGUI();
+            }
+        }
+        
+        if (!sendOnly) {
+            startGUI();
+        }
+    }
+    
+    private static void startNoGUI() {
     	
-    	if (args.length > 0) {
-    		if(args[0].toString().contains("--noupdate")) checkForUpdate = false;
-    	}
+    	System.out.println("*** StudioBridge by Rdiger-36 v." + MainMenu.version.substring(0, 1) + "." +
+                MainMenu.version.substring(1, 2) + "." + MainMenu.version.substring(2, 3) + " ***\n");
     	
+        String profilesDir = Config.customProfilePath(null);
+        ArrayList<String> errors = new ArrayList<>();
+
+        // Determine which UDP port (2021 or 1990) is in use, or set to 0 if none is available
+        int remoteUdpPort = UDPPackage.getAvailableUDPPort();
+
+        // Check if a valid port was assigned
+        if (remoteUdpPort > 0) {
+            File[] files = new File(profilesDir).listFiles();            
+            if (files != null) {
+
+                System.out.println("Found " + files.length + " profiles!");
+                System.out.println("Try to send all of them to Bambu Studio\n");
+            	
+                for (File file : files) {
+                    if (file.isFile()) {  // Process only files, not subdirectories
+                        Properties properties = new Properties();
+                        try (FileReader reader = new FileReader(file)) {
+                            properties.load(reader);
+                        } catch (IOException e) {
+                            System.err.println("Error loading file: " + file.getName());
+                            e.printStackTrace();
+                            continue;  // Process next file on error
+                        }
+
+                        // Read values from the properties file
+                        String ipAddress = properties.getProperty("IP-Address");
+                        String printerSN = properties.getProperty("PrinterSN");
+                        String printerType = properties.getProperty("PrinterType");
+                        String printerName = properties.getProperty("PrinterName");
+
+                        // Send the UDP package
+                        boolean sendSuccess = UDPPackage.send(null, ipAddress, printerSN,
+                                MultiPrinterSetup.getModel(MainMenu.getModel(printerType)),
+                                printerName, remoteUdpPort, false);
+                        if (!sendSuccess) {
+                            String errorMsg = "Error sending for " + printerName
+                                    + " - " + ipAddress + " - " + MultiPrinterSetup.getModel(MainMenu.getModel(printerType));
+                            errors.add(errorMsg);
+                        } else {
+                        	String successMsg = "Successfully sended " + printerName
+                                    + " - " + ipAddress + " - " + MultiPrinterSetup.getModel(MainMenu.getModel(printerType)) + " to Bambu Studio";
+                            System.out.println((successMsg));
+                        }
+                    }
+
+                    try {
+                        Thread.sleep(1000); // Simulated delay
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+
+                // Log errors if any
+                if (!errors.isEmpty()) {
+                    StringBuilder errorLog = new StringBuilder("Attention! The following printers could not send to Bambu Studio:\n");
+                    for (String error : errors) {
+                        errorLog.append(error).append("\n");
+                    }
+                    System.err.println(errorLog.toString());
+                }
+
+                // Overall message if everything went well
+                if (errors.isEmpty()) {
+                    System.out.println("All Packages successfully sent to Bambu Studio");
+                }
+            } else {
+                System.out.println("No folder found or the folder is empty, please check --> " + profilesDir +"");
+            }
+        } else {
+            System.err.println("Warning! Bambu Studio is not running!");
+        }
+    }
+
+	public static void startGUI() {
     	EventQueue.invokeLater(new Runnable() {
             public void run() {
                 try {

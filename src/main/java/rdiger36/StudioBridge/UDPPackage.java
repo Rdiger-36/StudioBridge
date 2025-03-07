@@ -76,9 +76,9 @@ public class UDPPackage {
 
         	// Confirmation of sent bytes
             if (packet.getLength() != byteBuffer.length) {
-            	if (!multiMode) new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to send the package to Bambu Studio!</html>", "Ok").showDialog();
+            	if (!multiMode && mainFrame != null) new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to send the package to Bambu Studio!</html>", "Ok").showDialog();
             } else {
-            	if (!multiMode) new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/success.png")), "<html>Package sent successfully to Bambu Studio</html>", "Ok").showDialog();
+            	if (!multiMode && mainFrame != null) new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/success.png")), "<html>Package sent successfully to Bambu Studio</html>", "Ok").showDialog();
                 success = true;
             }
             
@@ -87,7 +87,7 @@ public class UDPPackage {
             udpClient.close();
         } catch (Exception e) {
             // Show a warning that the package could not be sent to Bambu Studio
-        	 if (!multiMode) new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to send the package to Bambu Studio!</html>", "Ok").showDialog();
+        	 if (!multiMode && mainFrame != null) new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to send the package to Bambu Studio!</html>", "Ok").showDialog();
         }
         return success;
     }
