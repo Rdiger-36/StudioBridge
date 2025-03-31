@@ -1,3 +1,6 @@
+# !! Attention !!
+# This Solution only works with BambuStudio versions < 2.0 It seems that BambuLab implements a new safty feature that prevent sending printer data to BambuStudio
+
 # StudioBridge
 
 With StudioBridge it is possible to make Bambu Lab 3D Printers visible in Bambu Studio or Orca Slicer, that can not be automatically added by them.  
