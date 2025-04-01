@@ -1,5 +1,5 @@
 # !! Attention !!
-# This Solution only works with BambuStudio versions < 2.0 It seems that BambuLab implements a new safty feature that prevent sending printer data to BambuStudio
+# This Solution only works with BambuStudio versions < 2.0 It seems that BambuLab implements a new safety feature that prevent sending printer data to BambuStudio
 
 # StudioBridge
 
