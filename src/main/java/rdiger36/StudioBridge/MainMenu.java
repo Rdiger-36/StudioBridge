@@ -12,7 +12,10 @@ import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Properties;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -26,7 +29,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.text.AbstractDocument;
-
 import jnafilechooser.api.JnaFileChooser;
 import jnafilechooser.api.JnaFileChooser.Mode;
 import net.miginfocom.swing.MigLayout;
@@ -47,7 +49,7 @@ public class MainMenu {
     static String PrinterIP, PrinterName, PrinterSerial, PrinterType;
     
     // Application version
-    static String version = "105";
+    static String version = "108";
     
     // Set boolean for checking updates on startup
     static boolean checkForUpdate = true;
@@ -59,11 +61,106 @@ public class MainMenu {
     static String lastUsedProfile;
     
     public static void main(String[] args) {
+        boolean sendOnly = false;
+        int argCount = args.length;
+        
+        for (int i = 0; i < argCount; i++) {
+            if (args[i].equals("--noupdate")) {
+                checkForUpdate = false;
+            }
+            if (args[i].startsWith("--sendonly")) {
+                sendOnly = true;
+                startNoGUI();
+            }
+        }
+        
+        if (!sendOnly) {
+            startGUI();
+        }
+    }
+    
+    private static void startNoGUI() {
     	
-    	if (args.length > 0) {
-    		if(args[0].toString().contains("--noupdate")) checkForUpdate = false;
-    	}
+    	System.out.println("*** StudioBridge by Rdiger-36 v." + MainMenu.version.substring(0, 1) + "." +
+                MainMenu.version.substring(1, 2) + "." + MainMenu.version.substring(2, 3) + " ***\n");
     	
+        String profilesDir = Config.customProfilePath(null);
+        ArrayList<String> errors = new ArrayList<>();
+
+        // Determine which UDP port (2021 or 1990) is in use, or set to 0 if none is available
+        int remoteUdpPort = UDPPackage.getAvailableUDPPort();
+
+        // Check if a valid port was assigned
+        if (remoteUdpPort > 0) {
+            File[] files = new File(profilesDir).listFiles();            
+            if (files != null) {
+
+                System.out.println("Found " + files.length + " profiles!");
+                System.out.println("Try to send all of them to Bambu Studio\n");
+            	
+                for (File file : files) {
+                    if (file.isFile()) {  // Process only files, not subdirectories
+                        Properties properties = new Properties();
+                        try (FileReader reader = new FileReader(file)) {
+                            properties.load(reader);
+                        } catch (IOException e) {
+                            System.err.println("Error loading file: " + file.getName());
+                            e.printStackTrace();
+                            continue;  // Process next file on error
+                        }
+
+                        // Read values from the properties file
+                        String ipAddress = properties.getProperty("IP-Address");
+                        String printerSN = properties.getProperty("PrinterSN");
+                        String printerType = properties.getProperty("PrinterType");
+                        String printerName = properties.getProperty("PrinterName");
+
+                        // Send the UDP package
+                        boolean sendSuccess = UDPPackage.send(null, ipAddress, printerSN,
+                        		MainMenu.getModel(MultiPrinterSetup.getModel(printerType)),
+                                printerName, remoteUdpPort, false);
+                        if (!sendSuccess) {
+                            String errorMsg = "Error sending for " + printerName
+                                    + " - " + ipAddress + " - " + MultiPrinterSetup.getModel(MainMenu.getModel(printerType));
+                            errors.add(errorMsg);
+                        } else {
+                        	String successMsg = "Successfully sended " + printerName
+                                    + " - " + ipAddress + " - " + MultiPrinterSetup.getModel(MainMenu.getModel(printerType));
+                            System.out.println((successMsg));
+                        }
+                    }
+
+                    try {
+                        Thread.sleep(1000); // Simulated delay
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+
+                // Log errors if any
+                if (!errors.isEmpty()) {
+                    StringBuilder errorLog = new StringBuilder("Attention! The following printers could not send to Bambu Studio:\n");
+                    for (String error : errors) {
+                        errorLog.append(error).append("\n");
+                    }
+                    System.err.println(errorLog.toString());
+                }
+
+                // Overall message if everything went well
+                if (errors.isEmpty()) {
+                    System.out.println("All Packages successfully sent. The printers(s) will appear in the nect 60 seconds in Bambu Studio.");
+                }
+                System.out.println("The programm stays online for the next 60 seconds and will exit automatically.");
+            } else {
+                System.out.println("No folder found or the folder is empty, please check --> " + profilesDir +"");
+            }
+        } else {
+            System.err.println("Warning! Bambu Studio is not running!");
+        }
+    }
+
+	public static void startGUI() {
     	EventQueue.invokeLater(new Runnable() {
             public void run() {
                 try {
@@ -146,8 +243,8 @@ public class MainMenu {
         // Model selection combo box
         JComboBox<String> cbxModel = new JComboBox<>();
         cbxModel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        cbxModel.setMaximumRowCount(7);
-        cbxModel.setModel(new DefaultComboBoxModel<>(new String[]{"A1", "A1 Mini", "P1P", "P1S", "X1", "X1C", "X1E"}));
+        cbxModel.setMaximumRowCount(8);
+        cbxModel.setModel(new DefaultComboBoxModel<>(new String[]{"A1", "A1 Mini", "P1P", "P1S", "X1", "X1C", "X1E", "H2D"}));
         frmStudioBridge.getContentPane().add(cbxModel, "cell 2 5 4 1,growx");
         cbxModel.setSelectedIndex(0);
         
@@ -245,6 +342,18 @@ public class MainMenu {
             }
         });
         
+        JMenuItem mntmMultiPrinterSetup = new JMenuItem("Multiple Printer Setup");
+        mnSettings.add(mntmMultiPrinterSetup);
+        
+        mntmMultiPrinterSetup.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				 new MultiPrinterSetup(frmStudioBridge);
+				
+			}
+		});
+        
         // Action listener for copyright button
         btnCopy.addActionListener(new ActionListener() {
             @Override
@@ -283,8 +392,17 @@ public class MainMenu {
                         PrinterType = cbxModel.getSelectedItem().toString();
                     }
                 } 
-                
-                UDPPackage.send(frmStudioBridge, txtIP.getText(), txtSerial.getText(), getModel(cbxModel.getSelectedItem().toString()), txtName.getText());
+                                
+        		// Determine which UDP port (2021 or 1990) is in use, or set to 0 if none is available
+                int remoteUdpPort = UDPPackage.getAvailableUDPPort();
+
+                // Check if a valid port was assigned to remoteUdpPort
+                if (remoteUdpPort > 0) {
+                	UDPPackage.send(frmStudioBridge, txtIP.getText(), txtSerial.getText(), getModel(cbxModel.getSelectedItem().toString()), txtName.getText(), remoteUdpPort, false);
+                } else {
+                    // Show a warning if Bambu Studio is not running
+                	new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Bambu Studio is not running!</html>", "Ok").showDialog();
+                }
             }                        
         });
         
@@ -326,7 +444,7 @@ public class MainMenu {
             	
             	String profile = cbxProfile.getSelectedItem().toString();
             	
-            	if (!profile.equals("New profile") || !profile.equals("Import profile") || !profile.equals("---")) {
+            	if (!profile.equals("New profile") && !profile.equals("Import profile") && !profile.equals("---")) {
             	
                     int response = new DialogTwoButtons(frmStudioBridge, null,new ImageIcon(MainMenu.class.getResource("/achtung.png")), "Attention! Do you want to delete the profile: \"" + cbxProfile.getSelectedItem() + "\"?", "Yes", "No").showDialog();
                     
@@ -370,15 +488,24 @@ public class MainMenu {
                         	setProfile(profilePath);
                         	cbxProfile.addItem(profileName);
                         	cbxProfile.setSelectedItem(profileName);
+                        } else {
+                        	cbxProfile.setSelectedItem("New profile");
                         }
                 		
                 	} else if (cbxProfile.getSelectedItem().toString().equals("---")) {
                     	
-                    	if (!MainMenu.lastUsedProfile.equals("New profile") && !MainMenu.lastUsedProfile.equals("Import profile") && !MainMenu.lastUsedProfile.equals("---")) {
-                    		cbxProfile.setSelectedItem(MainMenu.lastUsedProfile);
-                    	} else {
-                    		cbxProfile.setSelectedItem("New profile");
-                    	}
+                		if (MainMenu.lastUsedProfile != null) {
+                		
+                        	if (!MainMenu.lastUsedProfile.equals("New profile") && !MainMenu.lastUsedProfile.equals("Import profile") && !MainMenu.lastUsedProfile.equals("---")) {
+                        		cbxProfile.setSelectedItem(MainMenu.lastUsedProfile);
+                        	} else {
+                        		cbxProfile.setSelectedItem("New profile");
+                        	}
+                			
+                		} else {
+                			cbxProfile.setSelectedItem("New profile");
+                		}
+                		
                 		
                 	} else {
                 	    // Construct the path to the profile configuration file.
@@ -465,7 +592,7 @@ public class MainMenu {
      * @param model The model name as selected by the user.
      * @return The formatted model name.
      */
-    private String getModel(String model) {
+    public static String getModel(String model) {
         switch (model) {
             case "A1": model = "N2S"; break;
             case "A1 Mini": model = "N1"; break;
@@ -474,6 +601,7 @@ public class MainMenu {
             case "X1": model = "3DPrinter-X1"; break;
             case "X1C": model = "3DPrinter-X1-Carbon"; break;
             case "X1E": model = "C13"; break;
+            case "H2D": model = "O1D"; break;
             default: break;
         }
         return model;

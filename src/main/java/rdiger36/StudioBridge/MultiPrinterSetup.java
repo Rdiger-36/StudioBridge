@@ -192,6 +192,7 @@ public class MultiPrinterSetup {
             case "4": return "X1";
             case "5": return "X1C";
             case "6": return "X1E";
+            case "7": return "H2D";
             default: return model;
         }
     }
@@ -262,9 +263,9 @@ public class MultiPrinterSetup {
 	                    			errorsOn = errorsOn + error + "<br>";
 	                    		}
 	                    		
-	                    		new DialogOneButton(null, dialInfo, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Attention! Following printers could not send to Bambu Studio:<br>" + errorsOn + "</html>", "Ok").showDialog();
+	                    		new DialogOneButton(null, dialInfo, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Attention! Following printers could not sent :<br>" + errorsOn + "</html>", "Ok").showDialog();
 	                    	} else {
-	                    		new DialogOneButton(null, dialInfo, new ImageIcon(MainMenu.class.getResource("/success.png")), "<html>Packages sent to Bambu Studio</html>", "Ok").showDialog();
+	                    		new DialogOneButton(null, dialInfo, new ImageIcon(MainMenu.class.getResource("/success.png")), "<html>Packages sent successfully.<br>The Printer(s) will appear in the next 60 seconds in Bambu Studio.<br>You can close this Programm when your printer(s) appear in Bambu Studio</html>", "Ok").showDialog();
 	                    	}
 	                    } else {
 	                    	new DialogOneButton(null, dialInfo, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Attention! Please select at least one printer!</html>", "Back").showDialog();

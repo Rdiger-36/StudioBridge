@@ -22,16 +22,19 @@ public class UI {
             if (mode) {
                 // Set the Look and Feel to a dark theme using FlatLaf
                 UIManager.setLookAndFeel("com.formdev.flatlaf.FlatDarkLaf");
-                // Configure additional UI properties for the dark theme
-                UIManager.put("TitlePane.menuBarEmbedded", true);
-                UIManager.put("TitlePane.unifiedBackground", true);
-                UIManager.put("MenuItem.selectionType", "underline");
-                FlatLaf.setUseNativeWindowDecorations(true); // Use native decorations for windows
-                FlatLaf.updateUI(); // Refresh the UI to apply changes
+
             } else {
                 // Revert to the system's default Look and Feel
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            	UIManager.setLookAndFeel("com.formdev.flatlaf.FlatLightLaf");
             }
+            
+            // Configure additional UI properties for the dark theme
+            UIManager.put("TitlePane.menuBarEmbedded", true);
+            UIManager.put("TitlePane.unifiedBackground", true);
+            UIManager.put("MenuItem.selectionType", "underline");
+            FlatLaf.setUseNativeWindowDecorations(true); // Use native decorations for windows
+            FlatLaf.updateUI(); // Refresh the UI to apply changes
+            
         } catch (Exception e1) {
             // Print stack trace if an exception occurs during Look and Feel change
             e1.printStackTrace();

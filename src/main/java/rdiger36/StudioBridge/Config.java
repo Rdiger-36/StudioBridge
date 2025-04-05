@@ -460,7 +460,7 @@ public class Config {
 	            }
 	        } catch (Exception e) {
 	            // Show error if reading the file has failed
-	        	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to read the config file!</html>", "Ok").showDialog();
+	        	if (mainFrame != null) new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to read the config file!</html>", "Ok").showDialog();
 	        }    
 	    }
 	    // Return the custom profile path.

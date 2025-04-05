@@ -1,25 +1,26 @@
-# !! Attention !!
-# This Solution only works with BambuStudio versions < 2.0 It seems that BambuLab implements a new safety feature that prevent sending printer data to BambuStudio
-
 # StudioBridge
 
-With StudioBridge it is possible to make Bambu Lab 3D Printers visible in Bambu Studio or Orca Slicer, that can not be automatically added by them.  
-It is also possible to conenct printers from other subnets or from accessible external networks (e.g. via VPN) or in your normal home network.
+With StudioBridge it is possible to make Only LAN 3D printers from Bambu Lab visible in Bambu Studio.
+Unfortunately, Bambu Studio does not offer the possibility to store printers from the network directly, which means that they cannot be used via Bambu Studio from other subnets or from accessible external networks (e.g. via VPN). This is because Bambu Lab adds its printers for Bambu Studio in the network via mDNS/SSDP. However, these services cannot be used across networks as they are not routed.
 There are many scripts for all kinds of systems, but many users feel more comfortable with a GUI. Therefore I developed StudioBridge, which is basically based on the scripts i found in countless forums.
 
 # How it works
-StudioBridge sends a UDP request to your Slicer (Bambu Studio or Orca Slicer) with the printer data (IP address, serial number, printer type, printer name).
-Once all the data has been entered, it can be sent to your Slicer, making the printer visible. Now the printer can be accessed via the LAN access code. This means that all the usual functions are available.
+StudioBridge sends a UDP request to Bambu Studio with the printer data (IP address, serial number, printer type, printer name).
+Once all the data has been entered, it can be sent to BambuStudio, making the printer visible. Now the printer can be accessed via the LAN access code in BambuStudio. This means that all the usual functions are available.
 
-This Programm has nothing to do with Bambu Connect and it also doesn't replace it. It's only for the connection in your Slicer.
-
-With StudioBridge all printers of the Bambu Lab assortment can be added. It is also possible to create and save a profile for each printer.
+With StudioBridge all printers of the Bambulab assortment can be added to Bambu Studio. It is also possible to create and save a profile for each printer.
 
 It should work on all platforms with Java.
 Successfully tested on:
 - Windows 10/11
 - Linux Ubuntu 24.04 LTS/24.10
-- MacOS 14.7/15.3
+- MacOS 14.7/15.1
+
+# Skip update check on startup
+To skip the update process, you can simply add the "--noupdate" argument
+```bash
+  java -jar ./StudioBridge.jar --noupdate
+```
 
 # Requirements
 - min. Java 1.8
@@ -32,11 +33,6 @@ Lightmode
 Darkmode
 
 ![image](https://github.com/user-attachments/assets/215f3f50-676c-4d53-805c-7010c3879ecd) ![image](https://github.com/user-attachments/assets/a958b601-67c7-4de7-bbbf-c0678b7c1930)
-
-Multiple Printer Setup
-
-![Bildschirmfoto 2025-02-05 um 00 04 00](https://github.com/user-attachments/assets/3a295a9c-2ca2-4d1d-ad1e-8e68909f9f84)
-![Bildschirmfoto 2025-02-05 um 00 03 04](https://github.com/user-attachments/assets/62ed0dd8-000d-4682-8399-c5b6229204ed)
 
 
 # Demo
@@ -74,32 +70,3 @@ Running the StudioBridge GUI
 	3.	Double-click the .jar file to launch StudioBridge. This should open the GUI, allowing you to configure and use your 3D printers with Bambu Studio over LAN.
 
 If the .jar file does not open directly, ensure Java is properly installed, and check your system’s default settings for opening .jar files.
-
-# Arguments
-
-### Skip update check on startup
-To skip the update process, you can simply add the "--noupdate" argument
-```bash
-java -jar ./StudioBridge.jar --noupdate
-```
-
-### Only send profiles without GUI
-To only send the already set up profiles without GUI, you can use the argument "--sendonly". This also will skip the update check
-```bash
-java -jar ./StudioBridge.jar --sendonly
-```
-The output should look like this:
-```bash
-*** StudioBridge by Rdiger-36 ***
-
-Found 2 profiles!
-Try to send all of them to Bambu Studio
-
-Successfully sended Test Bambu X1E - 192.168.XXX.XXX - X1E to Bambu Studio
-Successfully sended Bambu Lab P1S - 192.168.XXX.XXX - P1S to Bambu Studio
-All Packages successfully sent to Bambu Studio
-```
-
-
-# Support Me
-[![Buy Me a Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/Rdiger36)
