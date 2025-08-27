@@ -49,7 +49,7 @@ public class MainMenu {
     static String PrinterIP, PrinterName, PrinterSerial, PrinterType;
     
     // Application version
-    static String version = "108";
+    static String version = "109";
     
     // Set boolean for checking updates on startup
     static boolean checkForUpdate = true;
@@ -160,6 +160,9 @@ public class MainMenu {
         }
     }
 
+	/**
+	 * @wbp.parser.entryPoint
+	 */
 	public static void startGUI() {
     	EventQueue.invokeLater(new Runnable() {
             public void run() {
@@ -244,7 +247,7 @@ public class MainMenu {
         JComboBox<String> cbxModel = new JComboBox<>();
         cbxModel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         cbxModel.setMaximumRowCount(8);
-        cbxModel.setModel(new DefaultComboBoxModel<>(new String[]{"A1", "A1 Mini", "P1P", "P1S", "X1", "X1C", "X1E", "H2D"}));
+        cbxModel.setModel(new DefaultComboBoxModel<String>(new String[] {"A1", "A1 Mini", "H2D", "H2D Pro", "H2S", "P1P", "P1S", "X1", "X1C", "X1E"}));
         frmStudioBridge.getContentPane().add(cbxModel, "cell 2 5 4 1,growx");
         cbxModel.setSelectedIndex(0);
         
@@ -602,6 +605,8 @@ public class MainMenu {
             case "X1C": model = "3DPrinter-X1-Carbon"; break;
             case "X1E": model = "C13"; break;
             case "H2D": model = "O1D"; break;
+            case "H2D Pro": model = "O1E"; break;
+            case "H2S": model = "O1S"; break;
             default: break;
         }
         return model;
