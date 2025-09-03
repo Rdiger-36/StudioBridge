@@ -139,7 +139,7 @@ public class UDPPackage {
 
     public static void startBroadcast(String printerIP, String printerSN, String printerModel, String printerName, String message) {
         new Thread(() -> {
-        	try (DatagramSocket socket = new DatagramSocket(1900)) {
+        	try (DatagramSocket socket = new DatagramSocket()) {
         	    socket.setBroadcast(true);
 
         	    int[] targetPorts = {2021, 1990};
@@ -159,4 +159,5 @@ public class UDPPackage {
             }
         }).start();
     }    
+
 }
