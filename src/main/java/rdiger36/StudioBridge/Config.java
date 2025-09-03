@@ -148,7 +148,7 @@ public class Config {
 	    config.append(System.getProperty("line.separator"));  // Add a new line.
 	    
 	    // Add the printer model type (as index) from the cbxModel comboBox to the configuration.
-	    config.append("PrinterType=" + cbxModel.getSelectedIndex());
+	    config.append("PrinterType=" + cbxModel.getSelectedItem());
 	    config.append(System.getProperty("line.separator"));  // Add a new line.
 	    
 	    // Add the printer name from the txtName field to the configuration.
@@ -265,7 +265,7 @@ public class Config {
 	        
 	        // Set the selected index of the printer model in the cbxModel combo box based on the value.
 	        case "PrinterType": 
-	            cbxModel.setSelectedIndex(Integer.parseInt(wert)); 
+	            cbxModel.setSelectedItem(wert); 
 	            break;
 	        
 	        // Set the printer name in the txtName field, limiting the length to 25 characters.

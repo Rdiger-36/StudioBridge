@@ -49,7 +49,7 @@ public class MainMenu {
     static String PrinterIP, PrinterName, PrinterSerial, PrinterType;
     
     // Application version
-    static String version = "109";
+    static String version = "110";
     
     // Set boolean for checking updates on startup
     static boolean checkForUpdate = true;
@@ -117,15 +117,15 @@ public class MainMenu {
 
                         // Send the UDP package
                         boolean sendSuccess = UDPPackage.send(null, ipAddress, printerSN,
-                        		MainMenu.getModel(MultiPrinterSetup.getModel(printerType)),
+                        		Models.getModelFromName(Models.getNameFromModel(printerType)),
                                 printerName, remoteUdpPort, false);
                         if (!sendSuccess) {
                             String errorMsg = "Error sending for " + printerName
-                                    + " - " + ipAddress + " - " + MultiPrinterSetup.getModel(MainMenu.getModel(printerType));
+                                    + " - " + ipAddress + " - " + Models.getNameFromModel(Models.getModelFromName(printerType));
                             errors.add(errorMsg);
                         } else {
                         	String successMsg = "Successfully sended " + printerName
-                                    + " - " + ipAddress + " - " + MultiPrinterSetup.getModel(MainMenu.getModel(printerType));
+                                    + " - " + ipAddress + " - " + Models.getNameFromModel(Models.getModelFromName(printerType));
                             System.out.println((successMsg));
                         }
                     }
@@ -401,7 +401,7 @@ public class MainMenu {
 
                 // Check if a valid port was assigned to remoteUdpPort
                 if (remoteUdpPort > 0) {
-                	UDPPackage.send(frmStudioBridge, txtIP.getText(), txtSerial.getText(), getModel(cbxModel.getSelectedItem().toString()), txtName.getText(), remoteUdpPort, false);
+                	UDPPackage.send(frmStudioBridge, txtIP.getText(), txtSerial.getText(), Models.getModelFromName(cbxModel.getSelectedItem().toString()), txtName.getText(), remoteUdpPort, false);
                 } else {
                     // Show a warning if Bambu Studio is not running
                 	new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Bambu Studio is not running!</html>", "Ok").showDialog();
@@ -587,29 +587,6 @@ public class MainMenu {
             new DialogOneButton(null, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "Error! Directory " + ProfilesDir + " could not be created!", "Close").showDialog();
             System.exit(0);
         }
-    }
-
-    /**
-     * Converts model names to a specific format for sending to the printer.
-     *
-     * @param model The model name as selected by the user.
-     * @return The formatted model name.
-     */
-    public static String getModel(String model) {
-        switch (model) {
-            case "A1": model = "N2S"; break;
-            case "A1 Mini": model = "N1"; break;
-            case "P1P": model = "C11"; break;
-            case "P1S": model = "C12"; break;
-            case "X1": model = "3DPrinter-X1"; break;
-            case "X1C": model = "3DPrinter-X1-Carbon"; break;
-            case "X1E": model = "C13"; break;
-            case "H2D": model = "O1D"; break;
-            case "H2D Pro": model = "O1E"; break;
-            case "H2S": model = "O1S"; break;
-            default: break;
-        }
-        return model;
     }
     
     /**

@@ -149,7 +149,7 @@ public class MultiPrinterSetup {
                                     switch (parts[0].trim()) {
                                         case "IP-Address": ipAddress = parts[1].trim(); break;
                                         case "PrinterSN": printerSN = parts[1].trim(); break;
-                                        case "PrinterType": printerType = getModel(parts[1].trim()); break;
+                                        case "PrinterType": printerType = Models.getNameFromModel(parts[1].trim()); break;
                                         case "PrinterName": printerName = parts[1].trim(); break;
                                     }
                                 }
@@ -174,26 +174,6 @@ public class MultiPrinterSetup {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         for (int i = 0; i < model.getRowCount(); i++) {
             model.setValueAt(value, i, 4);
-        }
-    }
-
-    /**
-     * Maps model codes to model names.
-     * 
-     * @param model The model code as a string.
-     * @return The corresponding model name.
-     */
-    public static String getModel(String model) {
-        switch (model) {
-            case "0": return "A1";
-            case "1": return "A1 Mini";
-            case "2": return "P1P";
-            case "3": return "P1S";
-            case "4": return "X1";
-            case "5": return "X1C";
-            case "6": return "X1E";
-            case "7": return "H2D";
-            default: return model;
         }
     }
 
@@ -237,7 +217,7 @@ public class MultiPrinterSetup {
 	
 	                    SwingUtilities.invokeLater(() -> progressBar.setString("Send Package for " + NAME));
 	
-	                    if (!UDPPackage.send(frmStudioBridge, IP_ADRESS, SERIAL, MainMenu.getModel(MODEL), NAME, remoteUdpPort, true)) {
+	                    if (!UDPPackage.send(frmStudioBridge, IP_ADRESS, SERIAL, Models.getModelFromName(MODEL), NAME, remoteUdpPort, true)) {
 	                    	errors.add(NAME + " - " + IP_ADRESS + " - " + MODEL);
 	                    } 
 	

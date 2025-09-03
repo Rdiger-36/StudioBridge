@@ -70,3 +70,8 @@ Running the StudioBridge GUI
 	3.	Double-click the .jar file to launch StudioBridge. This should open the GUI, allowing you to configure and use your 3D printers with Bambu Studio over LAN.
 
 If the .jar file does not open directly, ensure Java is properly installed, and check your system’s default settings for opening .jar files.
+
+# FAQ
+
+Q: My Printer does not connect to Bambu Studio (Error Code -1)
+A: You have to Check if your Printer Informations are right. If thats true and it worked in othter version, then try to disable/enable Only-LAN-Mode. It also could help to diconnetd your printer from the cloud an d reconnect it ([Issue-12](https://github.com/Rdiger-36/StudioBridge/issues/12))
