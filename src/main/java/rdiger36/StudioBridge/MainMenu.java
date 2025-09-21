@@ -28,6 +28,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.text.AbstractDocument;
 import jnafilechooser.api.JnaFileChooser;
 import jnafilechooser.api.JnaFileChooser.Mode;
@@ -48,8 +49,17 @@ public class MainMenu {
     // Printer information variables
     static String PrinterIP, PrinterName, PrinterSerial, PrinterType;
     
+    // Application Name
+    static String title = "StudioBridge";
+    
     // Application version
-    static String version = "110";
+    static String version = "111";
+    
+    // Destination for UDPPackage
+    static String destionation4UDP = "localhost";
+    
+    // Direct mode setting: if true than send UDP package to broadcast, else send directly to Bambu Studio
+    static boolean directMode = true;
     
     // Set boolean for checking updates on startup
     static boolean checkForUpdate = true;
@@ -81,8 +91,14 @@ public class MainMenu {
     
     private static void startNoGUI() {
     	
-    	System.out.println("*** StudioBridge by Rdiger-36 v." + MainMenu.version.substring(0, 1) + "." +
+    	System.out.println("*** " + title + " by Rdiger-36 v." + MainMenu.version.substring(0, 1) + "." +
                 MainMenu.version.substring(1, 2) + "." + MainMenu.version.substring(2, 3) + " ***\n");
+    	
+    	directMode = Config.sendingMode(null);
+    	
+    	String sendOverMethod = "broadcast";
+    	
+    	if (directMode) sendOverMethod = "localhost";
     	
         String profilesDir = Config.customProfilePath(null);
         ArrayList<String> errors = new ArrayList<>();
@@ -120,11 +136,11 @@ public class MainMenu {
                         		Models.getModelFromName(Models.getNameFromModel(printerType)),
                                 printerName, remoteUdpPort, false);
                         if (!sendSuccess) {
-                            String errorMsg = "Error sending for " + printerName
+                            String errorMsg = "Error! Could not send package via " + sendOverMethod + " to Bambu Studio: " + printerName
                                     + " - " + ipAddress + " - " + Models.getNameFromModel(Models.getModelFromName(printerType));
                             errors.add(errorMsg);
                         } else {
-                        	String successMsg = "Successfully sended " + printerName
+                        	String successMsg = "Successfully sended package via " + sendOverMethod + " to Bambu Studio: " + printerName
                                     + " - " + ipAddress + " - " + Models.getNameFromModel(Models.getModelFromName(printerType));
                             System.out.println((successMsg));
                         }
@@ -188,24 +204,26 @@ public class MainMenu {
         
         rememberLastUsedProfile = Config.rememberLastProfile(null);
         
+        directMode = Config.sendingMode(null);
+        
         // Create the main application frame
         JFrame frmStudioBridge = new JFrame();
         frmStudioBridge.setResizable(false);
         frmStudioBridge.getContentPane().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         frmStudioBridge.setIconImage(Toolkit.getDefaultToolkit().getImage(MainMenu.class.getResource("/icon.png")));
-        frmStudioBridge.setTitle("StudioBridge");
+        frmStudioBridge.setTitle(title);
         frmStudioBridge.setBounds(100, 100, 299, 235);
         frmStudioBridge.setLocationRelativeTo(frame);
         frmStudioBridge.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        frmStudioBridge.getContentPane().setLayout(new MigLayout("", "[76.00px][9.00px][][grow][right][right]", "[35px:n,grow][10px:n][][][][][][10px:n][35px:n,grow]"));
+        frmStudioBridge.getContentPane().setLayout(new MigLayout("", "[76.00px][][]", "[35px:n,grow][10px:n][][][][][][10px:n][35px:n,grow]"));
 
         // Add informational label
         JLabel lblInfo = new JLabel("<html>This program sends a specific data package<br>to Bambu Studio.\r\nThis allows the printer<br>to be used in different networks</html>");
-        frmStudioBridge.getContentPane().add(lblInfo, "cell 0 0 6 1,growx,aligny center");
+        frmStudioBridge.getContentPane().add(lblInfo, "cell 0 0 2 1,growx,aligny center");
         
         // Separator
         JSeparator separator = new JSeparator();
-        frmStudioBridge.getContentPane().add(separator, "cell 0 1 6 1,growx,aligny center");
+        frmStudioBridge.getContentPane().add(separator, "cell 0 1 2 1,growx,aligny center");
         
         // Profile selection components
         JLabel lblProfile = new JLabel("Profile");
@@ -214,24 +232,7 @@ public class MainMenu {
         JComboBox<String> cbxProfile = new JComboBox<>();
         cbxProfile.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         cbxProfile.setModel(new DefaultComboBoxModel<String>(new String[] {"New profile", "Import profile", "---"}));
-        frmStudioBridge.getContentPane().add(cbxProfile, "cell 2 2 2 1,growx");
-
-        // Buttons for profile actions
-        JButton btnDeleteProfile = new JButton("");
-        btnDeleteProfile.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnDeleteProfile.setMargin(new Insets(2, 2, 2, 2));
-        btnDeleteProfile.setContentAreaFilled(false);
-        btnDeleteProfile.setRequestFocusEnabled(false);
-        btnDeleteProfile.setIcon(Resize.setNewImageIconSize(new ImageIcon(ToolInfo.class.getResource("/delete.png")), 16, 16));
-        frmStudioBridge.getContentPane().add(btnDeleteProfile, "cell 5 2,alignx right");
-
-        JButton btnSaveProfile = new JButton("");
-        btnSaveProfile.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnSaveProfile.setRequestFocusEnabled(false);
-        btnSaveProfile.setMargin(new Insets(2, 2, 2, 2));
-        btnSaveProfile.setContentAreaFilled(false);
-        btnSaveProfile.setIcon(Resize.setNewImageIconSize(new ImageIcon(ToolInfo.class.getResource("/save.png")), 16, 16));
-        frmStudioBridge.getContentPane().add(btnSaveProfile, "cell 4 2,alignx right");
+        frmStudioBridge.getContentPane().add(cbxProfile, "flowx,cell 1 2,growx");
 
         // Printer information labels
         JLabel lblIP = new JLabel("IP-Address");
@@ -248,7 +249,7 @@ public class MainMenu {
         cbxModel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         cbxModel.setMaximumRowCount(8);
         cbxModel.setModel(new DefaultComboBoxModel<String>(new String[] {"A1", "A1 Mini", "H2D", "H2D Pro", "H2S", "P1P", "P1S", "X1", "X1C", "X1E"}));
-        frmStudioBridge.getContentPane().add(cbxModel, "cell 2 5 4 1,growx");
+        frmStudioBridge.getContentPane().add(cbxModel, "cell 1 5,growx");
         cbxModel.setSelectedIndex(0);
         
         // Printer name input field
@@ -259,29 +260,24 @@ public class MainMenu {
         txtName.setText("");
         txtName.setColumns(10);
         ((AbstractDocument) txtName.getDocument()).setDocumentFilter(new LengthRestrictedDocumentFilter(25));
-        frmStudioBridge.getContentPane().add(txtName, "cell 2 6 4 1,growx");
+        frmStudioBridge.getContentPane().add(txtName, "cell 1 6,growx");
         
         // Separator
         JSeparator separator_1 = new JSeparator();
-        frmStudioBridge.getContentPane().add(separator_1, "cell 0 7 6 1,growx,aligny center");
+        frmStudioBridge.getContentPane().add(separator_1, "cell 0 7 2 1,growx,aligny center");
         
         // Button to send package
         JButton btnSendPackage = new JButton("Send package");
         btnSendPackage.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        frmStudioBridge.getContentPane().add(btnSendPackage, "cell 0 8 2 1");
+        frmStudioBridge.getContentPane().add(btnSendPackage, "cell 0 8");
         
-        // Copyright button
-        JButton btnCopy = new JButton("© Niklas (Rdiger-36)");
-        btnCopy.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnCopy.setMargin(new Insets(0, 0, 0, 0));
-        btnCopy.setBorderPainted(false);
-        btnCopy.setContentAreaFilled(false);
-        btnCopy.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-        frmStudioBridge.getContentPane().add(btnCopy, "cell 3 8 3 1,alignx right,aligny bottom");
+        JButton btnCheckPrinter = new JButton("Check Printer");
+        btnCheckPrinter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        frmStudioBridge.getContentPane().add(btnCheckPrinter, "flowx,cell 1 8");
 
         // Input fields for IP and Serial number
         JTextField txtIP = new JTextField();
-        frmStudioBridge.getContentPane().add(txtIP, "flowx,cell 2 3 4 1,growx");
+        frmStudioBridge.getContentPane().add(txtIP, "flowx,cell 1 3,growx");
         txtIP.setColumns(10);
         ((AbstractDocument) txtIP.getDocument()).setDocumentFilter(new LengthRestrictedDocumentFilter(15));
         
@@ -289,7 +285,7 @@ public class MainMenu {
         txtSerial.setText("");
         txtSerial.setColumns(10);
         ((AbstractDocument) txtSerial.getDocument()).setDocumentFilter(new LengthRestrictedDocumentFilter(25));
-        frmStudioBridge.getContentPane().add(txtSerial, "cell 2 4 4 1,growx");
+        frmStudioBridge.getContentPane().add(txtSerial, "cell 1 4,growx");
         
         // Menu bar and settings options
         JMenuBar menuBar = new JMenuBar();
@@ -324,6 +320,27 @@ public class MainMenu {
             }
         });
         
+        JCheckBoxMenuItem cbxmntmSetSendingMode = new JCheckBoxMenuItem("Send packages directly");
+        cbxmntmSetSendingMode.setSelected(directMode);
+        mnSettings.add(cbxmntmSetSendingMode);
+        
+        // Action listener for dark mode toggle
+        cbxmntmSetSendingMode.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+            	
+            	if (cbxmntmSetSendingMode.isSelected()) {
+            		new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>The mode for sending UDP packets has been changed to localhost!<br>Data will now be sent directly to Bambu Studio on your local machine.</html>", "Ok").showDialog();
+            	} else {
+            		new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>The mode for sending UDP packets has been changed to broadcast!<br>Data will now be sent to the broadcast address of your current network.</html>", "Ok").showDialog();
+            	}
+            	
+                directMode = cbxmntmSetSendingMode.isSelected();
+            }
+        });
+        
+        mnSettings.add(new JSeparator());
+        
         JMenuItem mntmChangeProfilesPath = new JMenuItem("Set custom profiles path");
         mnSettings.add(mntmChangeProfilesPath);
         
@@ -356,14 +373,6 @@ public class MainMenu {
 				
 			}
 		});
-        
-        // Action listener for copyright button
-        btnCopy.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new ToolInfo(frmStudioBridge);
-            }
-        });
         
         // Action listener for sending the data package
         btnSendPackage.addActionListener(new ActionListener() {
@@ -409,62 +418,19 @@ public class MainMenu {
             }                        
         });
         
-        // Action listener for saving profiles
-        btnSaveProfile.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {            
-                String profileName = cbxProfile.getSelectedItem().toString();
-                
-                if (profileName.equals("New profile")) {
-                    profileName = new SaveDialog(frmStudioBridge, txtName.getText(), "Save").saveProfile();
-                }
-                
-                if (profileName.length() > 0 && !profileName.equals("New profile")) {
-                    if (!profileExists(cbxProfile, profileName)) {
-                        cbxProfile.addItem(profileName);
-                        Config.saveProfile(frmStudioBridge, profileName, cbxProfile, cbxModel, txtIP, txtSerial, txtName);
-                        cbxProfile.setSelectedItem(profileName);
-                        frmStudioBridge.pack();    
-                    } else {
-                        int result = new DialogTwoButtons(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "Warning! The profile: " + profileName + " already exists, do you want to overwrite it?", "Yes", "No").showDialog();
-                        if (result == 0) {
-                            Config.saveProfile(frmStudioBridge, profileName, cbxProfile, cbxModel, txtIP, txtSerial, txtName);
-                        }
-                    }
-                    
-                    PrinterIP = txtIP.getText();
-                    PrinterName = txtName.getText();
-                    PrinterSerial = txtSerial.getText();
-                    PrinterType = cbxModel.getSelectedItem().toString();
-                }
-            }
-        });
-        
-        // Action listener for deleting profiles
-        btnDeleteProfile.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            	
-            	String profile = cbxProfile.getSelectedItem().toString();
-            	
-            	if (!profile.equals("New profile") && !profile.equals("Import profile") && !profile.equals("---")) {
-            	
-                    int response = new DialogTwoButtons(frmStudioBridge, null,new ImageIcon(MainMenu.class.getResource("/achtung.png")), "Attention! Do you want to delete the profile: \"" + cbxProfile.getSelectedItem() + "\"?", "Yes", "No").showDialog();
-                    
-                    if (response == 0) {
-                        new File(ProfilesDir + System.getProperty("file.separator") + cbxProfile.getSelectedItem() + ".sbp").delete();
-                        cbxProfile.removeItem(cbxProfile.getSelectedItem());
-                        cbxProfile.setSelectedIndex(0);
-                        
-                        PrinterIP = txtIP.getText();
-                        PrinterName = txtName.getText();
-                        PrinterSerial = txtSerial.getText();
-                        PrinterType = cbxModel.getSelectedItem().toString();
-                        
-                        frmStudioBridge.pack();    
-                    }
-            	}
-            }
+        // Action listener for opening new GUI to check the printer stats
+        btnCheckPrinter.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				
+				if (txtIP.getText().equals("")) {
+					new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>You must enter a valid IP-Address!</html>", "Ok").showDialog();
+				} else {
+					new Thread(() -> new PrinterCheck(frmStudioBridge, txtIP.getText())).start();
+				}
+			}
+        	
         });
         
         // Action listener for profile selection
@@ -542,6 +508,101 @@ public class MainMenu {
         });
         
         getAllProfiles(cbxProfile); // Load all profiles into the combo box
+        
+        JButton btnSaveProfile = new JButton("");
+        btnSaveProfile.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnSaveProfile.setRequestFocusEnabled(false);
+        btnSaveProfile.setMargin(new Insets(2, 2, 2, 2));
+        btnSaveProfile.setContentAreaFilled(false);
+        btnSaveProfile.setIcon(Resize.setNewImageIconSize(new ImageIcon(ToolInfo.class.getResource("/save.png")), 16, 16));
+        frmStudioBridge.getContentPane().add(btnSaveProfile, "cell 1 2,alignx left");
+                
+        // Buttons for profile actions
+        JButton btnDeleteProfile = new JButton("");
+        btnDeleteProfile.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnDeleteProfile.setMargin(new Insets(2, 2, 2, 2));
+        btnDeleteProfile.setContentAreaFilled(false);
+        btnDeleteProfile.setRequestFocusEnabled(false);
+        btnDeleteProfile.setIcon(Resize.setNewImageIconSize(new ImageIcon(ToolInfo.class.getResource("/delete.png")), 16, 16));
+        frmStudioBridge.getContentPane().add(btnDeleteProfile, "cell 1 2,alignx right");
+        
+        // Copyright button
+        JButton btnCopy = new JButton("© Niklas (Rdiger-36)");
+        btnCopy.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnCopy.setMargin(new Insets(0, 0, 0, 0));
+        btnCopy.setBorderPainted(false);
+        btnCopy.setContentAreaFilled(false);
+        btnCopy.setHorizontalAlignment(SwingConstants.RIGHT);
+        btnCopy.setVerticalAlignment(SwingConstants.BOTTOM);
+        btnCopy.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        
+        // Action listener for copyright button
+        btnCopy.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new ToolInfo(frmStudioBridge);
+            }
+        });
+        frmStudioBridge.getContentPane().add(btnCopy, "cell 1 8");
+        
+        // Action listener for deleting profiles
+        btnDeleteProfile.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	
+            	String profile = cbxProfile.getSelectedItem().toString();
+            	
+            	if (!profile.equals("New profile") && !profile.equals("Import profile") && !profile.equals("---")) {
+            	
+                    int response = new DialogTwoButtons(frmStudioBridge, null,new ImageIcon(MainMenu.class.getResource("/achtung.png")), "Attention! Do you want to delete the profile: \"" + cbxProfile.getSelectedItem() + "\"?", "Yes", "No").showDialog();
+                    
+                    if (response == 0) {
+                        new File(ProfilesDir + System.getProperty("file.separator") + cbxProfile.getSelectedItem() + ".sbp").delete();
+                        cbxProfile.removeItem(cbxProfile.getSelectedItem());
+                        cbxProfile.setSelectedIndex(0);
+                        
+                        PrinterIP = txtIP.getText();
+                        PrinterName = txtName.getText();
+                        PrinterSerial = txtSerial.getText();
+                        PrinterType = cbxModel.getSelectedItem().toString();
+                        
+                        frmStudioBridge.pack();    
+                    }
+            	}
+            }
+        });
+                
+        // Action listener for saving profiles
+        btnSaveProfile.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {            
+                String profileName = cbxProfile.getSelectedItem().toString();
+                
+                if (profileName.equals("New profile")) {
+                    profileName = new SaveDialog(frmStudioBridge, txtName.getText(), "Save").saveProfile();
+                }
+                
+                if (profileName.length() > 0 && !profileName.equals("New profile")) {
+                    if (!profileExists(cbxProfile, profileName)) {
+                        cbxProfile.addItem(profileName);
+                        Config.saveProfile(frmStudioBridge, profileName, cbxProfile, cbxModel, txtIP, txtSerial, txtName);
+                        cbxProfile.setSelectedItem(profileName);
+                        frmStudioBridge.pack();    
+                    } else {
+                        int result = new DialogTwoButtons(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "Warning! The profile: " + profileName + " already exists, do you want to overwrite it?", "Yes", "No").showDialog();
+                        if (result == 0) {
+                            Config.saveProfile(frmStudioBridge, profileName, cbxProfile, cbxModel, txtIP, txtSerial, txtName);
+                        }
+                    }
+                    
+                    PrinterIP = txtIP.getText();
+                    PrinterName = txtName.getText();
+                    PrinterSerial = txtSerial.getText();
+                    PrinterType = cbxModel.getSelectedItem().toString();
+                }
+            }
+        });
+        
                 
         PrinterIP = txtIP.getText();
         PrinterName = txtName.getText();

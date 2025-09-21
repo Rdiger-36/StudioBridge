@@ -331,6 +331,10 @@ public class Config {
 		    config.append(System.getProperty("line.separator")); // Add a new line.
 	    }
 	    
+	    // Append the usage of the mode for sending UDP packages to the configuration.
+	    config.append("directMode=" + MainMenu.directMode);
+	    config.append(System.getProperty("line.separator")); // Add a new line.
+	    
 	    /** 
 	     * FileOutputStream to create and write the contents of the StringBuilder to 
 	     * a file at the specified save path.
@@ -387,6 +391,45 @@ public class Config {
 	    // Return the dark mode status.
 	    return darkmode;
 	}
+	
+	/**
+	 * Checks the user's saved settings to determine if direct mode is enabled. 
+	 * The method reads the settings file and returns the value of the 
+	 * "directMode" setting.
+	 *
+	 * @return true if direct mode is enabled, false otherwise.
+	 */
+	public static boolean sendingMode(JFrame mainFrame) {
+	    // Define the path to the user settings file.
+	    String userSettings = MainMenu.savePath + System.getProperty("file.separator") + "settings";
+	    
+	    // Initialize directMode flag to false.
+	    boolean directMode = false;
+	    
+	    // Check if the settings file exists.
+	    if (new File(userSettings).exists()) {
+	        try {
+	            String line;
+	            // Open the settings file for reading using a BufferedReader.
+	            try (BufferedReader inputStream = new BufferedReader(new FileReader(userSettings))) {
+	                // Read each line of the file.
+	                while((line = inputStream.readLine()) != null) {
+	                    // Check if the line corresponds to the dark mode setting.
+	                    if (line.split("=")[0].equals("directMode")) {                
+	                        // Parse the value and set the directMode flag accordingly.
+	                    	directMode = Boolean.valueOf(line.split("=")[1]);
+	                    }
+	                }    
+	                // The BufferedReader is automatically closed here due to the try-with-resources statement.
+	            }
+	        } catch (Exception e) {
+	        	// Show error if reading the file has failed
+	        	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to read the config file!</html>", "Ok").showDialog();
+	        }    
+	    }
+	    // Return the dark mode status.
+	    return directMode;
+	}
 
 	/**
 	 * Checks the user's saved settings to determine if the option to
@@ -413,7 +456,7 @@ public class Config {
 	                while((line = inputStream.readLine()) != null) {
 	                    // Check if the line corresponds to the remember setting.
 	                    if (line.split("=")[0].equals("rememberLastUsedProfile")) {                
-	                        // Parse the value and set the darkmode flag accordingly.
+	                        // Parse the value and set the rember flag accordingly.
 	                    	remember = Boolean.valueOf(line.split("=")[1]);
 	                    }
 	                }    

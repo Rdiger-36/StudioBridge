@@ -7,6 +7,8 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
+
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
@@ -37,29 +39,29 @@ public class UDPPackage {
      * @param PrinterName The display name of the 3D printer.
      */
     public static boolean send(JFrame mainFrame, String printerIP, String printerSN, String printerModel, String printerName, int remoteUdpPort, boolean multiMode) {
-        
+     	
+    	Date date = new Date();
+    	
         try {
-
+ 
             // Create the message to be sent
         	String message =
-        		    "NOTIFY * HTTP/1.1\r\n" +
-        		    "HOST: 239.255.255.250:1900\r\n" +         
-        		    "Server: UPnP/1.0\r\n" +                  
+        		    "NOTIFY * HTTP/1.1\r\n" +      
+		    		"Server: Buildroot/2018.02-rc3 UPnP/1.0 ssdpd/1.8\r\n" +
+        		    "Date: " + date.toString() + "\r\n" +
         		    "Location: " + printerIP + "\r\n" +
-        		    "NT: urn:bambulab-com:device:3dprinter:1\r\n" +
+        		    "ST: urn:bambulab-com:device:3dprinter:1\r\n" +
+        		    "EXT:\r\n" +
         		    "USN: " + printerSN + "\r\n" +
         		    "Cache-Control: max-age=1800\r\n" +
         		    "DevModel.bambu.com: " + printerModel + "\r\n" +
         		    "DevName.bambu.com: " + printerName + "\r\n" +
-        		    "DevSignal.bambu.com: -40\r\n" +
+        		    "DevSignal.bambu.com: -44\r\n" +
         		    "DevConnect.bambu.com: lan\r\n" +
-        		    "DevBind.bambu.com: free\r\n" +
-        		    "Devseclink.bambu.com: secure\r\n" +
-        		    "DevVersion.bambu.com: 01.07.00.00\r\n" +  
-        		    "DevCap.bambu.com: 1\r\n" +                
+        		    "DevBind.bambu.com: free\r\n" +             
         		    "\r\n";
-            
-            UDPPackage.startBroadcast(printerIP, printerSN, printerIP, printerName, message);
+        	
+        	UDPPackage.startBroadcast(printerIP, printerSN, printerIP, printerName, message);
 
             if (!multiMode && mainFrame != null) new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/success.png")), "<html>Package sent successfully.<br>The Printer will appear in the next 60 seconds in Bambu Studio.<br>You can close this Programm when your printer(s) appear in Bambu Studio</html>", "Ok").showDialog();
 
@@ -140,12 +142,18 @@ public class UDPPackage {
     public static void startBroadcast(String printerIP, String printerSN, String printerModel, String printerName, String message) {
         new Thread(() -> {
         	try (DatagramSocket socket = new DatagramSocket()) {
-        	    socket.setBroadcast(true);
+        		
+        		String destionation = MainMenu.destionation4UDP;
+        		
+        	    if (MainMenu.directMode) {
+        	    	socket.setBroadcast(true);
+        	    	destionation = "255.255.255.255";
+        	    }
 
         	    int[] targetPorts = {2021, 1990};
         	    for (int i = 0; i < 10; i++) {
         	        byte[] data = message.getBytes(StandardCharsets.US_ASCII);
-        	        InetAddress bcast = InetAddress.getByName("255.255.255.255");
+        	        InetAddress bcast = InetAddress.getByName(destionation);
         	        for (int port : targetPorts) {
         	            DatagramPacket p = new DatagramPacket(data, data.length, bcast, port);
         	            socket.send(p);
@@ -158,6 +166,5 @@ public class UDPPackage {
                 e.printStackTrace();
             }
         }).start();
-    }    
-
+    }
 }
