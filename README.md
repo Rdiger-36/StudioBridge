@@ -201,9 +201,9 @@ Running the StudioBridge GUI
 If the .jar file does not open directly, ensure Java is properly installed, and check your system’s default settings for opening .jar files.
 
 ## FAQ
-Q: My App won't start on macOS. There is a Error Message that says that this app courrupted and has to be deleted.
+Q: My app won't start on macOS. There is an error message saying that the app is corrupted and needs to be deleted.
 
-A: This is asaftey feature from macOS Gatekeeper. To disable this Error Message just run this command in your Terminal:
+A: This is a safety feature from macOS Gatekeeper. To disable this error message, run the following command in your terminal:
 
 `xattr -dr com.apple.quarantine /Applications/StudioBridge.app`
 
