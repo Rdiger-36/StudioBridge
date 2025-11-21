@@ -27,11 +27,12 @@ Successfully tested on:
 # Preview
 Lightmode
 
-![image](https://github.com/user-attachments/assets/c7e1ac4c-47da-4d14-9214-1cc2d14e23a0) ![image](https://github.com/user-attachments/assets/02de45f4-6833-4ba3-9153-ecb579104f77)
+![image](https://github.com/user-attachments/assets/d7f51a53-35d4-4e5d-b77d-9bf5a77eaf36) ![image](https://github.com/user-attachments/assets/8a1b0062-bc4d-4b25-8247-d3349b8b6b74)
+
 
 Darkmode
 
-![image](https://github.com/user-attachments/assets/215f3f50-676c-4d53-805c-7010c3879ecd) ![image](https://github.com/user-attachments/assets/a958b601-67c7-4de7-bbbf-c0678b7c1930)
+![image](https://github.com/user-attachments/assets/216cb8b1-8913-4d71-87af-b4356de9c614) ![image](https://github.com/user-attachments/assets/a41a6a8b-a3ae-4baf-92a9-1069df042c4c)
 
 Multiple Printer Setup
 
@@ -58,21 +59,31 @@ To use StudioBridge via Terminal/CMD/PowerShell you have to run the StudioBridge
 
 /Applications/StudioBridge.app/Contents/MacOS/StudioBridgeCLI --help
 
-*** StudioBridge by Rdiger-36 v.2.0.0 ***
+*** StudioBridge by Rdiger-36 v.2.1.0 ***
 
 Usage:
   /Applications/StudioBridge.app/Contents/MacOS/StudioBridgeCLI [OPTIONS]
 
 Options:
   You can combine every option with each other
-  --noupdate   Skip search for latest updates on startup
-  --sendonly   Start with no GUI, only send data from all printers to Bambu Studio
-  --direct     Send UPD package directly to Bambu Studio, not over broadcast
-  --help       Show help for StudioBridge
+
+Starting options:
+  --noupdate             Skip search for latest updates on startup
+  --sendonly             Start with no GUI, only send data from all printers to Bambu Studio
+  --direct               Send UPD package directly to Bambu Studio, not over broadcast
+  --help                 Show help for StudioBridge
+
+Profile options:
+  --customProfilesDir='/path/to/profiles/'
+      Set custom profiles directory which will be loaded from this for StudioBridgeCLI
+  --selectedPrinters='/path/to/profile.sbp/','/path/to/other/profile2.sbp/'
+      Set single profiles which will be used for StudioBridgeCLI (single and multi profiles comma-separated)
 
 Example:
   /Applications/StudioBridge.app/Contents/MacOS/StudioBridgeCLI --help
   /Applications/StudioBridge.app/Contents/MacOS/StudioBridgeCLI --sendonly --noupdate --direct
+  /Applications/StudioBridge.app/Contents/MacOS/StudioBridgeCLI --sendonly --customProfilesDir='/Users/rdiger-36/Documents/StudioBridgeProfiles'
+  /Applications/StudioBridge.app/Contents/MacOS/StudioBridgeCLI --sendonly --selectedPrinters='/Users/rdiger-36/Documents/My P1S.sbp','/Users/rdiger-36/Desktop/Profiles/H2D-Pro Work.sbp.sbp'
 ```
 
 #### Windows
@@ -80,42 +91,70 @@ You can find the StudioBridgeCLI.exe in your installation directory, standard: "
 ```bash
 .\StudioBridgeCLI.exe --help
 
-*** StudioBridge by Rdiger-36 v.2.0.0 ***
+*** StudioBridge by Rdiger-36 v.2.1.0 ***
+
+You are currently running this application in raw mode (via .jar)!
+For the official version for your OS and CPU architecture, please visit the GitHub repository.
+https://github.com/Rdiger-36/StudioBridge/
 
 Usage:
-  .\StudioBridgeCLI.exe [OPTIONS]
+  ./StudioBridgeCLI.exe [OPTIONS]
 
 Options:
   You can combine every option with each other
-  --noupdate   Skip search for latest updates on startup
-  --sendonly   Start with no GUI, only send data from all printers to Bambu Studio
-  --direct     Send UPD package directly to Bambu Studio, not over broadcast
-  --help       Show help for StudioBridge
+
+Starting options:
+  --noupdate             Skip search for latest updates on startup
+  --sendonly             Start with no GUI, only send data from all printers to Bambu Studio
+  --direct               Send UPD package directly to Bambu Studio, not over broadcast
+  --help                 Show help for StudioBridge
+
+Profile options:
+  --customProfilesDir='/path/to/profiles/'
+      Set custom profiles directory which will be loaded from this for StudioBridgeCLI
+  --selectedPrinters='/path/to/profile.sbp/','/path/to/other/profile2.sbp/'
+      Set single profiles which will be used for StudioBridgeCLI (single and multi profiles comma-separated)
 
 Example:
-  .\StudioBridgeCLI.exe --help
-  .\StudioBridgeCLI.exe --sendonly --noupdate --direct
+  ./StudioBridgeCLI.exe --help
+  ./StudioBridgeCLI.exe --sendonly --noupdate --direct
+  ./StudioBridgeCLI.exe --sendonly --customProfilesDir='C:\Users\rdiger-36\Documents\StudioBridgeProfiles'
+  ./StudioBridgeCLI.exe --sendonly --selectedPrinters='C:\Users\rdiger-36\Documents\My P1S.sbp','C:\Users\rdiger-36\Desktop\H2D-Pro Work.sbp'
 ```
 
 #### Linux
 ```bash
 .\StudioBridge.AppImage --help
 
-*** StudioBridge by Rdiger-36 v.2.0.0 ***
+*** StudioBridge by Rdiger-36 v.2.1.0 ***
+
+You are currently running this application in raw mode (via .jar)!
+For the official version for your OS and CPU architecture, please visit the GitHub repository.
+https://github.com/Rdiger-36/StudioBridge/
 
 Usage:
-  .\StudioBridge.AppImage [OPTIONS]
+  ./StudioBridge.AppImage [OPTIONS]
 
 Options:
   You can combine every option with each other
-  --noupdate   Skip search for latest updates on startup
-  --sendonly   Start with no GUI, only send data from all printers to Bambu Studio
-  --direct     Send UPD package directly to Bambu Studio, not over broadcast
-  --help       Show help for StudioBridge
+
+Starting options:
+  --noupdate             Skip search for latest updates on startup
+  --sendonly             Start with no GUI, only send data from all printers to Bambu Studio
+  --direct               Send UPD package directly to Bambu Studio, not over broadcast
+  --help                 Show help for StudioBridge
+
+Profile options:
+  --customProfilesDir='/path/to/profiles/'
+      Set custom profiles directory which will be loaded from this for StudioBridgeCLI
+  --selectedPrinters='/path/to/profile.sbp/','/path/to/other/profile2.sbp/'
+      Set single profiles which will be used for StudioBridgeCLI (single and multi profiles comma-separated)
 
 Example:
-  .\StudioBridge.AppImage --help
-  .\StudioBridge.AppImage --sendonly --noupdate --direct
+  ./StudioBridge.AppImage --help
+  ./StudioBridge.AppImage --sendonly --noupdate --direct
+  ./StudioBridge.AppImage --sendonly --customProfilesDir='/home/rdiger-36/Documents/StudioBridgeProfiles'
+  ./StudioBridge.AppImage --sendonly --selectedPrinters='/home/rdiger-36/Documents/My P1S.sbp','/home/rdiger-36/Desktop/H2D-Pro Work.sbp'
 ```
 
 If you use --sendonly the output will look like this:
