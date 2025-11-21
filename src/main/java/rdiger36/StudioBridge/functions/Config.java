@@ -6,9 +6,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 
 import javax.swing.ImageIcon;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
-import javax.swing.JTextField;
 
 import com.formdev.flatlaf.FlatLaf;
 
@@ -16,45 +14,34 @@ import rdiger36.StudioBridge.gui.DialogOneButton;
 import rdiger36.StudioBridge.gui.DialogTwoButtons;
 import rdiger36.StudioBridge.gui.MainMenu;
 import rdiger36.StudioBridge.gui.SaveDialog;
+import rdiger36.StudioBridge.objects.Printer;
 
 /**
- * The Config class provides utility methods for managing user settings and profiles. 
- * It includes functionalities to save and load user preferences, such as dark mode status 
- * and custom profile paths, as well as to manage profile configurations.
+ * The {@code Config} class provides utility methods for managing application settings
+ * and printer profiles. It includes functionality for saving and loading user
+ * preferences (e.g., theme, profile directories, last used profile) as well as
+ * reading and writing printer profile configuration files.
  *
- * <p>This class serves as a central point for handling configuration-related operations 
- * in the application, ensuring that user settings are easily accessible and modifiable.</p>
- *
- * <h2>Methods:</h2>
- * <ul>
- *   <li><code>saveUserSettings()</code> - Saves user settings, including dark mode preference and custom profiles path.</li>
- *   <li><code>lastTheme()</code> - Retrieves the user's last theme preference (dark mode status) from the settings file.</li>
- *   <li><code>customProfilePath()</code> - Retrieves the path for custom profiles from the settings file.</li>
- *   <li><code>saveUnsavedNewProfile(JFrame, JComboBox, JComboBox, JTextField, JTextField, JTextField)</code> - Prompts the user to save a new profile if it has unsaved changes.</li>
- *   <li><code>saveUnsavedProfile(JFrame, JComboBox, JComboBox, JTextField, JTextField, JTextField)</code> - Prompts the user to save changes to the selected profile.</li>
- *   <li><code>saveProfile(String, JComboBox, JComboBox, JTextField, JTextField, JTextField)</code> - Saves a profile with the provided settings to a file.</li>
- *   <li><code>loadProfile(String, JComboBox, JTextField, JTextField, JTextField)</code> - Loads a profile's settings from a specified file.</li>
- *   <li><code>get_Conf(String, String, JComboBox, JTextField, JTextField, JTextField)</code> - Assigns configuration values to their respective variables based on the provided key.</li>
- *   <li><code>checkLength(String, int)</code> - Ensures that a given string does not exceed a specified length.</li>
- * </ul>
+ * <p>This class serves as a central configuration handler for the application and
+ * ensures consistent access to settings and profile data.</p>
  */
+
 public class Config {
 	
 	/**
-	 * Displays a warning dialog if a new profile has not been saved yet and provides 
-	 * options to either save the profile or continue without saving. If the user 
-	 * chooses to save the profile, it invokes the save process and returns the 
-	 * profile name. If the user opts to continue without saving, it returns an empty string.
+	 * Displays a warning dialog if the current printer profile is new and contains
+	 * unsaved data. The user may choose to save the profile or continue without saving.
 	 *
-	 * @param mainFrame The main application window (JFrame) to which the dialog will be attached.
-	 * @param comboBox The combo box containing profile options.
-	 * @param cbxModel The combo box containing the model options.
-	 * @param txtIP The text field containing the IP address for the profile.
-	 * @param txtSerial The text field containing the serial number for the profile.
-	 * @param txtName The text field containing the name of the profile.
-	 * @return The name of the saved profile, or an empty string if the profile is not saved.
+	 * <p>If the user chooses to save, a dialog is shown to enter a profile name.
+	 * The profile is then written to disk and the given {@link Printer} object is
+	 * updated accordingly.</p>
+	 *
+	 * @param mainFrame the window used for dialog positioning.
+	 * @param printer the printer object containing the unsaved profile data.
+	 * @return the name of the saved profile, or an empty string if the user chose
+	 *         not to save.
 	 */
-	public static String saveUnsavedNewProfile(JFrame mainFrame, JComboBox<String> comboBox, JComboBox<String> cbxModel, JTextField txtIP, JTextField txtSerial, JTextField txtName) {
+	public static String saveUnsavedNewProfile(JFrame mainFrame, Printer printer) {
 	    
 	    // Display a dialog that warns the user about unsaved profile changes.
 	    // The dialog has two buttons: "Save new profile" and "Continue without saving".
@@ -69,10 +56,13 @@ public class Config {
 	    if (response == 0) {
 	        // Get the profile name by showing a save dialog.
 	        // The text from the 'txtName' field is used as the initial suggestion for the profile name.
-	        String profileName = new SaveDialog(mainFrame, txtName.getText(), "Save").saveProfile().trim();
+	        String profileName = new SaveDialog(mainFrame, printer.getProfileName(), "Save").saveProfile().trim();
 	        
 	        // Save the profile with the entered name and associated details (model, IP, serial number), when the profile name is set.
-	        if (!profileName.equals("")) saveProfile(mainFrame, profileName, comboBox, cbxModel, txtIP, txtSerial, txtName);
+	        if (!profileName.equals("")) {
+	        	printer.setProfileName(profileName);
+	        	saveProfile(mainFrame, printer);
+	        }
 	        
 	        // Return the name of the saved profile.
 	        return profileName;
@@ -83,20 +73,17 @@ public class Config {
 	}
 	
 	/**
-	 * Displays a warning dialog if the selected profile contains unsaved changes and 
-	 * provides options to either save the profile or continue without saving. If the 
-	 * user chooses to save the profile, it invokes the save process and returns true. 
-	 * If the user opts to continue without saving, it returns false.
+	 * Displays a dialog when an existing profile contains unsaved changes. The user
+	 * may choose to save or continue without saving.
 	 *
-	 * @param mainFrame The main application window (JFrame) to which the dialog will be attached.
-	 * @param comboBox The combo box containing profile options.
-	 * @param cbxModel The combo box containing the model options.
-	 * @param txtIP The text field containing the IP address for the profile.
-	 * @param txtSerial The text field containing the serial number for the profile.
-	 * @param txtName The text field containing the name of the profile.
-	 * @return {@code true} if the profile is saved, {@code false} if the user continues without saving.
+	 * <p>If the user chooses to save, the changes are written to the profile file.</p>
+	 *
+	 * @param mainFrame the window used for dialog positioning.
+	 * @param printer the printer object representing the modified profile.
+	 * @return {@code true} if the profile was saved, {@code false} if the user chose
+	 *         not to save.
 	 */
-	public static boolean saveUnsavedProfile(JFrame mainFrame, JComboBox<String> comboBox, JComboBox<String> cbxModel, JTextField txtIP, JTextField txtSerial, JTextField txtName) {
+	public static boolean saveUnsavedProfile(JFrame mainFrame, Printer printer) {
 	    
 	    // Display a dialog warning the user that the current profile contains unsaved changes.
 	    // The dialog has two buttons: "Save profile" and "Continue without saving".
@@ -108,11 +95,9 @@ public class Config {
 	    
 	    // If the user chooses to save the profile (response == 0):
 	    if (response == 0) {
-	        // Get the name of the selected profile from the comboBox.
-	        String profielName = comboBox.getSelectedItem().toString();
 	        
 	        // Save the profile using the selected name and the provided profile details.
-	        saveProfile(mainFrame, profielName, comboBox, cbxModel, txtIP, txtSerial, txtName);
+	        saveProfile(mainFrame, printer);
 	        
 	        // Return true indicating that the profile has been saved.
 	        return true;
@@ -123,41 +108,38 @@ public class Config {
 	}
 	
 	/**
-	 * Saves the profile information (profile name, IP address, printer serial number, printer type, and printer name) 
-	 * into a configuration file. The file is saved in the profiles directory with the given profile name and a ".sbp" 
-	 * file extension.
+	 * Writes the contents of a {@link Printer} profile to a configuration file.
+	 * The file is stored inside the application's profile directory and saved
+	 * using the profile name with ".sbp" as extension.
 	 *
-	 * @param ProfileName The name of the profile to be saved.
-	 * @param comboBox The combo box containing the selected profile.
-	 * @param cbxModel The combo box containing the model selection (used to save the printer type).
-	 * @param txtIP The text field containing the IP address of the profile.
-	 * @param txtSerial The text field containing the serial number of the printer.
-	 * @param txtName The text field containing the name of the printer.
-	 * @return {@code true} if the profile is successfully saved, {@code false} if an error occurs during the save process.
+	 * @param mainFrame the window used for displaying error dialogs.
+	 * @param printer the printer object whose data should be stored.
+	 * @return {@code true} if the profile was saved successfully,
+	 *         {@code false} if an error occurred.
 	 */
-	public static boolean saveProfile(JFrame mainFrame, String ProfileName, JComboBox<String> comboBox, JComboBox<String> cbxModel, JTextField txtIP, JTextField txtSerial, JTextField txtName) {
+	public static boolean saveProfile(JFrame mainFrame, Printer printer) {
 	    
 	    // Create a StringBuilder to build the profile configuration line by line.
 	    StringBuilder config = new StringBuilder();
 	    
 	    // Add the profile name from the comboBox to the configuration.
-	    config.append("ProfileName=" + comboBox.getSelectedItem());
+	    config.append("ProfileName=" + printer.getProfileName());
 	    config.append(System.getProperty("line.separator"));  // Add a new line.
 	    
 	    // Add the IP address from the txtIP field to the configuration.
-	    config.append("IP-Address=" + txtIP.getText());
+	    config.append("IP-Address=" + printer.getIpAdress());
 	    config.append(System.getProperty("line.separator"));  // Add a new line.
 	    
 	    // Add the printer serial number from the txtSerial field to the configuration.
-	    config.append("PrinterSN=" + txtSerial.getText());
+	    config.append("PrinterSN=" + printer.getSerialNumber());
 	    config.append(System.getProperty("line.separator"));  // Add a new line.
 	    
 	    // Add the printer model type (as index) from the cbxModel comboBox to the configuration.
-	    config.append("PrinterType=" + cbxModel.getSelectedItem());
+	    config.append("PrinterType=" + printer.getPrinterModel());
 	    config.append(System.getProperty("line.separator"));  // Add a new line.
 	    
 	    // Add the printer name from the txtName field to the configuration.
-	    config.append("PrinterName=" + txtName.getText());
+	    config.append("PrinterName=" + printer.getPrinterName());
 	    
 	    /** 
 	     * Create a FileOutputStream to write the content of the config StringBuilder into a file. 
@@ -167,7 +149,7 @@ public class Config {
 	    FileOutputStream fos;
 	    try {
 	        // Create and open a file at the specified path with the profile name.
-	        fos = new FileOutputStream(MainMenu.ProfilesDir + System.getProperty("file.separator") + ProfileName + ".sbp");
+	        fos = new FileOutputStream(MainMenu.ProfilesDir + System.getProperty("file.separator") + printer.getProfileName() + ".sbp");
 	        
 	        // Write the content of the config to the file as bytes.
 	        fos.write(config.toString().getBytes());
@@ -185,17 +167,15 @@ public class Config {
 	}
 	
 	/**
-	 * Loads a specified profile from a configuration file and populates the relevant UI components 
-	 * (model combo box, IP address text field, serial number text field, and printer name text field) 
-	 * with the values from the file.
+	 * Loads the contents of a printer profile file and constructs a {@link Printer}
+	 * object based on its data.
 	 *
-	 * @param profile The name of the profile to be loaded.
-	 * @param cbxModel The combo box for selecting the printer model.
-	 * @param txtIP The text field for entering the IP address of the printer.
-	 * @param txtSerial The text field for entering the serial number of the printer.
-	 * @param txtName The text field for entering the name of the printer.
+	 * @param mainFrame the frame used for error dialog display.
+	 * @param profile the absolute file path of the profile to load.
+	 * @return a {@link Printer} object with the loaded data,
+	 *         or {@code null} if the file could not be read.
 	 */
-	public static void loadProfile(JFrame mainFrame, String profile, JComboBox<String> cbxModel, JTextField txtIP, JTextField txtSerial, JTextField txtName) {   
+	public static Printer loadProfile(JFrame mainFrame, String profile) {   
 	    
 	    // Create a File object representing the configuration file.
 	    File configFile = new File(profile);        
@@ -207,14 +187,8 @@ public class Config {
 	    BufferedReader inputStream;
 	    
 	    // Check if the configuration file exists.
-	    if (!configFile.exists()) {
-	        // If the file does not exist, clear the input fields.
-	        txtIP.setText("");                     // Clear the IP address field.
-	        txtSerial.setText("");                 // Clear the serial number field.
-	        cbxModel.setSelectedIndex(0);          // Set the model combo box to the first item.
-	        txtName.setText("");                   // Clear the printer name field.
-	        return;                                // Exit the method.
-	    } else {    
+	    if (configFile.exists()) {  
+	    	Printer printer = new Printer(configFile.getName().replace(".sbp", ""), "", "", "", "");
 	        
 	        try {
 	            // Open the configuration file for reading.
@@ -229,7 +203,7 @@ public class Config {
 	                 * Each line is split into a key-value pair, where the key is on the left side of '='
 	                 * and the value on the right.
 	                 */
-	                get_Conf(line.split("=")[0], line.split("=")[1], cbxModel, txtIP, txtSerial, txtName);
+	                getPrinterConf(line.split("=")[0], line.split("=")[1], printer);
 	            }    
 	            
 	            // Close the BufferedReader after reading all lines.
@@ -237,61 +211,61 @@ public class Config {
 	        } catch (Exception e) {
 	        	// Show error if reading the file has failed
 	        	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to read the profile file!</html>", "Ok").showDialog();
-	        	return;
+	        	return null;
 	        }
+            return printer;
+	    } else {
+	    	return null;
 	    }
 	}
 	
 	/**
-	 * Assigns the given configuration type and corresponding value to the appropriate UI component 
-	 * (IP address field, serial number field, model combo box, or printer name field) based on the configuration type.
+	 * Parses a configuration key/value pair and assigns the corresponding value
+	 * to the given {@link Printer} object's fields.
 	 *
-	 * @param configType The type of configuration being processed (e.g., "IP-Address", "PrinterSN", etc.).
-	 * @param wert The value associated with the configuration type (e.g., the actual IP address, serial number, etc.).
-	 * @param cbxModel The combo box for selecting the printer model.
-	 * @param txtIP The text field for entering the IP address of the printer.
-	 * @param txtSerial The text field for entering the serial number of the printer.
-	 * @param txtName The text field for entering the name of the printer.
+	 * @param configType the configuration key (e.g., "IP-Address").
+	 * @param wert the configuration value.
+	 * @param printer the printer object that receives the configuration data.
 	 */
-	private static void get_Conf(String configType, String wert, JComboBox<String> cbxModel, JTextField txtIP, JTextField txtSerial, JTextField txtName) {
+	private static void getPrinterConf(String configType, String wert, Printer printer) {
 	    
 	    // Switch statement to assign the value to the correct field based on the configuration type.
 	    switch(configType) {
 	        
 	        // Set the IP address in the txtIP field, limiting the length to 15 characters.
 	        case "IP-Address": 
-	            txtIP.setText(checkLength(wert, 15)); 
-	            break;
+	        	printer.setIpAdress(checkLength(wert, 15));
+	        	break;
 	        
 	        // Set the printer serial number in the txtSerial field, limiting the length to 25 characters.
 	        case "PrinterSN": 
-	            txtSerial.setText(checkLength(wert, 25)); 
-	            break;
+	        	printer.setSerialNumber(checkLength(wert, 25));
+	        	break;
 	        
 	        // Set the selected index of the printer model in the cbxModel combo box based on the value.
 	        case "PrinterType": 
-	            cbxModel.setSelectedItem(wert); 
-	            break;
+	        	printer.setPrinterModel(checkLength(wert, 25));
+	        	break;
 	        
 	        // Set the printer name in the txtName field, limiting the length to 25 characters.
 	        case "PrinterName": 
-	            txtName.setText(checkLength(wert, 25)); 
-	            break;
+	        	printer.setPrinterName(checkLength(wert, 25));
+	        	break;
 	        
 	        // Default case if no known configuration type is found (does nothing).
 	        default: 
-	            break;
+	        	break;
 	    }        
 	}
 
 
 	/**
-	 * Ensures that the given string does not exceed a specified length. 
-	 * If the string is longer than the specified length, it is truncated.
+	 * Ensures that a string does not exceed a maximum length. If the string is
+	 * longer than the allowed value, it is truncated.
 	 *
-	 * @param wert The string to be checked and possibly truncated.
-	 * @param length The maximum allowed length for the string.
-	 * @return The original string if it is within the length limit, or a truncated version if it exceeds the limit.
+	 * @param wert the string to check.
+	 * @param length the maximum allowed length.
+	 * @return the original string if within limits, otherwise a truncated version.
 	 */
 	private static String checkLength(String wert, int length) {
 	    
@@ -306,11 +280,20 @@ public class Config {
 
 	
 	/**
-	 * Saves user settings, including the dark mode preference and the path for custom profiles, 
-	 * to a configuration file. Each setting is written to a new line in the file.
+	 * Writes the user's application settings to the "settings" file in the
+	 * application configuration directory.
 	 *
-	 * The settings are stored in a file named "settings" at the location specified by the savePath 
-	 * in the MainMenu class.
+	 * <p>The following settings are stored:</p>
+	 * <ul>
+	 *     <li>Dark mode state</li>
+	 *     <li>Custom profile directory</li>
+	 *     <li>Remember last used profile</li>
+	 *     <li>Last used profile name (optional)</li>
+	 *     <li>Direct mode flag</li>
+	 *     <li>Show JAR info flag</li>
+	 * </ul>
+	 *
+	 * @param mainFrame the frame used to display possible error dialogs.
 	 */
 	public static void saveUserSettings(JFrame mainFrame) {
 	    // Create a StringBuilder to construct the configuration settings line by line.
@@ -340,7 +323,7 @@ public class Config {
 	    config.append("directMode=" + MainMenu.directMode);
 	    config.append(System.getProperty("line.separator")); // Add a new line.
 	    
-	    // Append the usage of the mode for sending UDP packages to the configuration.
+	    // Append the usage of the mode to show the jar info to the configuration.
 	    config.append("showJarInfo=" + MainMenu.jarInfo);
 	    config.append(System.getProperty("line.separator")); // Add a new line.
 	    
@@ -358,23 +341,21 @@ public class Config {
 	        fos.close();
 	    } catch (Exception e1) {
 	    	// Show error if saving the file has failed
+	    	e1.printStackTrace();
         	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to write the config to the config file!</html>", "Ok").showDialog();
         }    
 	}
 	
 	/**
-	 * Checks the user's saved settings to determine if dark mode is enabled. 
-	 * The method reads the settings file and returns the value of the 
-	 * "enableDarkmode" setting.
+	 * Loads the application settings from the "settings" file and assigns the
+	 * values to the corresponding fields in {@link MainMenu}.
 	 *
-	 * @return true if dark mode is enabled, false otherwise.
+	 * <p>If the settings file does not exist, no values are loaded.</p>
 	 */
-	public static boolean lastTheme(JFrame mainFrame) {
+	public static void loadAppSettings() {
 	    // Define the path to the user settings file.
 	    String userSettings = MainMenu.savePath + System.getProperty("file.separator") + "settings";
 	    
-	    // Initialize darkmode flag to false.
-	    boolean darkmode = false;
 	    
 	    // Check if the settings file exists.
 	    if (new File(userSettings).exists()) {
@@ -384,216 +365,64 @@ public class Config {
 	            try (BufferedReader inputStream = new BufferedReader(new FileReader(userSettings))) {
 	                // Read each line of the file.
 	                while((line = inputStream.readLine()) != null) {
-	                    // Check if the line corresponds to the dark mode setting.
-	                    if (line.split("=")[0].equals("enableDarkmode")) {                
-	                        // Parse the value and set the darkmode flag accordingly.
-	                        darkmode = Boolean.valueOf(line.split("=")[1]);
-	                    }
+	                	
+	                	getAppConf(line.split("=")[0], line.split("=")[1]);
 	                }    
 	                // The BufferedReader is automatically closed here due to the try-with-resources statement.
 	            }
 	        } catch (Exception e) {
 	        	// Show error if reading the file has failed
-	        	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to read the config file!</html>", "Ok").showDialog();
+	        	e.printStackTrace();
+	        	new DialogOneButton(null, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to read the config file!</html>", "Ok").showDialog();
 	        }    
 	    }
-	    // Return the dark mode status.
-	    return darkmode;
 	}
 	
 	/**
-	 * Checks the user's saved settings to determine if direct mode is enabled. 
-	 * The method reads the settings file and returns the value of the 
-	 * "directMode" setting.
+	 * Assigns a setting key/value pair from the settings file to the appropriate
+	 * application field in {@link MainMenu}.
 	 *
-	 * @return true if direct mode is enabled, false otherwise.
+	 * @param configType the settings key.
+	 * @param wert the settings value.
 	 */
-	public static boolean sendingMode(JFrame mainFrame) {
-	    // Define the path to the user settings file.
-	    String userSettings = MainMenu.savePath + System.getProperty("file.separator") + "settings";
+	private static void getAppConf(String configType, String wert) {
 	    
-	    // Initialize directMode flag to false.
-	    boolean directMode = false;
-	    
-	    // Check if the settings file exists.
-	    if (new File(userSettings).exists()) {
-	        try {
-	            String line;
-	            // Open the settings file for reading using a BufferedReader.
-	            try (BufferedReader inputStream = new BufferedReader(new FileReader(userSettings))) {
-	                // Read each line of the file.
-	                while((line = inputStream.readLine()) != null) {
-	                    // Check if the line corresponds to the dark mode setting.
-	                    if (line.split("=")[0].equals("directMode")) {                
-	                        // Parse the value and set the directMode flag accordingly.
-	                    	directMode = Boolean.valueOf(line.split("=")[1]);
-	                    }
-	                }    
-	                // The BufferedReader is automatically closed here due to the try-with-resources statement.
-	            }
-	        } catch (Exception e) {
-	        	// Show error if reading the file has failed
-	        	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to read the config file!</html>", "Ok").showDialog();
-	        }    
-	    }
-	    // Return the dark mode status.
-	    return directMode;
+	    // Switch statement to assign the value to the correct field based on the configuration type.
+	    switch(configType) {
+	        
+	    	// Set the enableDarkmode setting
+	        case "enableDarkmode": 
+	        	MainMenu.darkmode = Boolean.valueOf(wert);
+	        	break;
+	        
+	        // Set the customProfilesPath setting
+	        case "customProfilesPath": 
+	        	MainMenu.ProfilesDir = wert;
+	        	break;
+	        
+        	// Set the rememberLastUsedProfile setting
+	        case "rememberLastUsedProfile": 
+	        	MainMenu.rememberLastUsedProfile = Boolean.valueOf(wert);
+	        	break;
+	        
+	        // Set the lastUsedProfile setting
+	        case "lastUsedProfile": 
+	        	MainMenu.lastUsedProfile = wert;
+	        	break;
+	        	
+	        // Set the directMode setting
+	        case "directMode": 
+	        	MainMenu.directMode = Boolean.valueOf(wert);
+	        	break;
+	        	
+        	// Set the showJarInfo setting
+	        case "showJarInfo": 
+	        	MainMenu.jarInfo = Boolean.valueOf(wert);
+	        	break;
+	        
+	        // Default case if no known configuration type is found (does nothing).
+	        default: 
+	        	break;
+	    }        
 	}
-
-	/**
-	 * Checks the user's saved settings to determine if Jar info visibility state is enabled. 
-	 * The method reads the settings file and returns the value of the 
-	 * "showInfo" setting.
-	 *
-	 * @return true if Jar info visibility state is enabled, false otherwise.
-	 */
-	public static boolean jarInfoVisibility(JFrame mainFrame) {
-	    // Define the path to the user settings file.
-	    String userSettings = MainMenu.savePath + System.getProperty("file.separator") + "settings";
-	    
-	    // Initialize Jar info visibility flag to false.
-	    boolean showInfo = true;
-	    
-	    // Check if the settings file exists.
-	    if (new File(userSettings).exists()) {
-	        try {
-	            String line;
-	            // Open the settings file for reading using a BufferedReader.
-	            try (BufferedReader inputStream = new BufferedReader(new FileReader(userSettings))) {
-	                // Read each line of the file.
-	                while((line = inputStream.readLine()) != null) {
-	                    // Check if the line corresponds to the Jar info visibility setting.
-	                    if (line.split("=")[0].equals("showJarInfo")) {                
-	                        // Parse the value and set the Jar info visibility flag accordingly.
-	                    	showInfo = Boolean.valueOf(line.split("=")[1]);
-	                    }
-	                }    
-	                // The BufferedReader is automatically closed here due to the try-with-resources statement.
-	            }
-	        } catch (Exception e) {
-	        	// Show error if reading the file has failed
-	        	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to read the config file!</html>", "Ok").showDialog();
-	        }    
-	    }
-	    // Return Jar info visibility state.
-	    return showInfo;
-	}
-	
-	/**
-	 * Checks the user's saved settings to determine if the option to
-	 * remember the last used profile is enabled. 
-	 * The method reads the settings file and returns the value of the 
-	 * "rememberLastUsedProfile" setting.
-	 *
-	 * @return true if the remember option is enabled, false otherwise.
-	 */
-	public static boolean rememberLastProfile(JFrame mainFrame) {
-	    // Define the path to the user settings file.
-	    String userSettings = MainMenu.savePath + System.getProperty("file.separator") + "settings";
-	    
-	    // Initialize remember flag to false.
-	    boolean remember = false;
-	    
-	    // Check if the settings file exists.
-	    if (new File(userSettings).exists()) {
-	        try {
-	            String line;
-	            // Open the settings file for reading using a BufferedReader.
-	            try (BufferedReader inputStream = new BufferedReader(new FileReader(userSettings))) {
-	                // Read each line of the file.
-	                while((line = inputStream.readLine()) != null) {
-	                    // Check if the line corresponds to the remember setting.
-	                    if (line.split("=")[0].equals("rememberLastUsedProfile")) {                
-	                        // Parse the value and set the rember flag accordingly.
-	                    	remember = Boolean.valueOf(line.split("=")[1]);
-	                    }
-	                }    
-	                // The BufferedReader is automatically closed here due to the try-with-resources statement.
-	            }
-	        } catch (Exception e) {
-	        	// Show error if reading the file has failed
-	        	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to read the config file!</html>", "Ok").showDialog();
-	        }    
-	    }
-	    // Return the remember status.
-	    return remember;
-	}
-	
-	/**
-	 * Retrieves the custom profiles path from the user's settings file. 
-	 * If the settings file exists and contains a valid custom profiles path,
-	 * that path is returned. Otherwise, a default profiles path is returned.
-	 *
-	 * @return The custom profiles path as a string.
-	 */
-	public static String customProfilePath(JFrame mainFrame) {
-	    // Define the path to the user settings file.
-	    String userSettings = MainMenu.savePath + System.getProperty("file.separator") + "settings";
-	    
-	    // Initialize the custom profile path to the default location.
-	    String customProfilePath = MainMenu.savePath + System.getProperty("file.separator") + "Profiles";
-	    
-	    // Check if the settings file exists.
-	    if (new File(userSettings).exists()) {
-	        try {
-	            String line;
-	            // Open the settings file for reading using a BufferedReader.
-	            try (BufferedReader inputStream = new BufferedReader(new FileReader(userSettings))) {
-	                // Read each line of the file.
-	                while((line = inputStream.readLine()) != null) {
-	                    // Check if the line corresponds to the custom profiles path setting.
-	                    if (line.split("=")[0].equals("customProfilesPath")) {                
-	                        // Update the custom profile path with the value from the settings file.
-	                        customProfilePath = line.split("=")[1];
-	                    }
-	                }    
-	                // The BufferedReader is automatically closed here.
-	            }
-	        } catch (Exception e) {
-	            // Show error if reading the file has failed
-	        	if (mainFrame != null) new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to read the config file!</html>", "Ok").showDialog();
-	        }    
-	    }
-	    // Return the custom profile path.
-	    return customProfilePath;
-	}
-
-	/**
-	 * Retrieves the last used profile name from the user's settings file. 
-	 * If the settings file exists and contains a valid profile name,
-	 * that name is returned.
-	 *
-	 * @return The last used profile name as a string.
-	 */
-	public static String lastUsedProfile(JFrame mainFrame) {
-	    // Define the path to the user settings file.
-	    String userSettings = MainMenu.savePath + System.getProperty("file.separator") + "settings";
-	    
-	    // Initialize the profile string.
-	    String profile = "";
-	    
-	    // Check if the settings file exists.
-	    if (new File(userSettings).exists()) {
-	        try {
-	            String line;
-	            // Open the settings file for reading using a BufferedReader.
-	            try (BufferedReader inputStream = new BufferedReader(new FileReader(userSettings))) {
-	                // Read each line of the file.
-	                while((line = inputStream.readLine()) != null) {
-	                    // Check if the line corresponds to the last used profile name setting.
-	                    if (line.split("=")[0].equals("lastUsedProfile")) {                
-	                        // Set the last used profile with the value from the settings file.
-	                    	if (!line.split("=")[1].equals("Import profile")) profile = line.split("=")[1];
-	                    }
-	                }    
-	                // The BufferedReader is automatically closed here.
-	            }
-	        } catch (Exception e) {
-	            // Show error if reading the file has failed
-	        	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to read the config file!</html>", "Ok").showDialog();
-	        }    
-	    }
-	    // Return the custom profile path.
-	    return profile;
-	}	
 }

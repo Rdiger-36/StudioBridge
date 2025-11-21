@@ -18,6 +18,8 @@ public class Models {
             case "X1": model = "3DPrinter-X1"; break;
             case "X1C": model = "3DPrinter-X1-Carbon"; break;
             case "X1E": model = "C13"; break;
+            case "H2C": model = "O1C"; break;
+            case "H2C (new revision)": model = "O1C2"; break;
             case "H2D": model = "O1D"; break;
             case "H2D Pro": model = "O1E"; break;
             case "H2S": model = "O1S"; break;
@@ -43,6 +45,8 @@ public class Models {
 	        case "3DPrinter-X1": model = "X1"; break;
 	        case "3DPrinter-X1-Carbon": model = "X1C"; break;
 	        case "C13": model = "X1E"; break;
+	        case "O1C": model = "H2C"; break;
+	        case "O1C2": model = "H2C (new revision)"; break;
 	        case "O1D": model = "H2D"; break;
 	        case "O1E": model = "H2D Pro"; break;
 	        case "O1S": model = "H2S"; break;

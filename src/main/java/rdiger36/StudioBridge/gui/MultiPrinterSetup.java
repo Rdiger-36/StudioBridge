@@ -5,10 +5,6 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -18,6 +14,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import net.miginfocom.swing.MigLayout;
 import rdiger36.StudioBridge.functions.*;
+import rdiger36.StudioBridge.objects.Printer;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -40,7 +37,6 @@ public class MultiPrinterSetup {
      * 
      * @param frmStudioBridge The parent JFrame for positioning the dialog.
      */
-    @SuppressWarnings("serial")
     public MultiPrinterSetup(JFrame frmStudioBridge) {
         JDialog dialInfo = new JDialog();
         dialInfo.setModalExclusionType(ModalExclusionType.APPLICATION_EXCLUDE);
@@ -64,10 +60,10 @@ public class MultiPrinterSetup {
         table.setFocusable(false);
         table.setModel(new DefaultTableModel(
             new Object[][] {},
-            new String[] { "Name", "IP-Address", "Serial", "Model", "Send Package" }
+            new String[] { "Profil", "Name", "IP-Address", "Serial", "Model", "Send Package" }
         ) {
             Class<?>[] columnTypes = new Class[] {
-                Object.class, Object.class, Object.class, Object.class, Boolean.class
+                Object.class, Object.class, Object.class, Object.class, Object.class, Boolean.class
             };
 
             public Class<?> getColumnClass(int columnIndex) {
@@ -77,10 +73,11 @@ public class MultiPrinterSetup {
 
         // Set preferred column widths
         table.getColumnModel().getColumn(0).setPreferredWidth(110);
-        table.getColumnModel().getColumn(1).setPreferredWidth(164);
-        table.getColumnModel().getColumn(2).setPreferredWidth(159);
-        table.getColumnModel().getColumn(3).setPreferredWidth(108);
-        table.getColumnModel().getColumn(4).setPreferredWidth(93);
+        table.getColumnModel().getColumn(1).setPreferredWidth(120);
+        table.getColumnModel().getColumn(2).setPreferredWidth(164);
+        table.getColumnModel().getColumn(3).setPreferredWidth(159);
+        table.getColumnModel().getColumn(4).setPreferredWidth(108);
+        table.getColumnModel().getColumn(5).setPreferredWidth(93);
         scrollPane.setViewportView(table);
 
         dialInfo.getContentPane().setLayout(new MigLayout("", "[188.00,grow][223.00,grow][390.00][]", "[grow][bottom][]"));
@@ -134,36 +131,9 @@ public class MultiPrinterSetup {
      */
     private void importPrinters(JTable table) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
-        File folder = new File(MainMenu.ProfilesDir);
-
-        if (folder.isDirectory()) {
-            File[] files = folder.listFiles();
-
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isFile() && file.toString().endsWith("sbp")) {
-                        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-                            String line, ipAddress = "", printerSN = "", printerType = "", printerName = "";
-
-                            while ((line = br.readLine()) != null) {
-                                String[] parts = line.split("=", 2);
-                                if (parts.length == 2) {
-                                    switch (parts[0].trim()) {
-                                        case "IP-Address": ipAddress = parts[1].trim(); break;
-                                        case "PrinterSN": printerSN = parts[1].trim(); break;
-                                        case "PrinterType": printerType = Models.getNameFromModel(parts[1].trim()); break;
-                                        case "PrinterName": printerName = parts[1].trim(); break;
-                                    }
-                                }
-                            }
-                            model.addRow(new Object[]{printerName, ipAddress, printerSN, printerType, false});
-
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
+        
+	    for (Printer printer : MainMenu.printerMap.values()) {
+	    	model.addRow(new Object[]{printer.getProfileName(), printer.getPrinterName(), printer.getIpAdress(), printer.getSerialNumber(), printer.getPrinterModel(), false});
         }
     }
 
@@ -175,7 +145,7 @@ public class MultiPrinterSetup {
     private void setAllBooleans(boolean value) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         for (int i = 0; i < model.getRowCount(); i++) {
-            model.setValueAt(value, i, 4);
+            model.setValueAt(value, i, 5);
         }
     }
 
@@ -207,20 +177,17 @@ public class MultiPrinterSetup {
 	            int rowCount = model.getRowCount();
 	            	                    
 	            for (int i = 0; i < rowCount && !stopThread; i++) {
-	                Boolean shouldSend = (Boolean) model.getValueAt(i, 4);
+	                Boolean shouldSend = (Boolean) model.getValueAt(i, 5);
 	                if (shouldSend != null && shouldSend) {
 	                	
 	                	printerSelected = true;
 	                	
-	                    String NAME = (String) model.getValueAt(i, 0);
-	                    String IP_ADRESS = (String) model.getValueAt(i, 1);
-	                    String SERIAL = (String) model.getValueAt(i, 2);
-	                    String MODEL = (String) model.getValueAt(i, 3);
+	                	Printer printer = new Printer((String) model.getValueAt(i, 0), (String) model.getValueAt(i, 1), (String) model.getValueAt(i, 2), (String) model.getValueAt(i, 3), (String) model.getValueAt(i, 4));
 	
-	                    SwingUtilities.invokeLater(() -> progressBar.setString("Send Package for " + NAME));
+	                    SwingUtilities.invokeLater(() -> progressBar.setString("Send Package for " + printer.getPrinterName()));
 	
-	                    if (!UDPPackage.send(frmStudioBridge, IP_ADRESS, SERIAL, Models.getModelFromName(MODEL), NAME, remoteUdpPort, true)) {
-	                    	errors.add(NAME + " - " + IP_ADRESS + " - " + MODEL);
+	                    if (!UDPPackage.send(frmStudioBridge, printer, remoteUdpPort, true)) {
+	                    	errors.add(printer.getPrinterName() + " - " + printer.getIpAdress() + " - " + printer.getPrinterModel());
 	                    } 
 	
 	                    try {

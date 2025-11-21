@@ -14,6 +14,7 @@ import javax.swing.JFrame;
 
 import rdiger36.StudioBridge.gui.DialogOneButton;
 import rdiger36.StudioBridge.gui.MainMenu;
+import rdiger36.StudioBridge.objects.Printer;
 
 /**
  * The UDPPackage class provides functionality to send UDP packets
@@ -26,7 +27,7 @@ import rdiger36.StudioBridge.gui.MainMenu;
  *
  * <h2>Methods:</h2>
  * <ul>
- *   <li><code>send(JFrame, String, String, String, String)</code> - Sends a specific UDP data packet to the local Bambu Studio instance with the printer's details.</li>
+ *   <li><code>send(JFrame, Printer, int, boolean)</code> - Sends a specific UDP data packet to the local Bambu Studio instance with the printer's details.</li>
  *   <li><code>getAvailableUDPPort()</code> - Retrieves the first available UDP port from the specified list of ports.</li>
  * </ul>
  */
@@ -36,12 +37,11 @@ public class UDPPackage {
      * Sends a specific UDP data packet to the local Bambu Studio instance.
      *
      * @param mainFrame The main frame of the application, used to show dialogs.
-     * @param printerIP The IP address of the 3D printer.
-     * @param PrinterSN The serial number of the 3D printer.
-     * @param PrinterModel The model of the 3D printer.
-     * @param PrinterName The display name of the 3D printer.
+     * @param printer The Printer object with all necessary data.
+     * @param remoteUdpPort The correct port for BambuStudio.
+     * @param multiMode The option for single or multi mode.
      */
-    public static boolean send(JFrame mainFrame, String printerIP, String printerSN, String printerModel, String printerName, int remoteUdpPort, boolean multiMode) {
+    public static boolean send(JFrame mainFrame, Printer printer, int remoteUdpPort, boolean multiMode) {
      	
     	Date date = new Date();
     	
@@ -52,19 +52,19 @@ public class UDPPackage {
         		    "NOTIFY * HTTP/1.1\r\n" +      
 		    		"Server: Buildroot/2018.02-rc3 UPnP/1.0 ssdpd/1.8\r\n" +
         		    "Date: " + date.toString() + "\r\n" +
-        		    "Location: " + printerIP + "\r\n" +
+        		    "Location: " + printer.getIpAdress() + "\r\n" +
         		    "ST: urn:bambulab-com:device:3dprinter:1\r\n" +
         		    "EXT:\r\n" +
-        		    "USN: " + printerSN + "\r\n" +
+        		    "USN: " + printer.getSerialNumber() + "\r\n" +
         		    "Cache-Control: max-age=1800\r\n" +
-        		    "DevModel.bambu.com: " + printerModel + "\r\n" +
-        		    "DevName.bambu.com: " + printerName + "\r\n" +
+        		    "DevModel.bambu.com: " + Models.getModelFromName(printer.getPrinterModel()) + "\r\n" +
+        		    "DevName.bambu.com: " + printer.getPrinterName() + "\r\n" +
         		    "DevSignal.bambu.com: -44\r\n" +
         		    "DevConnect.bambu.com: lan\r\n" +
         		    "DevBind.bambu.com: free\r\n" +             
         		    "\r\n";
         	
-        	UDPPackage.startBroadcast(printerIP, printerSN, printerIP, printerName, message);
+        	UDPPackage.startBroadcast(message);
 
             if (!multiMode && mainFrame != null) new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/success.png")), "<html>Package sent successfully.<br>The Printer will appear in the next 60 seconds in Bambu Studio.<br>You can close this Programm when your printer(s) appear in Bambu Studio</html>", "Ok").showDialog();
 
@@ -142,29 +142,45 @@ public class UDPPackage {
         }
     }
 
-    public static void startBroadcast(String printerIP, String printerSN, String printerModel, String printerName, String message) {
+    /**
+     * Starts a background thread that sends the given message as a UDP broadcast
+     * or to a specific destination address. The message is sent to multiple ports
+     * in 10 intervals.
+     *
+     * @param message the text message to send via UDP
+     */
+    public static void startBroadcast(String message) {
         new Thread(() -> {
-        	try (DatagramSocket socket = new DatagramSocket()) {
-        		
-        		String destionation = MainMenu.destionation4UDP;
-        		
-        	    if (MainMenu.directMode) {
-        	    	socket.setBroadcast(true);
-        	    	destionation = "255.255.255.255";
-        	    }
+            try (DatagramSocket socket = new DatagramSocket()) {
+                
+                // Default destination (configured in settings)
+                String destionation = MainMenu.destionation4UDP;
+                
+                // Enable true broadcast mode when directMode is active
+                if (MainMenu.directMode) {
+                    socket.setBroadcast(true);
+                    destionation = "255.255.255.255";
+                }
 
-        	    int[] targetPorts = {2021, 1990};
-        	    for (int i = 0; i < 10; i++) {
-        	        byte[] data = message.getBytes(StandardCharsets.US_ASCII);
-        	        InetAddress bcast = InetAddress.getByName(destionation);
-        	        for (int port : targetPorts) {
-        	            DatagramPacket p = new DatagramPacket(data, data.length, bcast, port);
-        	            socket.send(p);
-        	        }
-        	        Thread.sleep(5_000);
-        	    }
-        	    
+                // Ports to which the packet will be sent
+                int[] targetPorts = {2021, 1990};
+
+                // Send message 10 times in 5-second intervals
+                for (int i = 0; i < 10; i++) {
+                    byte[] data = message.getBytes(StandardCharsets.US_ASCII);
+                    InetAddress bcast = InetAddress.getByName(destionation);
+
+                    // Send packet to each target port
+                    for (int port : targetPorts) {
+                        DatagramPacket p = new DatagramPacket(data, data.length, bcast, port);
+                        socket.send(p);
+                    }
+
+                    Thread.sleep(5_000);
+                }
+
                 socket.close();
+
             } catch (Exception e) {
                 e.printStackTrace();
             }

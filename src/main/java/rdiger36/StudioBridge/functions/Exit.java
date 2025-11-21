@@ -4,117 +4,127 @@ import java.io.File;
 import java.util.ArrayList;
 
 import javax.swing.ImageIcon;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
-import javax.swing.JTextField;
 
 import rdiger36.StudioBridge.gui.DialogTwoButtons;
 import rdiger36.StudioBridge.gui.MainMenu;
+import rdiger36.StudioBridge.objects.Printer;
 
 /**
- * The Exit class provides functionality to handle application exit actions,
- * ensuring that unsaved profiles and user settings are properly saved before 
- * the application closes.
+ * The {@code Exit} class provides functionality for performing a clean shutdown
+ * of the application. Before termination, it ensures that unsaved profiles and
+ * user settings are properly handled to prevent data loss.
  *
- * <p>This class is responsible for managing the application's state and ensuring 
- * that user data is not lost during termination.</p>
+ * <p>The class checks whether the currently edited or imported profiles contain
+ * unsaved changes and triggers the necessary save dialogs if required before
+ * the application closes.</p>
  */
 public class Exit {
 
     /**
-     * Closes the application after saving unsaved profiles and user settings.
+     * Initiates the application shutdown sequence while ensuring that all
+     * unsaved profile data and user settings are correctly saved.
      *
-     * <p>This method checks if there are unsaved changes in the profile fields. 
-     * If the current profile is new and contains data, it saves the new profile. 
-     * If the profile has been modified, it saves those changes. Finally, it saves 
-     * the user settings and exits the application.</p>
+     * <p>The method performs the following checks:</p>
+     * <ul>
+     *   <li>If the currently selected profile is a new, unsaved profile
+     *       containing data, the user is prompted to save it.</li>
+     *   <li>If the loaded profile has been modified, the user is prompted
+     *       to save the changes.</li>
+     *   <li>If imported profiles exist that have not yet been saved to the
+     *       filesystem, the user is warned accordingly.</li>
+     *   <li>Finally, user settings are saved and the application terminates.</li>
+     * </ul>
      *
-     * @param mainFrame The main application frame, used for displaying dialogs.
-     * @param comboBox The JComboBox containing the list of profiles.
-     * @param cbxModel The JComboBox representing the printer model.
-     * @param txtIP The JTextField for the printer IP address.
-     * @param txtSerial The JTextField for the printer serial number.
-     * @param txtName The JTextField for the printer name.
+     * @param mainFrame the main application window used to display dialogs.
+     * @param profiles a list of all profile names currently loaded in the UI.
+     * @param printer the currently edited {@link Printer} object whose values
+     *                may need to be saved before exiting.
      */
-    public static void closeApp(JFrame mainFrame, JComboBox<String> comboBox, JComboBox<String> cbxModel, JTextField txtIP, JTextField txtSerial, JTextField txtName) {
-        
-    	String importedProfileSaved = checkImportedProfiles(comboBox); 
-    	
-    	// Check if the selected profile is "New profile" and has unsaved data
-        if (comboBox.getSelectedItem().toString().equals("New profile") && 
-            (txtIP.getText().length() > 0 || txtSerial.getText().length() > 0 || txtName.getText().length() > 0)) {
-            Config.saveUnsavedNewProfile(mainFrame, comboBox, cbxModel, txtIP, txtSerial, txtName);
-        } 
-        // Check if there are changes in the existing profile
-        else if (!txtIP.getText().equals(MainMenu.PrinterIP) || 
-                 !txtSerial.getText().equals(MainMenu.PrinterSerial) || 
-                 !txtName.getText().equals(MainMenu.PrinterName) || 
-                 !cbxModel.getSelectedItem().toString().equals(MainMenu.PrinterType)) {
-            Config.saveUnsavedProfile(mainFrame, comboBox, cbxModel, txtIP, txtSerial, txtName);
-        } 
-        // Check if there is an unsaved imported profile
-        else if (importedProfileSaved.equals("oneUnsaved")){
-        	Config.saveUnsavedNewProfile(mainFrame, comboBox, cbxModel, txtIP, txtSerial, txtName);	
+    public static void closeApp(JFrame mainFrame, ArrayList<String> profiles, Printer printer) {
+
+        String importedProfileSaved = checkImportedProfiles(profiles);
+
+        // Check if the selected profile is "New profile" and has unsaved data
+        if (printer.getPrinterModel().equals("New profile") &&
+            (printer.getIpAdress().length() > 0 || printer.getSerialNumber().length() > 0 || printer.getPrinterName().length() > 0)) {
+
+            Config.saveUnsavedNewProfile(mainFrame, printer);
         }
-        // 	Check if there are several unsaved imported profiles
-        else if (importedProfileSaved.equals("multipleUnsaved")) {
-        	int result = new DialogTwoButtons(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! There are several unsaved imported profiles!<br>Do you want to go back to save them?</html>", "Yes", "No").showDialog();
-            if (result == 0) {
-                return;
+
+        // Check if there are changes in the existing profile
+        else if (MainMenu.mainPrinter != null) {
+            if (!printer.getIpAdress().equals(MainMenu.mainPrinter.getIpAdress()) ||
+                !printer.getSerialNumber().equals(MainMenu.mainPrinter.getSerialNumber()) ||
+                !printer.getPrinterName().equals(MainMenu.mainPrinter.getPrinterName()) ||
+                !printer.getPrinterModel().equals(MainMenu.mainPrinter.getPrinterModel())) {
+
+                Config.saveUnsavedNewProfile(mainFrame, printer);
             }
         }
-        
+
+        // Check if there is exactly one unsaved imported profile
+        else if (importedProfileSaved.equals("oneUnsaved")) {
+            Config.saveUnsavedNewProfile(mainFrame, printer);
+        }
+
+        // Check if several imported profiles are unsaved
+        else if (importedProfileSaved.equals("multipleUnsaved")) {
+            int result = new DialogTwoButtons(
+                    mainFrame,
+                    null,
+                    new ImageIcon(MainMenu.class.getResource("/achtung.png")),
+                    "<html>Warning! There are several unsaved imported profiles!<br>Do you want to go back to save them?</html>",
+                    "Yes",
+                    "No"
+            ).showDialog();
+
+            if (result == 0) {
+                return; // Abort exit
+            }
+        }
+
         // Save user settings before exiting
         Config.saveUserSettings(mainFrame);
-        System.exit(0); // Exit the application
+        System.exit(0);
     }
 
     /**
-     * Checks if all imported profiles displayed in the JComboBox are saved
-     * and returns an appropriate response.
+     * Checks whether imported profiles listed in the profile overview
+     * exist on disk as .sbp files. Profiles that do not have a corresponding
+     * file are considered unsaved.
      *
-     * @param comboBox the JComboBox containing profile names.
-     * @return "multipleUnsaved" if multiple profiles are not saved,
-     *         "oneUnsaved" if exactly one profile is not saved,
-     *         or an empty string if all profiles are saved.
+     * <p>The result indicates how many profiles are unsaved:</p>
+     * <ul>
+     *   <li>{@code "multipleUnsaved"} – more than one unsaved profile</li>
+     *   <li>{@code "oneUnsaved"} – exactly one unsaved profile</li>
+     *   <li>empty string – all profiles are saved</li>
+     * </ul>
+     *
+     * @param profiles a list of profile names displayed in the UI.
+     * @return a status string describing the number of unsaved profiles.
      */
-    private static String checkImportedProfiles(JComboBox<String> comboBox) {
-        
-        // Directory where the profiles are stored
+    private static String checkImportedProfiles(ArrayList<String> profiles) {
+
+        // Directory where profiles are stored
         String profDir = MainMenu.ProfilesDir + System.getProperty("file.separator");
 
-        // List to store all profiles except for the special entries
-        ArrayList<String> profileList = new ArrayList<>();
-
-        // Iterate through all items in the JComboBox
-        for (int i = 0; i < comboBox.getItemCount(); i++) {
-            String item = comboBox.getItemAt(i);
-            
-            // Only add profiles that are not "New profile", "Import profile", or "---"
-            if (!item.equals("New profile") && !item.equals("Import profile") && !item.equals("---")) {
-                profileList.add(item);
-            }
-        }
-
-        // Count how many profiles are not saved (i.e., do not have a corresponding .sbp file)
         int unsavedCounter = 0;
-        
-        for (String profile : profileList) {
+
+        for (String profile : profiles) {
             File profileFile = new File(profDir + profile + ".sbp");
-            
+
             if (!profileFile.exists()) {
                 unsavedCounter++;
             }
         }
 
-        // Return based on the number of unsaved profiles
         if (unsavedCounter > 1) {
             return "multipleUnsaved";
         } else if (unsavedCounter == 1) {
             return "oneUnsaved";
         }
 
-        // If all profiles are saved, return an empty string
         return "";
     }
 }

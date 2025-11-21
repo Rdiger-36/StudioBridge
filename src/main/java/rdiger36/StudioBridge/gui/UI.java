@@ -1,6 +1,5 @@
 package rdiger36.StudioBridge.gui;
 
-import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import com.formdev.flatlaf.FlatLaf;
 
@@ -19,6 +18,8 @@ public class UI {
      */
     public static void changeLAF(boolean mode) {
         try {
+        	
+        	FlatLaf.setUseNativeWindowDecorations(true); // Use native decorations for windows
         	
             if (mode) {
                 // Set the Look and Feel to a dark theme using FlatLaf
@@ -40,14 +41,11 @@ public class UI {
             }
             
             // Configure additional UI properties for the dark theme
-            UIManager.put("TitlePane.menuBarEmbedded", true);
-            UIManager.put("TitlePane.unifiedBackground", true);
+//            UIManager.put("TitlePane.menuBarEmbedded", true);
+//            UIManager.put("TitlePane.unifiedBackground", true);
             UIManager.put("MenuItem.selectionType", "underline");
             
-            SwingUtilities.invokeLater(()-> {
-            	FlatLaf.setUseNativeWindowDecorations(true); // Use native decorations for windows
-                FlatLaf.updateUI(); // Refresh the UI to apply changes
-            });
+            FlatLaf.updateUI(); // Refresh the UI to apply changes
             
         } catch (Exception e1) {
             // Print stack trace if an exception occurs during Look and Feel change

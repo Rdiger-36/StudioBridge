@@ -34,6 +34,7 @@ public class SaveDialog {
      *
      * @param mainFrame   The parent JFrame for positioning the dialog.
      * @param profileName The default profile name to display in the text field.
+     * @param btnText The String that is set for the Button.
      */
     public SaveDialog(JFrame mainFrame, String profileName, String btnText) {
         
@@ -45,7 +46,7 @@ public class SaveDialog {
         dial.setAlwaysOnTop(true);
         dial.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
-                response = "";
+                response = null;
                 dial.dispose();
             }
         });
