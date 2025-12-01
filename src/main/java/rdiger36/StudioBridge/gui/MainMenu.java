@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -446,7 +447,8 @@ public class MainMenu {
         JFrame frmStudioBridge = new JFrame();
         frmStudioBridge.setResizable(false);
         frmStudioBridge.getContentPane().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        frmStudioBridge.setIconImage(Toolkit.getDefaultToolkit().getImage(MainMenu.class.getResource("/icon.png")));
+        URL iconUrl = MainMenu.class.getClassLoader().getResource("icon.png");
+        frmStudioBridge.setIconImage(Toolkit.getDefaultToolkit().getImage(iconUrl));
         frmStudioBridge.setTitle(title);
         frmStudioBridge.setSize(299, 235);
         frmStudioBridge.setLocationRelativeTo(frame);
