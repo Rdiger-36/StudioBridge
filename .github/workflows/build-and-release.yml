@@ -1,0 +1,52 @@
+name: Build and Release Swing App
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: mvn clean package
+
+      - name: Rename JAR for release
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          mv target/*-jar-with-dependencies.jar "target/StudioBridge-${VERSION}.jar"
+
+      - name: Upload JAR as artifact (für jeden Build)
+        uses: actions/upload-artifact@v3
+        with:
+          name: StudioBridge.jar
+          path: target/StudioBridge-*.jar
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')  # Nur bei Tags wie v1.0.0
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download JAR from build job
+        uses: actions/download-artifact@v3
+        with:
+          name: StudioBridge.jar
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: StudioBridge-*.jar
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
