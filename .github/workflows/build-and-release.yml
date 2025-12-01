@@ -27,7 +27,7 @@ jobs:
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           mv target/*-jar-with-dependencies.jar "target/StudioBridge-${VERSION}.jar"
 
-      - name: Upload JAR as artifact (für jeden Build)
+      - name: Upload JAR as artifact
         uses: actions/upload-artifact@v4
         with:
           name: StudioBridge.jar
