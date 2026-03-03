@@ -62,9 +62,15 @@ import rdiger36.StudioBridge.objects.*;
  * manage profiles, and send data packages to printers.
  */
 public class MainMenu {
-    
+
     // Default and current save paths for profiles
-    public static String defaultSavePath = System.getProperty("user.home") + System.getProperty("file.separator") + "StudioBridge";
+    if (localMachine.getOs().equals("windows")) {
+        	public static String defaultSavePath = System.getProperty("user.home") + System.getProperty("file.separator") + "StudioBridge";
+        } else if (localMachine.getOs().equals("linux")) {
+        	public static String defaultSavePath = System.getProperty("user.home") + System.getProperty("file.separator") + ".studio-bridge";
+        } else if (localMachine.getOs().equals("macos")) {
+        	public static String defaultSavePath = System.getProperty("user.home") + System.getProperty("file.separator") + ".studio-bridge";
+        }
     public static String savePath = defaultSavePath;
     public static String ProfilesDir = savePath + System.getProperty("file.separator") + "Profiles";
     
@@ -699,8 +705,10 @@ public class MainMenu {
                     cbxProfile.addItem("Import profile");
                     cbxProfile.addItem("---");
                     getAllProfiles(frmStudioBridge, cbxProfile);
-                    cbxProfile.setSelectedIndex(0);
-                    mainPrinter = new Printer("New profile", "", "", "", "No model");
+                    if (cbxProfile.getItemCount() <= 3) {
+                        cbxProfile.setSelectedIndex(0);
+                        mainPrinter = new Printer("New profile", "", "", "", "No model");
+                    }
                     frmStudioBridge.pack();    
                 }
             }
@@ -1119,6 +1127,10 @@ public class MainMenu {
             	if (((DefaultComboBoxModel<String>)comboBox.getModel()).getIndexOf(lastUsedProfile) != -1) {
             		comboBox.setSelectedItem(lastUsedProfile);
             	}
+            }
+            // If still on "New profile" and real profiles exist, default to the first one
+            if ("New profile".equals(comboBox.getSelectedItem()) && comboBox.getItemCount() > 3) {
+            	comboBox.setSelectedIndex(3);
             }
             
         } else {

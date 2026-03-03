@@ -76,6 +76,9 @@ Starting options:
 Profile options:
   --customProfilesDir='/path/to/profiles/'
       Set custom profiles directory which will be loaded from this for StudioBridgeCLI
+      Default Windows: `~/StudioBridge/Profiles`
+      Default MacOS: `~/.studio-bridge/Profiles`
+      Default Linux: `~/.studio-bridge/Profiles`
   --selectedPrinters='/path/to/profile.sbp/','/path/to/other/profile2.sbp/'
       Set single profiles which will be used for StudioBridgeCLI (single and multi profiles comma-separated)
 
