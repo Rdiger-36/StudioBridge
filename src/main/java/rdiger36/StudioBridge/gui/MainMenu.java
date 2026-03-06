@@ -132,6 +132,13 @@ public class MainMenu {
 
         migrateOldDataDirectory();
         Config.loadAppSettings();
+        // If the settings file still references the old ~/StudioBridge/Profiles path
+        // (carried over from before migration), redirect it to the new location.
+        String oldProfilesDir = System.getProperty("user.home") + System.getProperty("file.separator")
+                + "StudioBridge" + System.getProperty("file.separator") + "Profiles";
+        if (ProfilesDir.equals(oldProfilesDir)) {
+            ProfilesDir = defaultSavePath + System.getProperty("file.separator") + "Profiles";
+        }
 
         final Map<String, String> valid = new LinkedHashMap<>();
 
