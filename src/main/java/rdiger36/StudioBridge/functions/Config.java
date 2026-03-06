@@ -203,7 +203,8 @@ public class Config {
 	                 * Each line is split into a key-value pair, where the key is on the left side of '='
 	                 * and the value on the right.
 	                 */
-	                getPrinterConf(line.split("=")[0], line.split("=")[1], printer);
+	                String[] parts = line.split("=", 2);
+	                getPrinterConf(parts[0], parts.length > 1 ? parts[1] : "", printer);
 	            }    
 	            
 	            // Close the BufferedReader after reading all lines.
@@ -366,7 +367,8 @@ public class Config {
 	                // Read each line of the file.
 	                while((line = inputStream.readLine()) != null) {
 	                	
-	                	getAppConf(line.split("=")[0], line.split("=")[1]);
+	                	String[] parts = line.split("=", 2);
+	                	getAppConf(parts[0], parts.length > 1 ? parts[1] : "");
 	                }    
 	                // The BufferedReader is automatically closed here due to the try-with-resources statement.
 	            }
