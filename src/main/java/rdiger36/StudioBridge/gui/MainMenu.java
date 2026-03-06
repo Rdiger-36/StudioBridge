@@ -64,13 +64,7 @@ import rdiger36.StudioBridge.objects.*;
 public class MainMenu {
 
     // Default and current save paths for profiles
-    if (localMachine.getOs().equals("windows")) {
-        	public static String defaultSavePath = System.getProperty("user.home") + System.getProperty("file.separator") + "StudioBridge";
-        } else if (localMachine.getOs().equals("linux")) {
-        	public static String defaultSavePath = System.getProperty("user.home") + System.getProperty("file.separator") + ".studio-bridge";
-        } else if (localMachine.getOs().equals("macos")) {
-        	public static String defaultSavePath = System.getProperty("user.home") + System.getProperty("file.separator") + ".studio-bridge";
-        }
+    public static String defaultSavePath = System.getProperty("user.home") + System.getProperty("file.separator") + ".studio-bridge";
     public static String savePath = defaultSavePath;
     public static String ProfilesDir = savePath + System.getProperty("file.separator") + "Profiles";
     
@@ -136,6 +130,7 @@ public class MainMenu {
         boolean sendOnly = false;
         boolean showHelp = false;
 
+        migrateOldDataDirectory();
         Config.loadAppSettings();
 
         final Map<String, String> valid = new LinkedHashMap<>();
@@ -307,6 +302,49 @@ public class MainMenu {
     	
     }
 
+
+    private static void migrateOldDataDirectory() {
+        String sep = System.getProperty("file.separator");
+        File oldDir = new File(System.getProperty("user.home") + sep + "StudioBridge");
+        File newDir = new File(defaultSavePath);
+
+        if (!oldDir.exists() || !oldDir.isDirectory()) {
+            return;
+        }
+
+        newDir.mkdirs();
+        mergeDirectories(oldDir, newDir);
+        deleteDirectory(oldDir);
+    }
+
+    private static void mergeDirectories(File src, File dest) {
+        File[] files = src.listFiles();
+        if (files == null) return;
+
+        for (File file : files) {
+            File target = new File(dest, file.getName());
+            if (file.isDirectory()) {
+                target.mkdirs();
+                mergeDirectories(file, target);
+            } else if (!target.exists()) {
+                file.renameTo(target);
+            }
+        }
+    }
+
+    private static void deleteDirectory(File dir) {
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    deleteDirectory(file);
+                } else {
+                    file.delete();
+                }
+            }
+        }
+        dir.delete();
+    }
 
     // CLI mode, no GUI
     private static void startNoGUI() {
