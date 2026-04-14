@@ -62,9 +62,9 @@ import rdiger36.StudioBridge.objects.*;
  * manage profiles, and send data packages to printers.
  */
 public class MainMenu {
-    
+
     // Default and current save paths for profiles
-    public static String defaultSavePath = System.getProperty("user.home") + System.getProperty("file.separator") + "StudioBridge";
+    public static String defaultSavePath = System.getProperty("user.home") + System.getProperty("file.separator") + ".studio-bridge";
     public static String savePath = defaultSavePath;
     public static String ProfilesDir = savePath + System.getProperty("file.separator") + "Profiles";
     
@@ -130,6 +130,7 @@ public class MainMenu {
         boolean sendOnly = false;
         boolean showHelp = false;
 
+        migrateOldDataDirectory();
         Config.loadAppSettings();
 
         final Map<String, String> valid = new LinkedHashMap<>();
@@ -301,6 +302,49 @@ public class MainMenu {
     	
     }
 
+
+    private static void migrateOldDataDirectory() {
+        String sep = System.getProperty("file.separator");
+        File oldDir = new File(System.getProperty("user.home") + sep + "StudioBridge");
+        File newDir = new File(defaultSavePath);
+
+        if (!oldDir.exists() || !oldDir.isDirectory()) {
+            return;
+        }
+
+        newDir.mkdirs();
+        mergeDirectories(oldDir, newDir);
+        deleteDirectory(oldDir);
+    }
+
+    private static void mergeDirectories(File src, File dest) {
+        File[] files = src.listFiles();
+        if (files == null) return;
+
+        for (File file : files) {
+            File target = new File(dest, file.getName());
+            if (file.isDirectory()) {
+                target.mkdirs();
+                mergeDirectories(file, target);
+            } else if (!target.exists()) {
+                file.renameTo(target);
+            }
+        }
+    }
+
+    private static void deleteDirectory(File dir) {
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    deleteDirectory(file);
+                } else {
+                    file.delete();
+                }
+            }
+        }
+        dir.delete();
+    }
 
     // CLI mode, no GUI
     private static void startNoGUI() {
@@ -699,8 +743,10 @@ public class MainMenu {
                     cbxProfile.addItem("Import profile");
                     cbxProfile.addItem("---");
                     getAllProfiles(frmStudioBridge, cbxProfile);
-                    cbxProfile.setSelectedIndex(0);
-                    mainPrinter = new Printer("New profile", "", "", "", "No model");
+                    if (cbxProfile.getItemCount() <= 3) {
+                        cbxProfile.setSelectedIndex(0);
+                        mainPrinter = new Printer("New profile", "", "", "", "No model");
+                    }
                     frmStudioBridge.pack();    
                 }
             }
@@ -1119,6 +1165,10 @@ public class MainMenu {
             	if (((DefaultComboBoxModel<String>)comboBox.getModel()).getIndexOf(lastUsedProfile) != -1) {
             		comboBox.setSelectedItem(lastUsedProfile);
             	}
+            }
+            // If still on "New profile" and real profiles exist, default to the first one
+            if ("New profile".equals(comboBox.getSelectedItem()) && comboBox.getItemCount() > 3) {
+            	comboBox.setSelectedIndex(3);
             }
             
         } else {
