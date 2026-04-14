@@ -14,6 +14,14 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.class>rdiger36.StudioBridge.gui.MainMenu</main.class>
+
+        <!-- Dependency Versions -->
+        <flatlaf.version>3.7.1</flatlaf.version>
+        <commons-io.version>2.21.0</commons-io.version>
+        <jna.version>5.18.1</jna.version>
+        <json.version>20250517</json.version>
+        <junit.version>4.13.2</junit.version>
+        <jnafilechooser.version>1.1.2</jnafilechooser.version>
     </properties>
 
     <repositories>
@@ -22,6 +30,7 @@
             <url>https://jitpack.io</url>
         </repository>
     </repositories>
+
     <build>
         <plugins>
             <plugin>
@@ -70,6 +79,19 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <version>2.18.0</version>
+                <configuration>
+                    <!-- JitPack-Abhängigkeiten vom Auto-Update ausschließen -->
+                    <excludes>
+                        <exclude>com.github.steos:jnafilechooser</exclude>
+                    </excludes>
+                    <ignoredVersions>.*-SNAPSHOT</ignoredVersions>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -77,43 +99,43 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.2</version>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.formdev</groupId>
             <artifactId>flatlaf</artifactId>
-            <version>3.6.2</version>
+            <version>${flatlaf.version}</version>
         </dependency>
         <dependency>
             <groupId>com.formdev</groupId>
             <artifactId>flatlaf-extras</artifactId>
-            <version>3.6.2</version>
+            <version>${flatlaf.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.21.0</version>
+            <version>${commons-io.version}</version>
         </dependency>
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
-            <version>5.18.1</version>
+            <version>${jna.version}</version>
         </dependency>
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna-platform</artifactId>
-            <version>5.18.1</version>
+            <version>${jna.version}</version>
         </dependency>
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20250517</version>
+            <version>${json.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.steos</groupId>
             <artifactId>jnafilechooser</artifactId>
-            <version>1.1.2</version>
+            <version>${jnafilechooser.version}</version>
         </dependency>
     </dependencies>
 
