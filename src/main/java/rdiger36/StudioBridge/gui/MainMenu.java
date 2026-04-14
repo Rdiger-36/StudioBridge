@@ -530,7 +530,7 @@ public class MainMenu {
         	    "A-Series", "A1", "A1 Mini",
         	    "H-Series", "H2C", "H2C (new revision)", "H2D", "H2D Pro", "H2S",
         	    "P-Series", "P1P", "P1S", "P2S",
-        	    "X-Series", "X1", "X1C", "X1E"
+        	    "X-Series", "X1", "X1C", "X1E", "X2D"
         	};
         
         // Model selection combo box
