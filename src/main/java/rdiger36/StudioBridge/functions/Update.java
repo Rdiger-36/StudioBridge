@@ -33,10 +33,9 @@ public class Update {
 
         if (onlineVersion != null) {
 
-            String onlineVersionString = onlineVersion.replace("Version ", "")
-                                                     .replace(".", "")
-                                                     .replace("BETA", "")
-                                                     .trim();
+            // Strip everything except digits — handles tag formats like
+            // "v.2.1.2", "Version 2.1.1", "2.1.0-BETA", etc.
+            String onlineVersionString = onlineVersion.replaceAll("[^0-9]", "");
 
             // Convert version strings to integers for comparison
             int online = Integer.parseInt(onlineVersionString);
