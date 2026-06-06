@@ -527,7 +527,7 @@ public class MainMenu {
         frmStudioBridge.getContentPane().add(lblDevModel, "flowx,cell 0 5,growx,aligny center");
 
         String[] items = {
-        	    "A-Series", "A1", "A1 Mini",
+        	    "A-Series", "A1", "A1 Mini", "A2L",
         	    "H-Series", "H2C", "H2C (new revision)", "H2D", "H2D Pro", "H2S",
         	    "P-Series", "P1P", "P1S", "P2S",
         	    "X-Series", "X1", "X1C", "X1E", "X2D"
