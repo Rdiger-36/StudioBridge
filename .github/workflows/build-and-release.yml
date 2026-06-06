@@ -81,16 +81,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Install ImageMagick
-        shell: pwsh
-        run: choco install imagemagick --no-progress -y
-
-      - name: Convert icon to ICO
-        shell: pwsh
-        run: |
-          magick src/main/resources/icon.png `
-            -define icon:auto-resize=256,128,64,48,32,16 `
-            icon.ico
+      # icon.ico is pre-converted and stored in .github/packaging/icons/
 
       - name: Download JAR
         uses: actions/download-artifact@v4
@@ -114,7 +105,7 @@ jobs:
         run: |
           # Add icon to CLI properties
           Copy-Item .github/packaging/cli-win.properties cli-win.properties
-          Add-Content cli-win.properties "icon=icon.ico"
+          Add-Content cli-win.properties "icon=.github/packaging/icons/icon.ico"
 
           jpackage `
             --type msi `
@@ -122,7 +113,7 @@ jobs:
             --app-version "${{ needs.build-jar.outputs.version }}" `
             --input input `
             --main-jar "${{ env.MAIN_JAR }}" `
-            --icon icon.ico `
+            --icon .github/packaging/icons/icon.ico `
             --runtime-image runtime `
             --java-options "${{ env.JAVA_OPTS }}" `
             --copyright "${{ env.COPYRIGHT }}" `
@@ -139,7 +130,7 @@ jobs:
         shell: pwsh
         run: |
           Copy-Item .github/packaging/cli-win.properties cli-win.properties
-          Add-Content cli-win.properties "icon=icon.ico"
+          Add-Content cli-win.properties "icon=.github/packaging/icons/icon.ico"
 
           jpackage `
             --type app-image `
@@ -147,7 +138,7 @@ jobs:
             --app-version "${{ needs.build-jar.outputs.version }}" `
             --input input `
             --main-jar "${{ env.MAIN_JAR }}" `
-            --icon icon.ico `
+            --icon .github/packaging/icons/icon.ico `
             --runtime-image runtime `
             --java-options "${{ env.JAVA_OPTS }}" `
             --add-launcher "StudioBridgeCLI=cli-win.properties" `
@@ -339,19 +330,7 @@ jobs:
             -S apple-tool:,apple: \
             -s -k "$MACOS_KEYCHAIN_PWD" build.keychain
 
-      - name: Convert icon to ICNS
-        run: |
-          mkdir icon.iconset
-          sips -z 16  16  src/main/resources/icon.png --out icon.iconset/icon_16x16.png
-          sips -z 32  32  src/main/resources/icon.png --out icon.iconset/icon_16x16@2x.png
-          sips -z 32  32  src/main/resources/icon.png --out icon.iconset/icon_32x32.png
-          sips -z 64  64  src/main/resources/icon.png --out icon.iconset/icon_32x32@2x.png
-          sips -z 128 128 src/main/resources/icon.png --out icon.iconset/icon_128x128.png
-          sips -z 256 256 src/main/resources/icon.png --out icon.iconset/icon_128x128@2x.png
-          sips -z 256 256 src/main/resources/icon.png --out icon.iconset/icon_256x256.png
-          sips -z 512 512 src/main/resources/icon.png --out icon.iconset/icon_256x256@2x.png
-          cp src/main/resources/icon.png icon.iconset/icon_512x512.png
-          iconutil -c icns icon.iconset -o icon.icns
+      # icon.icns is pre-converted and stored in .github/packaging/icons/
 
       - name: Download JAR
         uses: actions/download-artifact@v4
@@ -369,6 +348,32 @@ jobs:
             --compress=zip-6 \
             --output runtime
 
+      - name: Sign JNA native libraries inside JAR
+        # Apple notarization scans inside JARs and rejects unsigned .jnilib/.dylib files.
+        # JNA bundles native dispatchers for all platforms — we must sign the macOS ones.
+        env:
+          APPLE_TEAM_ID:   ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_TEAM_NAME: ${{ secrets.APPLE_TEAM_NAME }}
+        run: |
+          mkdir -p jna-natives
+          # Extract only JNA native libs
+          (cd jna-natives && jar xf ../input/StudioBridge.jar com/sun/jna/)
+
+          # Sign every .jnilib and .dylib with hardened runtime + timestamp
+          find jna-natives/com/sun/jna -name "*.jnilib" -o -name "*.dylib" | \
+          while read lib; do
+            codesign --force \
+              --sign "Developer ID Application: ${APPLE_TEAM_NAME} (${APPLE_TEAM_ID})" \
+              --options runtime \
+              --timestamp \
+              --entitlements .github/entitlements.plist \
+              "$lib"
+          done
+
+          # Repack signed natives back into the JAR
+          (cd jna-natives && jar uf ../input/StudioBridge.jar com/)
+          rm -rf jna-natives
+
       - name: Build signed DMG
         env:
           APPLE_TEAM_ID:   ${{ secrets.APPLE_TEAM_ID }}
@@ -376,7 +381,7 @@ jobs:
         run: |
           # Add icon to CLI properties
           cp .github/packaging/cli-mac.properties cli-mac.properties
-          echo "icon=icon.icns" >> cli-mac.properties
+          echo "icon=.github/packaging/icons/icon.icns" >> cli-mac.properties
 
           jpackage \
             --type dmg \
@@ -384,7 +389,7 @@ jobs:
             --app-version "${{ needs.build-jar.outputs.version }}" \
             --input input \
             --main-jar "${{ env.MAIN_JAR }}" \
-            --icon icon.icns \
+            --icon .github/packaging/icons/icon.icns \
             --runtime-image runtime \
             --java-options "${{ env.JAVA_OPTS }}" \
             --copyright "${{ env.COPYRIGHT }}" \
