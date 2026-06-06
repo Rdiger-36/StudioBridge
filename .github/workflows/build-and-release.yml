@@ -1,52 +1,343 @@
-name: Build and Release Swing App
+name: Build and Release
 
 on:
   push:
     branches: [ "main" ]
-    tags: [ "*"]
+    tags: [ "v*" ]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
-      - name: Set up JDK
-        uses: actions/setup-java@v4
+  # ─────────────────────────────────────────────────────────────────────────
+  # JAR — cross-platform fat JAR (any runner)
+  # ─────────────────────────────────────────────────────────────────────────
+  build-jar:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
         with:
-          java-version: '11'
+          java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Build with Maven
-        run: mvn clean package
+      - name: Get project version
+        id: version
+        run: echo "value=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
 
-      - name: Rename JAR for release
-        run: |
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          mv target/*-jar-with-dependencies.jar "target/StudioBridge-${VERSION}.jar"
+      - name: Build fat JAR
+        run: mvn clean package -q
 
-      - name: Upload JAR as artifact
-        uses: actions/upload-artifact@v4
+      - name: Rename JAR
+        run: mv target/*-jar-with-dependencies.jar "target/StudioBridge-${{ steps.version.outputs.value }}.jar"
+
+      - uses: actions/upload-artifact@v4
         with:
-          name: StudioBridge.jar
+          name: jar
           path: target/StudioBridge-*.jar
 
-  release:
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/v')  # Nur bei Tags wie v1.0.0
-    runs-on: ubuntu-latest
+  # ─────────────────────────────────────────────────────────────────────────
+  # Windows — MSI installer + portable ZIP  (x86 and arm64)
+  # ─────────────────────────────────────────────────────────────────────────
+  build-windows:
+    needs: build-jar
+    strategy:
+      matrix:
+        include:
+          - runner: windows-latest
+            arch: x86
+          - runner: windows-11-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
     steps:
-      - name: Download JAR from build job
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Download JAR
         uses: actions/download-artifact@v4
         with:
-          name: StudioBridge.jar
+          name: jar
+          path: input
+
+      - name: Convert icon to ICO
+        shell: pwsh
+        run: |
+          magick src/main/resources/icon.png `
+            -define icon:auto-resize=256,128,64,48,32,16 `
+            icon.ico
+
+      - name: Build app-image (portable base)
+        shell: pwsh
+        run: |
+          $jar = (Get-ChildItem input\*.jar | Select-Object -First 1).Name
+          jpackage `
+            --type app-image `
+            --input input `
+            --main-jar $jar `
+            --main-class rdiger36.StudioBridge.gui.MainMenu `
+            --name StudioBridge `
+            --app-version "${{ needs.build-jar.outputs.version }}" `
+            --icon icon.ico `
+            --dest app-image
+
+      - name: Create portable ZIP
+        shell: pwsh
+        run: |
+          $v = "${{ needs.build-jar.outputs.version }}"
+          Compress-Archive -Path app-image\StudioBridge\* `
+            -DestinationPath "StudioBridge-${v}_win_${{ matrix.arch }}_NO-INSTALL.zip"
+
+      - name: Build MSI installer
+        shell: pwsh
+        run: |
+          $jar = (Get-ChildItem input\*.jar | Select-Object -First 1).Name
+          jpackage `
+            --type msi `
+            --input input `
+            --main-jar $jar `
+            --main-class rdiger36.StudioBridge.gui.MainMenu `
+            --name StudioBridge `
+            --app-version "${{ needs.build-jar.outputs.version }}" `
+            --icon icon.ico `
+            --win-menu --win-shortcut --win-per-user-install `
+            --dest msi-output
+
+      - name: Rename MSI
+        shell: pwsh
+        run: |
+          $v = "${{ needs.build-jar.outputs.version }}"
+          Get-ChildItem msi-output\*.msi |
+            Rename-Item -NewName "StudioBridge-${v}_win_${{ matrix.arch }}.msi"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ matrix.arch }}
+          path: |
+            msi-output/*.msi
+            *.zip
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Linux — AppImage  (x86_64 and aarch64)
+  # ─────────────────────────────────────────────────────────────────────────
+  build-linux:
+    needs: build-jar
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            arch: x86_64
+          - runner: ubuntu-24.04-arm
+            arch: aarch64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Install dependencies
+        run: sudo apt-get install -y libfuse2
+
+      - name: Download appimagetool
+        run: |
+          wget -q \
+            "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${{ matrix.arch }}.AppImage" \
+            -O appimagetool
+          chmod +x appimagetool
+
+      - name: Download JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: jar
+          path: input
+
+      - name: Build app-image via jpackage
+        run: |
+          JAR=$(ls input/*.jar | head -1 | xargs basename)
+          jpackage \
+            --type app-image \
+            --input input \
+            --main-jar "$JAR" \
+            --main-class rdiger36.StudioBridge.gui.MainMenu \
+            --name StudioBridge \
+            --app-version "${{ needs.build-jar.outputs.version }}" \
+            --icon src/main/resources/icon.png \
+            --dest app-image
+
+      - name: Package as AppImage
+        run: |
+          VERSION="${{ needs.build-jar.outputs.version }}"
+
+          mkdir -p AppDir
+          cp -r app-image/StudioBridge/. AppDir/
+
+          # AppRun launcher
+          cat > AppDir/AppRun << 'APPRUN'
+          #!/bin/sh
+          DIR="$(dirname "$(readlink -f "$0")")"
+          exec "$DIR/bin/StudioBridge" "$@"
+          APPRUN
+          chmod +x AppDir/AppRun
+
+          # .desktop entry
+          cat > AppDir/StudioBridge.desktop << 'DESKTOP'
+          [Desktop Entry]
+          Name=StudioBridge
+          Exec=StudioBridge
+          Icon=StudioBridge
+          Type=Application
+          Categories=Utility;Network;
+          DESKTOP
+
+          # Icon (AppImage looks for it at AppDir root, without extension)
+          cp src/main/resources/icon.png AppDir/StudioBridge.png
+
+          ARCH=${{ matrix.arch }} APPIMAGE_EXTRACT_AND_RUN=1 \
+            ./appimagetool AppDir \
+            "StudioBridge-${VERSION}-${{ matrix.arch }}.AppImage"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.arch }}
+          path: "*.AppImage"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # macOS — signed + notarized DMG  (arm64 and x86)
+  #
+  # Required secrets:
+  #   MACOS_CERTIFICATE     — base64-encoded Developer ID Application .p12
+  #   MACOS_CERTIFICATE_PWD — export password for the .p12
+  #   MACOS_KEYCHAIN_PWD    — temporary keychain password (any value)
+  #   APPLE_TEAM_NAME       — name part of "Developer ID Application: Name (ID)"
+  #   APPLE_TEAM_ID         — 10-character Apple Team ID
+  #   APPLE_ID              — Apple ID e-mail for notarytool
+  #   APPLE_APP_PASSWORD    — app-specific password (appleid.apple.com)
+  # ─────────────────────────────────────────────────────────────────────────
+  build-macos:
+    needs: build-jar
+    strategy:
+      matrix:
+        include:
+          - runner: macos-latest   # arm64 — M-Series
+            arch: arm64
+          - runner: macos-13       # x86   — Intel
+            arch: x86
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Import Developer ID certificate
+        env:
+          MACOS_CERTIFICATE:     ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          MACOS_KEYCHAIN_PWD:    ${{ secrets.MACOS_KEYCHAIN_PWD }}
+        run: |
+          echo "$MACOS_CERTIFICATE" | base64 --decode > certificate.p12
+          security create-keychain -p "$MACOS_KEYCHAIN_PWD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$MACOS_KEYCHAIN_PWD" build.keychain
+          security import certificate.p12 \
+            -k build.keychain \
+            -P "$MACOS_CERTIFICATE_PWD" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/jpackage
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s -k "$MACOS_KEYCHAIN_PWD" build.keychain
+
+      - name: Convert icon to ICNS
+        run: |
+          mkdir icon.iconset
+          sips -z 16  16  src/main/resources/icon.png --out icon.iconset/icon_16x16.png
+          sips -z 32  32  src/main/resources/icon.png --out icon.iconset/icon_16x16@2x.png
+          sips -z 32  32  src/main/resources/icon.png --out icon.iconset/icon_32x32.png
+          sips -z 64  64  src/main/resources/icon.png --out icon.iconset/icon_32x32@2x.png
+          sips -z 128 128 src/main/resources/icon.png --out icon.iconset/icon_128x128.png
+          sips -z 256 256 src/main/resources/icon.png --out icon.iconset/icon_128x128@2x.png
+          sips -z 256 256 src/main/resources/icon.png --out icon.iconset/icon_256x256.png
+          sips -z 512 512 src/main/resources/icon.png --out icon.iconset/icon_256x256@2x.png
+          cp src/main/resources/icon.png icon.iconset/icon_512x512.png
+          iconutil -c icns icon.iconset -o icon.icns
+
+      - name: Download JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: jar
+          path: input
+
+      - name: Build signed DMG
+        env:
+          APPLE_TEAM_ID:   ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_TEAM_NAME: ${{ secrets.APPLE_TEAM_NAME }}
+        run: |
+          JAR=$(ls input/*.jar | head -1 | xargs basename)
+          jpackage \
+            --type dmg \
+            --input input \
+            --main-jar "$JAR" \
+            --main-class rdiger36.StudioBridge.gui.MainMenu \
+            --name StudioBridge \
+            --app-version "${{ needs.build-jar.outputs.version }}" \
+            --icon icon.icns \
+            --mac-sign \
+            --mac-signing-key-user-name "Developer ID Application: ${APPLE_TEAM_NAME} (${APPLE_TEAM_ID})" \
+            --dest dmg-output
+
+      - name: Rename DMG
+        run: |
+          V="${{ needs.build-jar.outputs.version }}"
+          mv dmg-output/*.dmg "StudioBridge-${V}_macOS_${{ matrix.arch }}.dmg"
+
+      - name: Notarize and staple DMG
+        env:
+          APPLE_ID:           ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID:      ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          DMG=$(ls *.dmg | head -1)
+          xcrun notarytool submit "$DMG" \
+            --apple-id  "$APPLE_ID" \
+            --team-id   "$APPLE_TEAM_ID" \
+            --password  "$APPLE_APP_PASSWORD" \
+            --wait
+          xcrun stapler staple "$DMG"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.arch }}
+          path: "*.dmg"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Release — collects all artifacts, creates GitHub Release on tag push
+  # ─────────────────────────────────────────────────────────────────────────
+  release:
+    needs: [ build-jar, build-windows, build-linux, build-macos ]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: StudioBridge-*.jar
+          files: artifacts/**/*
           generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
