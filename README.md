@@ -18,6 +18,14 @@
   <img src="https://img.shields.io/badge/maintained-yes-brightgreen?style=flat-square" alt="maintained" />
 </p>
 
+<p align="center">
+  <img src="https://img.shields.io/github/stars/Rdiger-36/StudioBridge?style=flat-square&color=yellow" alt="stars" />
+  <img src="https://img.shields.io/github/forks/Rdiger-36/StudioBridge?style=flat-square&color=orange" alt="forks" />
+  <img src="https://img.shields.io/github/issues/Rdiger-36/StudioBridge?style=flat-square" alt="open issues" />
+  <img src="https://img.shields.io/github/downloads/Rdiger-36/StudioBridge/total?style=flat-square&label=downloads&color=blue" alt="total downloads" />
+  <img src="https://img.shields.io/github/last-commit/Rdiger-36/StudioBridge?style=flat-square&label=last%20commit" alt="last commit" />
+</p>
+
 ---
 
 With StudioBridge it is possible to make Bambu Lab 3D Printers visible in Bambu Studio or Orca Slicer, that can not be automatically added by them.
