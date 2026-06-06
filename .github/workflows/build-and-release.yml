@@ -5,10 +5,21 @@ on:
     branches: [ "main" ]
     tags: [ "v*" ]
 
+env:
+  APP_NAME:    StudioBridge
+  MAIN_JAR:    StudioBridge.jar
+  MODULES:     java.base,java.desktop,java.net.http,java.security.jgss,java.security.sasl,java.naming,jdk.crypto.ec
+  JAVA_OPTS:   "-Xmx512m"
+  COPYRIGHT:   Rdiger-36
+  VENDOR:      Rdiger-36
+  DESCRIPTION: "With StudioBridge it is possible to make Bambu Lab 3D Printers visible in Bambu Studio or Orca Slicer, that can not be automatically added by them."
+  ABOUT_URL:   https://github.com/Rdiger-36/StudioBridge
+  WIN_UUID:    b062e5bc-0c30-48e7-8f48-9067789d244b
+
 jobs:
 
   # ─────────────────────────────────────────────────────────────────────────
-  # JAR — cross-platform fat JAR (any runner)
+  # JAR — cross-platform fat JAR
   # Runs on every push to main (CI check) and on tag pushes (release)
   # ─────────────────────────────────────────────────────────────────────────
   build-jar:
@@ -31,13 +42,21 @@ jobs:
       - name: Build fat JAR
         run: mvn clean package -q
 
-      - name: Rename JAR
-        run: mv target/*-jar-with-dependencies.jar "target/StudioBridge-${{ steps.version.outputs.value }}.jar"
+      - name: Prepare JAR artifact
+        run: |
+          mkdir input
+          cp target/*-jar-with-dependencies.jar input/${{ env.MAIN_JAR }}
+          cp target/*-jar-with-dependencies.jar "target/StudioBridge-${{ steps.version.outputs.value }}.jar"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: jar
+          name: jar-release
           path: target/StudioBridge-*.jar
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jar-input
+          path: input/StudioBridge.jar
 
   # ─────────────────────────────────────────────────────────────────────────
   # Windows — MSI installer + portable ZIP  (x86 and arm64)
@@ -62,12 +81,6 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Download JAR
-        uses: actions/download-artifact@v4
-        with:
-          name: jar
-          path: input
-
       - name: Install ImageMagick
         shell: pwsh
         run: choco install imagemagick --no-progress -y
@@ -79,41 +92,74 @@ jobs:
             -define icon:auto-resize=256,128,64,48,32,16 `
             icon.ico
 
-      - name: Build app-image (portable base)
+      - name: Download JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: jar-input
+          path: input
+
+      - name: Build minimal runtime via jlink
         shell: pwsh
         run: |
-          $jar = (Get-ChildItem input\*.jar | Select-Object -First 1).Name
+          jlink `
+            --add-modules "${{ env.MODULES }}" `
+            --strip-debug `
+            --no-header-files `
+            --no-man-pages `
+            --compress=zip-6 `
+            --output runtime
+
+      - name: Build MSI installer
+        shell: pwsh
+        run: |
+          # Add icon to CLI properties
+          Copy-Item .github/packaging/cli-win.properties cli-win.properties
+          Add-Content cli-win.properties "icon=icon.ico"
+
+          jpackage `
+            --type msi `
+            --name "${{ env.APP_NAME }}" `
+            --app-version "${{ needs.build-jar.outputs.version }}" `
+            --input input `
+            --main-jar "${{ env.MAIN_JAR }}" `
+            --icon icon.ico `
+            --runtime-image runtime `
+            --java-options "${{ env.JAVA_OPTS }}" `
+            --copyright "${{ env.COPYRIGHT }}" `
+            --vendor "${{ env.VENDOR }}" `
+            --description "${{ env.DESCRIPTION }}" `
+            --about-url "${{ env.ABOUT_URL }}" `
+            --win-menu --win-shortcut `
+            --win-dir-chooser --win-shortcut-prompt `
+            --win-upgrade-uuid "${{ env.WIN_UUID }}" `
+            --add-launcher "StudioBridgeCLI=cli-win.properties" `
+            --dest msi-output
+
+      - name: Build portable app-image
+        shell: pwsh
+        run: |
+          Copy-Item .github/packaging/cli-win.properties cli-win.properties
+          Add-Content cli-win.properties "icon=icon.ico"
+
           jpackage `
             --type app-image `
-            --input input `
-            --main-jar $jar `
-            --main-class rdiger36.StudioBridge.gui.MainMenu `
-            --name StudioBridge `
+            --name "${{ env.APP_NAME }}" `
             --app-version "${{ needs.build-jar.outputs.version }}" `
+            --input input `
+            --main-jar "${{ env.MAIN_JAR }}" `
             --icon icon.ico `
+            --runtime-image runtime `
+            --java-options "${{ env.JAVA_OPTS }}" `
+            --add-launcher "StudioBridgeCLI=cli-win.properties" `
             --dest app-image
 
       - name: Create portable ZIP
         shell: pwsh
         run: |
           $v = "${{ needs.build-jar.outputs.version }}"
-          Compress-Archive -Path app-image\StudioBridge\* `
+          Compress-Archive `
+            -Path "app-image\${{ env.APP_NAME }}\*" `
             -DestinationPath "StudioBridge-${v}_win_${{ matrix.arch }}_NO-INSTALL.zip"
-
-      - name: Build MSI installer
-        shell: pwsh
-        run: |
-          $jar = (Get-ChildItem input\*.jar | Select-Object -First 1).Name
-          jpackage `
-            --type msi `
-            --input input `
-            --main-jar $jar `
-            --main-class rdiger36.StudioBridge.gui.MainMenu `
-            --name StudioBridge `
-            --app-version "${{ needs.build-jar.outputs.version }}" `
-            --icon icon.ico `
-            --win-menu --win-shortcut --win-per-user-install `
-            --dest msi-output
 
       - name: Rename MSI
         shell: pwsh
@@ -165,53 +211,77 @@ jobs:
       - name: Download JAR
         uses: actions/download-artifact@v4
         with:
-          name: jar
+          name: jar-input
           path: input
+
+      - name: Build minimal runtime via jlink
+        run: |
+          jlink \
+            --add-modules "${{ env.MODULES }}" \
+            --strip-debug \
+            --no-header-files \
+            --no-man-pages \
+            --compress=zip-6 \
+            --output runtime
 
       - name: Build app-image via jpackage
         run: |
-          JAR=$(ls input/*.jar | head -1 | xargs basename)
           jpackage \
             --type app-image \
-            --input input \
-            --main-jar "$JAR" \
-            --main-class rdiger36.StudioBridge.gui.MainMenu \
-            --name StudioBridge \
+            --name "${{ env.APP_NAME }}" \
             --app-version "${{ needs.build-jar.outputs.version }}" \
+            --input input \
+            --main-jar "${{ env.MAIN_JAR }}" \
             --icon src/main/resources/icon.png \
-            --dest app-image
+            --runtime-image runtime \
+            --java-options "${{ env.JAVA_OPTS }}"
 
       - name: Package as AppImage
         run: |
           VERSION="${{ needs.build-jar.outputs.version }}"
+          APPDIR="build/${{ env.APP_NAME }}.AppDir"
 
-          mkdir -p AppDir
-          cp -r app-image/StudioBridge/. AppDir/
+          # FHS-compliant AppDir structure
+          mkdir -p \
+            "${APPDIR}/usr/bin" \
+            "${APPDIR}/usr/lib/${{ env.APP_NAME }}" \
+            "${APPDIR}/usr/share/applications" \
+            "${APPDIR}/usr/share/icons/hicolor/256x256/apps"
 
-          # AppRun launcher
-          cat > AppDir/AppRun << 'APPRUN'
+          # Copy jpackage app-image into usr/lib
+          cp -a "${{ env.APP_NAME }}/." "${APPDIR}/usr/lib/${{ env.APP_NAME }}/"
+
+          # Symlink launcher into PATH
+          ln -sfn "../lib/${{ env.APP_NAME }}/bin/${{ env.APP_NAME }}" \
+            "${APPDIR}/usr/bin/${{ env.APP_NAME }}"
+
+          # AppRun
+          cat > "${APPDIR}/AppRun" << 'APPRUN'
           #!/bin/sh
-          DIR="$(dirname "$(readlink -f "$0")")"
-          exec "$DIR/bin/StudioBridge" "$@"
+          HERE="$(dirname "$(readlink -f "$0")")"
+          exec "$HERE/usr/bin/StudioBridge" "$@"
           APPRUN
-          chmod +x AppDir/AppRun
+          chmod +x "${APPDIR}/AppRun"
 
           # .desktop entry
-          cat > AppDir/StudioBridge.desktop << 'DESKTOP'
+          cat > "${APPDIR}/${{ env.APP_NAME }}.desktop" << 'DESKTOP'
           [Desktop Entry]
+          Type=Application
           Name=StudioBridge
           Exec=StudioBridge
           Icon=StudioBridge
-          Type=Application
-          Categories=Utility;Network;
+          Categories=Utility;
+          Terminal=false
           DESKTOP
 
-          # Icon (AppImage looks for it at AppDir root, without extension)
-          cp src/main/resources/icon.png AppDir/StudioBridge.png
+          # Icons
+          install -m 0644 src/main/resources/icon.png "${APPDIR}/${{ env.APP_NAME }}.png"
+          install -m 0644 src/main/resources/icon.png \
+            "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${{ env.APP_NAME }}.png"
 
           ARCH=${{ matrix.arch }} APPIMAGE_EXTRACT_AND_RUN=1 \
-            ./appimagetool AppDir \
-            "StudioBridge-${VERSION}-${{ matrix.arch }}.AppImage"
+            ./appimagetool "${APPDIR}" \
+            "${{ env.APP_NAME }}-${VERSION}-${{ matrix.arch }}.AppImage"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -286,26 +356,44 @@ jobs:
       - name: Download JAR
         uses: actions/download-artifact@v4
         with:
-          name: jar
+          name: jar-input
           path: input
+
+      - name: Build minimal runtime via jlink
+        run: |
+          jlink \
+            --add-modules "${{ env.MODULES }}" \
+            --strip-debug \
+            --no-header-files \
+            --no-man-pages \
+            --compress=zip-6 \
+            --output runtime
 
       - name: Build signed DMG
         env:
           APPLE_TEAM_ID:   ${{ secrets.APPLE_TEAM_ID }}
           APPLE_TEAM_NAME: ${{ secrets.APPLE_TEAM_NAME }}
         run: |
-          JAR=$(ls input/*.jar | head -1 | xargs basename)
+          # Add icon to CLI properties
+          cp .github/packaging/cli-mac.properties cli-mac.properties
+          echo "icon=icon.icns" >> cli-mac.properties
+
           jpackage \
             --type dmg \
-            --input input \
-            --main-jar "$JAR" \
-            --main-class rdiger36.StudioBridge.gui.MainMenu \
-            --name StudioBridge \
+            --name "${{ env.APP_NAME }}" \
             --app-version "${{ needs.build-jar.outputs.version }}" \
+            --input input \
+            --main-jar "${{ env.MAIN_JAR }}" \
             --icon icon.icns \
+            --runtime-image runtime \
+            --java-options "${{ env.JAVA_OPTS }}" \
+            --copyright "${{ env.COPYRIGHT }}" \
+            --vendor "${{ env.VENDOR }}" \
+            --description "${{ env.DESCRIPTION }}" \
             --mac-sign \
             --mac-signing-key-user-name "Developer ID Application: ${APPLE_TEAM_NAME} (${APPLE_TEAM_ID})" \
             --mac-entitlements .github/entitlements.plist \
+            --add-launcher "StudioBridgeCLI=cli-mac.properties" \
             --dest dmg-output
 
       - name: Rename DMG
@@ -365,7 +453,14 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/*
+          files: |
+            artifacts/jar-release/*
+            artifacts/windows-x86/*
+            artifacts/windows-arm64/*
+            artifacts/linux-x86_64/*
+            artifacts/linux-aarch64/*
+            artifacts/macos-arm64/*
+            artifacts/macos-x86/*
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-') }}
         env:
