@@ -161,18 +161,18 @@ jobs:
             -Path "app-image\${{ env.APP_NAME }}\*" `
             -DestinationPath "StudioBridge-${v}_win_${{ matrix.arch }}_NO-INSTALL.zip"
 
-      - name: Rename MSI
+      - name: Rename and move MSI
         shell: pwsh
         run: |
           $v = "${{ needs.build-jar.outputs.version }}"
           Get-ChildItem msi-output\*.msi |
-            Rename-Item -NewName "StudioBridge-${v}_win_${{ matrix.arch }}.msi"
+            Move-Item -Destination "StudioBridge-${v}_win_${{ matrix.arch }}.msi"
 
       - uses: actions/upload-artifact@v4
         with:
           name: windows-${{ matrix.arch }}
           path: |
-            msi-output/*.msi
+            *.msi
             *.zip
 
   # ─────────────────────────────────────────────────────────────────────────
