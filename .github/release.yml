@@ -1,0 +1,29 @@
+changelog:
+  exclude:
+    labels:
+      - duplicate
+      - invalid
+      - wontfix
+      - question
+  categories:
+    - title: "💥 Breaking Changes"
+      labels:
+        - breaking change
+    - title: "✨ New Features & Improvements"
+      labels:
+        - enhancement
+    - title: "🐛 Bug Fixes"
+      labels:
+        - bug
+    - title: "📦 Dependency Updates"
+      labels:
+        - dependencies
+    - title: "🔧 Build & CI"
+      labels:
+        - build
+    - title: "📝 Documentation"
+      labels:
+        - documentation
+    - title: "🔍 Other Changes"
+      labels:
+        - "*"
