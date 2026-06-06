@@ -484,6 +484,7 @@ jobs:
             artifacts/linux-x86_64/*
             artifacts/linux-aarch64/*
             artifacts/macos-arm64/*
+          name: "Version ${{ needs.build-jar.outputs.version }}"
           generate_release_notes: true
           append_body: true
           body: |
