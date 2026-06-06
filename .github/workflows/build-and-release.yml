@@ -46,6 +46,7 @@ jobs:
     needs: build-jar
     if: startsWith(github.ref, 'refs/tags/v')
     strategy:
+      fail-fast: false
       matrix:
         include:
           - runner: windows-latest
@@ -66,6 +67,10 @@ jobs:
         with:
           name: jar
           path: input
+
+      - name: Install ImageMagick
+        shell: pwsh
+        run: choco install imagemagick --no-progress -y
 
       - name: Convert icon to ICO
         shell: pwsh
@@ -131,6 +136,7 @@ jobs:
     needs: build-jar
     if: startsWith(github.ref, 'refs/tags/v')
     strategy:
+      fail-fast: false
       matrix:
         include:
           - runner: ubuntu-latest
@@ -228,6 +234,7 @@ jobs:
     needs: build-jar
     if: startsWith(github.ref, 'refs/tags/v')
     strategy:
+      fail-fast: false
       matrix:
         include:
           - runner: macos-latest   # arm64 — M-Series
@@ -298,6 +305,7 @@ jobs:
             --icon icon.icns \
             --mac-sign \
             --mac-signing-key-user-name "Developer ID Application: ${APPLE_TEAM_NAME} (${APPLE_TEAM_ID})" \
+            --mac-entitlements .github/entitlements.plist \
             --dest dmg-output
 
       - name: Rename DMG
@@ -312,11 +320,28 @@ jobs:
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
         run: |
           DMG=$(ls *.dmg | head -1)
-          xcrun notarytool submit "$DMG" \
+
+          # Submit and capture result as JSON for error logging
+          RESULT=$(xcrun notarytool submit "$DMG" \
             --apple-id  "$APPLE_ID" \
             --team-id   "$APPLE_TEAM_ID" \
             --password  "$APPLE_APP_PASSWORD" \
-            --wait
+            --wait --output-format json)
+
+          echo "$RESULT"
+          STATUS=$(echo "$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['status'])")
+          ID=$(echo "$RESULT"     | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+
+          # On failure print the detailed log from Apple before exiting
+          if [ "$STATUS" != "Accepted" ]; then
+            echo "Notarization failed (status: $STATUS) — fetching log..."
+            xcrun notarytool log "$ID" \
+              --apple-id "$APPLE_ID" \
+              --team-id  "$APPLE_TEAM_ID" \
+              --password "$APPLE_APP_PASSWORD"
+            exit 1
+          fi
+
           xcrun stapler staple "$DMG"
 
       - uses: actions/upload-artifact@v4
