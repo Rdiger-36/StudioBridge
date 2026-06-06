@@ -81,14 +81,19 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Install ImageMagick
-        shell: pwsh
-        run: choco install imagemagick --no-progress -y
-
-      - name: Convert icon to ICO
+      - name: Install ImageMagick and convert icon to ICO
         shell: pwsh
         run: |
-          magick src/main/resources/icon.png `
+          choco install imagemagick --no-progress -y
+
+          # Locate the freshly installed magick.exe and set MAGICK_CONFIGURE_PATH
+          # to bypass broken registry entries on the windows-11-arm runner
+          $magickExe = Get-ChildItem "C:\Program Files\ImageMagick*\magick.exe" |
+            Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          $env:MAGICK_CONFIGURE_PATH = $magickExe.DirectoryName
+          $env:PATH = "$($magickExe.DirectoryName);$env:PATH"
+
+          & $magickExe.FullName src/main/resources/icon.png `
             -define icon:auto-resize=256,128,64,48,32,16 `
             icon.ico
 
@@ -368,6 +373,32 @@ jobs:
             --no-man-pages \
             --compress=zip-6 \
             --output runtime
+
+      - name: Sign JNA native libraries inside JAR
+        # Apple notarization scans inside JARs and rejects unsigned .jnilib/.dylib files.
+        # JNA bundles native dispatchers for all platforms — we must sign the macOS ones.
+        env:
+          APPLE_TEAM_ID:   ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_TEAM_NAME: ${{ secrets.APPLE_TEAM_NAME }}
+        run: |
+          mkdir -p jna-natives
+          # Extract only JNA native libs
+          (cd jna-natives && jar xf ../input/StudioBridge.jar com/sun/jna/)
+
+          # Sign every .jnilib and .dylib with hardened runtime + timestamp
+          find jna-natives/com/sun/jna -name "*.jnilib" -o -name "*.dylib" | \
+          while read lib; do
+            codesign --force \
+              --sign "Developer ID Application: ${APPLE_TEAM_NAME} (${APPLE_TEAM_ID})" \
+              --options runtime \
+              --timestamp \
+              --entitlements .github/entitlements.plist \
+              "$lib"
+          done
+
+          # Repack signed natives back into the JAR
+          (cd jna-natives && jar uf ../input/StudioBridge.jar com/)
+          rm -rf jna-natives
 
       - name: Build signed DMG
         env:
