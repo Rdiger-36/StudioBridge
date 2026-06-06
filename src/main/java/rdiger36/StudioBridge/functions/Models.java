@@ -12,6 +12,7 @@ public class Models {
         switch (model) {
             case "A1": model = "N2S"; break;
             case "A1 Mini": model = "N1"; break;
+            case "A2L": model = "N9"; break;
             case "P1P": model = "C11"; break;
             case "P1S": model = "C12"; break;
             case "P2S": model = "N7"; break;
@@ -40,6 +41,7 @@ public class Models {
         switch (model) {
 	        case "N2S": model = "A1"; break;
 	        case "N1": model = "A1 Mini"; break;
+	        case "N9": model = "A2L"; break;
 	        case "C11": model = "P1P"; break;
 	        case "C12": model = "P1S"; break;
 	        case "N7": model = "P2S"; break;
