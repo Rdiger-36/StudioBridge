@@ -1,7 +1,35 @@
-# StudioBridge
+<p align="center">
+  <img src=".github/packaging/icons/icon.png" width="120" alt="StudioBridge icon" />
+</p>
 
-With StudioBridge it is possible to make Bambu Lab 3D Printers visible in Bambu Studio or Orca Slicer, that can not be automatically added by them.  
-It is also possible to conenct printers from other subnets or from accessible external networks (e.g. via VPN) or in your normal home network.
+<h1 align="center">StudioBridge</h1>
+
+<p align="center">
+  Make your Bambu Lab 3D printers visible in Bambu Studio or Orca Slicer — across any network.<br/>
+  Connect printers from other subnets, VPNs, or your home network with a simple GUI.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/v/release/Rdiger-36/StudioBridge?style=flat-square&label=version&color=blue" alt="version" />
+  <img src="https://img.shields.io/badge/Java-%E2%89%A521-ED8B00?style=flat-square&logo=openjdk&logoColor=white" alt="Java" />
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey?style=flat-square" alt="platform" />
+  <img src="https://img.shields.io/badge/license-GPL--3.0-green?style=flat-square" alt="license" />
+  <img src="https://img.shields.io/github/actions/workflow/status/Rdiger-36/StudioBridge/build-and-release.yml?style=flat-square&label=build" alt="build" />
+  <img src="https://img.shields.io/badge/maintained-yes-brightgreen?style=flat-square" alt="maintained" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/stars/Rdiger-36/StudioBridge?style=flat-square&color=yellow" alt="stars" />
+  <img src="https://img.shields.io/github/forks/Rdiger-36/StudioBridge?style=flat-square&color=orange" alt="forks" />
+  <img src="https://img.shields.io/github/issues/Rdiger-36/StudioBridge?style=flat-square" alt="open issues" />
+  <img src="https://img.shields.io/github/downloads/Rdiger-36/StudioBridge/total?style=flat-square&label=downloads&color=blue" alt="total downloads" />
+  <img src="https://img.shields.io/github/last-commit/Rdiger-36/StudioBridge?style=flat-square&label=last%20commit" alt="last commit" />
+</p>
+
+---
+
+With StudioBridge it is possible to make Bambu Lab 3D Printers visible in Bambu Studio or Orca Slicer, that can not be automatically added by them.
+It is also possible to connect printers from other subnets or from accessible external networks (e.g. via VPN) or in your normal home network.
 There are many scripts for all kinds of systems, but many users feel more comfortable with a GUI. Therefore I developed StudioBridge, which is basically based on the scripts i found in countless forums.
 
 # How it works
@@ -19,7 +47,9 @@ You can check if the printer would connect correctly in Bambu Studio with the fu
 Successfully tested on:
 - Windows 10/11 ARM and x86
 - Linux Ubuntu 25.10 ARM and x86
-- MacOS Intel and M-Series
+- macOS M-Series (Apple Silicon)
+
+> **Note for Intel Mac users:** macOS 27 (September 2026) removes Rosetta 2 support. Native Intel (x86) builds are no longer provided. Intel Mac users can use the `.jar` release with Java 21+.
 
 # Requirements
 - min. Java 21 (only for .jar compiled release)
@@ -202,13 +232,6 @@ Running the StudioBridge GUI
 	3.	Double-click the .jar file to launch StudioBridge. This should open the GUI, allowing you to configure and use your 3D printers with Bambu Studio over LAN.
 
 If the .jar file does not open directly, ensure Java is properly installed, and check your system’s default settings for opening .jar files.
-
-## FAQ
-Q: My app won't start on macOS. There is an error message saying that the app is corrupted and needs to be deleted.
-
-A: This is a safety feature from macOS Gatekeeper. To disable this error message, run the following command in your terminal:
-
-`xattr -dr com.apple.quarantine /Applications/StudioBridge.app`
 
 # Support Me
 [![Buy Me a Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/Rdiger36)
