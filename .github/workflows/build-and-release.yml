@@ -485,6 +485,32 @@ jobs:
             artifacts/linux-aarch64/*
             artifacts/macos-arm64/*
           generate_release_notes: true
+          append_body: true
+          body: |
+            ---
+            ## Downloads
+
+            ### Windows
+            | | Installer (MSI) | Portable (ZIP) |
+            |---|---|---|
+            | **x86 (Intel/AMD)** | [⬇ StudioBridge-${{ needs.build-jar.outputs.version }}_win_x86.msi](https://github.com/Rdiger-36/StudioBridge/releases/download/${{ github.ref_name }}/StudioBridge-${{ needs.build-jar.outputs.version }}_win_x86.msi) | [⬇ NO-INSTALL x86](https://github.com/Rdiger-36/StudioBridge/releases/download/${{ github.ref_name }}/StudioBridge-${{ needs.build-jar.outputs.version }}_win_x86_NO-INSTALL.zip) |
+            | **ARM64** | [⬇ StudioBridge-${{ needs.build-jar.outputs.version }}_win_arm64.msi](https://github.com/Rdiger-36/StudioBridge/releases/download/${{ github.ref_name }}/StudioBridge-${{ needs.build-jar.outputs.version }}_win_arm64.msi) | [⬇ NO-INSTALL arm64](https://github.com/Rdiger-36/StudioBridge/releases/download/${{ github.ref_name }}/StudioBridge-${{ needs.build-jar.outputs.version }}_win_arm64_NO-INSTALL.zip) |
+
+            ### Linux
+            | | AppImage |
+            |---|---|
+            | **x86_64 (Intel/AMD)** | [⬇ StudioBridge-${{ needs.build-jar.outputs.version }}-x86_64.AppImage](https://github.com/Rdiger-36/StudioBridge/releases/download/${{ github.ref_name }}/StudioBridge-${{ needs.build-jar.outputs.version }}-x86_64.AppImage) |
+            | **aarch64 (ARM)** | [⬇ StudioBridge-${{ needs.build-jar.outputs.version }}-aarch64.AppImage](https://github.com/Rdiger-36/StudioBridge/releases/download/${{ github.ref_name }}/StudioBridge-${{ needs.build-jar.outputs.version }}-aarch64.AppImage) |
+
+            ### macOS
+            | | DMG |
+            |---|---|
+            | **Apple Silicon (M-Series)** | [⬇ StudioBridge-${{ needs.build-jar.outputs.version }}_macOS_arm64.dmg](https://github.com/Rdiger-36/StudioBridge/releases/download/${{ github.ref_name }}/StudioBridge-${{ needs.build-jar.outputs.version }}_macOS_arm64.dmg) |
+
+            ### JAR (alle Plattformen, erfordert Java 21+)
+            | | |
+            |---|---|
+            | **Standalone JAR** | [⬇ StudioBridge-${{ needs.build-jar.outputs.version }}.jar](https://github.com/Rdiger-36/StudioBridge/releases/download/${{ github.ref_name }}/StudioBridge-${{ needs.build-jar.outputs.version }}.jar) |
           prerelease: ${{ contains(github.ref_name, '-') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
