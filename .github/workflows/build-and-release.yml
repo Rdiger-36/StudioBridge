@@ -83,6 +83,15 @@ jobs:
 
       # icon.ico is pre-converted and stored in .github/packaging/icons/
 
+      - name: Install WiX toolset (ARM64 only — not pre-installed on windows-11-arm)
+        if: matrix.arch == 'arm64'
+        shell: pwsh
+        run: |
+          choco install wixtoolset --no-progress -y
+          $wixDir = Get-ChildItem "C:\Program Files (x86)\WiX Toolset*\bin" |
+            Select-Object -First 1 -ExpandProperty FullName
+          echo "$wixDir" >> $env:GITHUB_PATH
+
       - name: Download JAR
         uses: actions/download-artifact@v4
         with:
@@ -348,31 +357,42 @@ jobs:
             --compress=zip-6 \
             --output runtime
 
-      - name: Sign JNA native libraries inside JAR
-        # Apple notarization scans inside JARs and rejects unsigned .jnilib/.dylib files.
-        # JNA bundles native dispatchers for all platforms — we must sign the macOS ones.
+      - name: Sign all native libraries inside JAR
+        # Apple notarization scans inside JARs for .dylib/.jnilib and rejects unsigned ones.
+        # Multiple dependencies (JNA, FlatLaf, ...) bundle macOS native code — sign them all.
         env:
           APPLE_TEAM_ID:   ${{ secrets.APPLE_TEAM_ID }}
           APPLE_TEAM_NAME: ${{ secrets.APPLE_TEAM_NAME }}
         run: |
-          mkdir -p jna-natives
-          # Extract only JNA native libs
-          (cd jna-natives && jar xf ../input/StudioBridge.jar com/sun/jna/)
+          mkdir -p jar-natives
 
-          # Sign every .jnilib and .dylib with hardened runtime + timestamp
-          find jna-natives/com/sun/jna -name "*.jnilib" -o -name "*.dylib" | \
-          while read lib; do
-            codesign --force \
-              --sign "Developer ID Application: ${APPLE_TEAM_NAME} (${APPLE_TEAM_ID})" \
-              --options runtime \
-              --timestamp \
-              --entitlements .github/entitlements.plist \
-              "$lib"
-          done
+          # Collect paths of all native libs inside the JAR
+          NATIVE_LIBS=$(jar tf input/StudioBridge.jar | grep -E '\.(jnilib|dylib)$')
 
-          # Repack signed natives back into the JAR
-          (cd jna-natives && jar uf ../input/StudioBridge.jar com/)
-          rm -rf jna-natives
+          if [ -z "$NATIVE_LIBS" ]; then
+            echo "No native libs found in JAR — skipping."
+          else
+            # Extract only those files
+            (cd jar-natives && echo "$NATIVE_LIBS" | xargs jar xf ../input/StudioBridge.jar)
+
+            # Sign each one with hardened runtime + secure timestamp
+            find jar-natives -name "*.jnilib" -o -name "*.dylib" | \
+            while read lib; do
+              echo "Signing: $lib"
+              codesign --force \
+                --sign "Developer ID Application: ${APPLE_TEAM_NAME} (${APPLE_TEAM_ID})" \
+                --options runtime \
+                --timestamp \
+                --entitlements .github/entitlements.plist \
+                "$lib"
+            done
+
+            # Repack signed natives back into the JAR
+            (cd jar-natives && find . -name "*.jnilib" -o -name "*.dylib" | \
+              sed 's|^\./||' | xargs jar uf ../input/StudioBridge.jar)
+          fi
+
+          rm -rf jar-natives
 
       - name: Build signed DMG
         env:
