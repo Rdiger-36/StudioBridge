@@ -1,7 +1,27 @@
-# StudioBridge
+<p align="center">
+  <img src=".github/packaging/icons/icon.png" width="120" alt="StudioBridge icon" />
+</p>
 
-With StudioBridge it is possible to make Bambu Lab 3D Printers visible in Bambu Studio or Orca Slicer, that can not be automatically added by them.  
-It is also possible to conenct printers from other subnets or from accessible external networks (e.g. via VPN) or in your normal home network.
+<h1 align="center">StudioBridge</h1>
+
+<p align="center">
+  Make your Bambu Lab 3D printers visible in Bambu Studio or Orca Slicer — across any network.<br/>
+  Connect printers from other subnets, VPNs, or your home network with a simple GUI.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/v/release/Rdiger-36/StudioBridge?style=flat-square&label=version&color=blue" alt="version" />
+  <img src="https://img.shields.io/badge/Java-%E2%89%A521-ED8B00?style=flat-square&logo=openjdk&logoColor=white" alt="Java" />
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey?style=flat-square" alt="platform" />
+  <img src="https://img.shields.io/badge/license-GPL--3.0-green?style=flat-square" alt="license" />
+  <img src="https://img.shields.io/github/actions/workflow/status/Rdiger-36/StudioBridge/build-and-release.yml?style=flat-square&label=build" alt="build" />
+  <img src="https://img.shields.io/badge/maintained-yes-brightgreen?style=flat-square" alt="maintained" />
+</p>
+
+---
+
+With StudioBridge it is possible to make Bambu Lab 3D Printers visible in Bambu Studio or Orca Slicer, that can not be automatically added by them.
+It is also possible to connect printers from other subnets or from accessible external networks (e.g. via VPN) or in your normal home network.
 There are many scripts for all kinds of systems, but many users feel more comfortable with a GUI. Therefore I developed StudioBridge, which is basically based on the scripts i found in countless forums.
 
 # How it works
