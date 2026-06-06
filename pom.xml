@@ -5,7 +5,7 @@
 
     <groupId>rdiger36</groupId>
     <artifactId>StudioBridge</artifactId>
-    <version>2.1.0</version>
+    <version>2.1.1</version>
     <packaging>jar</packaging>
 
     <name>StudioBridge</name>
@@ -17,9 +17,9 @@
 
         <!-- Dependency Versions -->
         <flatlaf.version>3.7.1</flatlaf.version>
-        <commons-io.version>2.21.0</commons-io.version>
-        <jna.version>5.18.1</jna.version>
-        <json.version>20250517</json.version>
+        <commons-io.version>2.22.0</commons-io.version>
+        <jna.version>5.19.0</jna.version>
+        <json.version>20260522</json.version>
         <junit.version>4.13.2</junit.version>
         <jnafilechooser.version>1.1.2</jnafilechooser.version>
     </properties>
@@ -36,6 +36,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
                 <configuration>
                     <source>11</source>
                     <target>11</target>
