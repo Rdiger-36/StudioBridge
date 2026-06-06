@@ -19,7 +19,9 @@ You can check if the printer would connect correctly in Bambu Studio with the fu
 Successfully tested on:
 - Windows 10/11 ARM and x86
 - Linux Ubuntu 25.10 ARM and x86
-- MacOS Intel and M-Series
+- macOS M-Series (Apple Silicon)
+
+> **Note for Intel Mac users:** macOS 27 (September 2026) removes Rosetta 2 support. Native Intel (x86) builds are no longer provided. Intel Mac users can use the `.jar` release with Java 21+.
 
 # Requirements
 - min. Java 21 (only for .jar compiled release)
@@ -202,13 +204,6 @@ Running the StudioBridge GUI
 	3.	Double-click the .jar file to launch StudioBridge. This should open the GUI, allowing you to configure and use your 3D printers with Bambu Studio over LAN.
 
 If the .jar file does not open directly, ensure Java is properly installed, and check your system’s default settings for opening .jar files.
-
-## FAQ
-Q: My app won't start on macOS. There is an error message saying that the app is corrupted and needs to be deleted.
-
-A: This is a safety feature from macOS Gatekeeper. To disable this error message, run the following command in your terminal:
-
-`xattr -dr com.apple.quarantine /Applications/StudioBridge.app`
 
 # Support Me
 [![Buy Me a Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/Rdiger36)

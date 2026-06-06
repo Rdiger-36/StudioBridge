@@ -289,7 +289,11 @@ jobs:
           path: "*.AppImage"
 
   # ─────────────────────────────────────────────────────────────────────────
-  # macOS — signed + notarized DMG  (arm64 and x86)
+  # macOS — signed + notarized DMG  (arm64 / Apple Silicon only)
+  #
+  # Intel (x86) support dropped: macOS 27 (September 2026) removes Rosetta 2,
+  # making x86 app execution on Apple Silicon impossible. Intel Macs cannot
+  # upgrade to macOS 27, so the x86 user base will effectively be zero.
   #
   # Required secrets:
   #   MACOS_CERTIFICATE     — base64-encoded Developer ID Application .p12
@@ -303,15 +307,7 @@ jobs:
   build-macos:
     needs: build-jar
     if: startsWith(github.ref, 'refs/tags/v')
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: macos-latest   # arm64 — M-Series
-            arch: arm64
-          - runner: macos-13       # x86   — Intel
-            arch: x86
-    runs-on: ${{ matrix.runner }}
+    runs-on: macos-latest   # arm64 — Apple Silicon (M-Series)
     steps:
       - uses: actions/checkout@v4
 
@@ -424,7 +420,7 @@ jobs:
       - name: Rename DMG
         run: |
           V="${{ needs.build-jar.outputs.version }}"
-          mv dmg-output/*.dmg "StudioBridge-${V}_macOS_${{ matrix.arch }}.dmg"
+          mv dmg-output/*.dmg "StudioBridge-${V}_macOS_arm64.dmg"
 
       - name: Notarize and staple DMG
         env:
@@ -459,7 +455,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: macos-${{ matrix.arch }}
+          name: macos-arm64
           path: "*.dmg"
 
   # ─────────────────────────────────────────────────────────────────────────
@@ -485,7 +481,6 @@ jobs:
             artifacts/linux-x86_64/*
             artifacts/linux-aarch64/*
             artifacts/macos-arm64/*
-            artifacts/macos-x86/*
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-') }}
         env:
