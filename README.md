@@ -12,7 +12,7 @@
 <p align="center">
   <img src="https://img.shields.io/github/v/release/Rdiger-36/StudioBridge?style=flat-square&label=version&color=blue" alt="version" />
   <img src="https://img.shields.io/badge/Java-%E2%89%A521-ED8B00?style=flat-square&logo=openjdk&logoColor=white" alt="Java" />
-  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey?style=flat-square" alt="platform" />
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey?style=flat-square&color=orange" alt="platform" />
   <img src="https://img.shields.io/badge/license-GPL--3.0-green?style=flat-square" alt="license" />
   <img src="https://img.shields.io/github/actions/workflow/status/Rdiger-36/StudioBridge/build-and-release.yml?style=flat-square&label=build" alt="build" />
   <img src="https://img.shields.io/badge/maintained-yes-brightgreen?style=flat-square" alt="maintained" />
