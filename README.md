@@ -89,7 +89,7 @@ To use StudioBridge via Terminal/CMD/PowerShell you have to run the StudioBridge
 
 /Applications/StudioBridge.app/Contents/MacOS/StudioBridgeCLI --help
 
-*** StudioBridge by Rdiger-36 v.2.1.2 ***
+*** StudioBridge by Rdiger-36 v.2.1.3 ***
 
 Usage:
   /Applications/StudioBridge.app/Contents/MacOS/StudioBridgeCLI [OPTIONS]
@@ -122,7 +122,7 @@ You can find the StudioBridgeCLI.exe in your installation directory, standard: "
 ```bash
 .\StudioBridgeCLI.exe --help
 
-*** StudioBridge by Rdiger-36 v.2.1.2 ***
+*** StudioBridge by Rdiger-36 v.2.1.3 ***
 
 You are currently running this application in raw mode (via .jar)!
 For the official version for your OS and CPU architecture, please visit the GitHub repository.
@@ -158,7 +158,7 @@ Example:
 ```bash
 .\StudioBridge.AppImage --help
 
-*** StudioBridge by Rdiger-36 v.2.1.2 ***
+*** StudioBridge by Rdiger-36 v.2.1.3 ***
 
 You are currently running this application in raw mode (via .jar)!
 For the official version for your OS and CPU architecture, please visit the GitHub repository.
