@@ -48,12 +48,12 @@ jobs:
           cp target/*-jar-with-dependencies.jar input/${{ env.MAIN_JAR }}
           cp target/*-jar-with-dependencies.jar "target/StudioBridge-${{ steps.version.outputs.value }}.jar"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: jar-release
           path: target/StudioBridge-*.jar
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: jar-input
           path: input/StudioBridge.jar
@@ -93,7 +93,7 @@ jobs:
           echo "$wixDir" >> $env:GITHUB_PATH
 
       - name: Download JAR
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: jar-input
           path: input
@@ -168,7 +168,7 @@ jobs:
           Get-ChildItem msi-output\*.msi |
             Move-Item -Destination "StudioBridge-${v}_win_${{ matrix.arch }}.msi"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: windows-${{ matrix.arch }}
           path: |
@@ -209,7 +209,7 @@ jobs:
           chmod +x appimagetool
 
       - name: Download JAR
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: jar-input
           path: input
@@ -283,7 +283,7 @@ jobs:
             ./appimagetool "${APPDIR}" \
             "${{ env.APP_NAME }}-${VERSION}-${{ matrix.arch }}.AppImage"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: linux-${{ matrix.arch }}
           path: "*.AppImage"
@@ -338,7 +338,7 @@ jobs:
       # icon.icns is pre-converted and stored in .github/packaging/icons/
 
       - name: Download JAR
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: jar-input
           path: input
@@ -453,7 +453,7 @@ jobs:
 
           xcrun stapler staple "$DMG"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: macos-arm64
           path: "*.dmg"
@@ -470,7 +470,7 @@ jobs:
       pull-requests: read
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           path: artifacts
 
