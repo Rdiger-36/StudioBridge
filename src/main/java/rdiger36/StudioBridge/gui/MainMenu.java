@@ -72,7 +72,7 @@ public class MainMenu {
     public static String title = "StudioBridge";
     
     // Application version
-    public static String version = "212";
+    public static String version = "213";
     
     // Destination for UDPPackage
     public static String destionation4UDP = "localhost";
