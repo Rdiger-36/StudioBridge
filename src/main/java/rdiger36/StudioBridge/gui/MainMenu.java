@@ -132,6 +132,7 @@ public class MainMenu {
 
         migrateOldDataDirectory();
         Config.loadAppSettings();
+        migrateLegacyProfilesPathSetting();
 
         final Map<String, String> valid = new LinkedHashMap<>();
 
@@ -315,6 +316,51 @@ public class MainMenu {
         newDir.mkdirs();
         mergeDirectories(oldDir, newDir);
         deleteDirectory(oldDir);
+    }
+
+    /**
+     * Repairs a profiles path that was read from the settings file but still points into
+     * the old data directory that {@link #migrateOldDataDirectory()} has already moved.
+     *
+     * <p>The settings file always contains an absolute {@code customProfilesPath}, even for
+     * users who never picked one, so everybody who used StudioBridge before the data
+     * directory was renamed has the old location stored there. Because the settings are
+     * loaded after the directory migration, that stored value overrides the migrated path
+     * and the profiles moved to the new directory are never found again.</p>
+     *
+     * <p>This runs on every start and does not require the old directory to still exist,
+     * because {@code getAllProfiles()} recreates the missing directory as an empty one.</p>
+     */
+    private static void migrateLegacyProfilesPathSetting() {
+        String legacyDir = System.getProperty("user.home") + System.getProperty("file.separator") + "StudioBridge";
+        ProfilesDir = remapLegacyProfilesPath(ProfilesDir, legacyDir, defaultSavePath);
+    }
+
+    /**
+     * Moves a path that lies inside the old data directory to the same relative location
+     * inside the current one. Paths outside the old directory are returned unchanged, so a
+     * directory the user deliberately selected somewhere else is kept as it is.
+     *
+     * @param profilesDir the profiles path as loaded from the settings file.
+     * @param legacyDir the data directory used before the rename.
+     * @param currentDir the data directory used today.
+     * @return the remapped path, or the unchanged path if no remapping is needed.
+     */
+    static String remapLegacyProfilesPath(String profilesDir, String legacyDir, String currentDir) {
+        if (profilesDir == null || legacyDir == null || currentDir == null) {
+            return profilesDir;
+        }
+
+        if (profilesDir.equals(legacyDir)) {
+            return currentDir;
+        }
+
+        // Compare including the separator so that siblings like "StudioBridgeBackup" are not matched
+        if (profilesDir.startsWith(legacyDir + System.getProperty("file.separator"))) {
+            return currentDir + profilesDir.substring(legacyDir.length());
+        }
+
+        return profilesDir;
     }
 
     private static void mergeDirectories(File src, File dest) {
