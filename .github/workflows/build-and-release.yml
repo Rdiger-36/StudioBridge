@@ -27,9 +27,9 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.value }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -48,12 +48,12 @@ jobs:
           cp target/*-jar-with-dependencies.jar input/${{ env.MAIN_JAR }}
           cp target/*-jar-with-dependencies.jar "target/StudioBridge-${{ steps.version.outputs.value }}.jar"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: jar-release
           path: target/StudioBridge-*.jar
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: jar-input
           path: input/StudioBridge.jar
@@ -74,9 +74,9 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -93,7 +93,7 @@ jobs:
           echo "$wixDir" >> $env:GITHUB_PATH
 
       - name: Download JAR
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: jar-input
           path: input
@@ -168,7 +168,7 @@ jobs:
           Get-ChildItem msi-output\*.msi |
             Move-Item -Destination "StudioBridge-${v}_win_${{ matrix.arch }}.msi"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: windows-${{ matrix.arch }}
           path: |
@@ -191,9 +191,9 @@ jobs:
             arch: aarch64
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -209,7 +209,7 @@ jobs:
           chmod +x appimagetool
 
       - name: Download JAR
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: jar-input
           path: input
@@ -283,7 +283,7 @@ jobs:
             ./appimagetool "${APPDIR}" \
             "${{ env.APP_NAME }}-${VERSION}-${{ matrix.arch }}.AppImage"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: linux-${{ matrix.arch }}
           path: "*.AppImage"
@@ -309,9 +309,9 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: macos-latest   # arm64 — Apple Silicon (M-Series)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -338,7 +338,7 @@ jobs:
       # icon.icns is pre-converted and stored in .github/packaging/icons/
 
       - name: Download JAR
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: jar-input
           path: input
@@ -453,7 +453,7 @@ jobs:
 
           xcrun stapler staple "$DMG"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: macos-arm64
           path: "*.dmg"
@@ -470,7 +470,7 @@ jobs:
       pull-requests: read
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: artifacts
 
