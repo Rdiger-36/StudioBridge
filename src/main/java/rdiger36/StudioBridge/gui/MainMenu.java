@@ -71,8 +71,8 @@ public class MainMenu {
     // Application Name
     public static String title = "StudioBridge";
     
-    // Application version
-    public static String version = "213";
+    // Application version, taken from the Maven project version
+    public static String version = Update.readLocalVersion();
     
     // Destination for UDPPackage
     public static String destionation4UDP = "localhost";
@@ -292,7 +292,6 @@ public class MainMenu {
 
 
     private static void printHeader() {
-        String version = MainMenu.version.substring(0, 1) + "." + MainMenu.version.substring(1, 2) + "." + MainMenu.version.substring(2, 3);
         System.out.println("*** " + title + " by Rdiger-36 v." + version + " ***\n");
         
         if (runningAsJar) {
@@ -1146,7 +1145,7 @@ public class MainMenu {
         });
         
 
-        if(checkForUpdate) new Thread(() -> Update.checkVersion(frmStudioBridge)).start(); // Check for updates, if it is not disabled by --noupdate argument at startup
+        if(checkForUpdate) new Thread(() -> Update.checkVersion(frmStudioBridge), "update-check").start(); // Check for updates, if it is not disabled by --noupdate argument at startup
         
         if (jarInfo) {
         
