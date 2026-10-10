@@ -234,4 +234,4 @@ Running the StudioBridge GUI
 If the .jar file does not open directly, ensure Java is properly installed, and check your system’s default settings for opening .jar files.
 
 # Support Me
-[![Buy Me a Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/Rdiger36)
+<a href="https://ko-fi.com/rdiger36"><img src="https://storage.ko-fi.com/cdn/kofi2.png?v=3" alt="Buy Me a Coffee at ko-fi.com" height="36" /></a>
