@@ -8,6 +8,9 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -32,6 +35,9 @@ import rdiger36.StudioBridge.objects.Printer;
  * </ul>
  */
 public class UDPPackage {
+	
+    // Running broadcast thread per printer serial number, so repeated sends replace each other
+    private static final Map<String, Thread> runningBroadcasts = new ConcurrentHashMap<>();
     	
     /**
      * Sends a specific UDP data packet to the local Bambu Studio instance.
@@ -64,7 +70,7 @@ public class UDPPackage {
         		    "DevBind.bambu.com: free\r\n" +             
         		    "\r\n";
         	
-        	UDPPackage.startBroadcast(message);
+        	UDPPackage.startBroadcast(printer.getSerialNumber(), message);
 
             if (!multiMode && mainFrame != null) new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/success.png")), "<html>Package sent successfully.<br>The Printer will appear in the next 60 seconds in Bambu Studio.<br>You can close this Programm when your printer(s) appear in Bambu Studio</html>", "Ok").showDialog();
 
@@ -112,9 +118,12 @@ public class UDPPackage {
     private static boolean isPortInUseWithLsof(int port) {
         try {
             // Run lsof command to check if the port is in use
-            Process process = new ProcessBuilder("lsof", "-i", "udp:" + port).start();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            return reader.readLine() != null; // If output is not null, port is in use
+            Process process = new ProcessBuilder("lsof", "-i", "udp:" + port).redirectError(ProcessBuilder.Redirect.DISCARD).start();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                return reader.readLine() != null; // If output is not null, port is in use
+            } finally {
+                if (!process.waitFor(5, TimeUnit.SECONDS)) process.destroyForcibly();
+            }
         } catch (Exception e) {
             return false;
         }
@@ -147,10 +156,11 @@ public class UDPPackage {
      * or to a specific destination address. The message is sent to multiple ports
      * in 10 intervals.
      *
+     * @param key identifies the printer, a running broadcast with the same key is stopped first
      * @param message the text message to send via UDP
      */
-    public static void startBroadcast(String message) {
-        new Thread(() -> {
+    public static void startBroadcast(String key, String message) {
+        Thread thread = new Thread(() -> {
             try (DatagramSocket socket = new DatagramSocket()) {
                 
                 // Default destination (configured in settings)
@@ -167,7 +177,7 @@ public class UDPPackage {
 
                 // Send message 10 times in 5-second intervals
                 for (int i = 0; i < 10; i++) {
-                    byte[] data = message.getBytes(StandardCharsets.US_ASCII);
+                    byte[] data = message.getBytes(StandardCharsets.UTF_8);
                     InetAddress bcast = InetAddress.getByName(destionation);
 
                     // Send packet to each target port
@@ -179,11 +189,17 @@ public class UDPPackage {
                     Thread.sleep(5_000);
                 }
 
-                socket.close();
-
+            } catch (InterruptedException e) {
+                // Replaced by a newer broadcast for the same printer
             } catch (Exception e) {
                 e.printStackTrace();
+            } finally {
+                runningBroadcasts.remove(key, Thread.currentThread());
             }
-        }).start();
+        }, "udp-broadcast");
+        
+        Thread previous = runningBroadcasts.put(key, thread);
+        if (previous != null) previous.interrupt();
+        thread.start();
     }
 }

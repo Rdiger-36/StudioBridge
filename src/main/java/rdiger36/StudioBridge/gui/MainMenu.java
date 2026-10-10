@@ -848,7 +848,7 @@ public class MainMenu {
 			if (txtIP.getText().equals("")) {
 				new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>You must enter a valid IP-Address!</html>", "Ok").showDialog();
 			} else {
-				new Thread(() -> new PrinterCheck(frmStudioBridge, txtIP.getText())).start();
+				new PrinterCheck(frmStudioBridge, txtIP.getText());
 			}
 			       	
         });
@@ -874,13 +874,20 @@ public class MainMenu {
                         	profileName = new SaveDialog(frmStudioBridge, "New imported profile", "Set profile name").saveProfile();
                         	
                         	if (profileName != null) {
+                            	profileName = profileName.trim();
                             	if (profileName.equals("")) profileName = "New imported profile";
                             	
                             	setProfile(profilePath);
-                            	cbxProfile.addItem(profileName);
-                            	cbxProfile.setSelectedItem(profileName);
                             	mainPrinter.setProfileName(profileName);
-                            	Config.saveProfile(frmStudioBridge, mainPrinter);
+                            	
+                            	// Only list the imported profile if it could be saved
+                            	if (Config.saveProfile(frmStudioBridge, mainPrinter)) {
+                            		if (!profileExists(profileName)) cbxProfile.addItem(profileName);
+                            		cbxProfile.setSelectedItem(profileName);
+                            		printerMap.put(profileName, mainPrinter);
+                            	} else {
+                            		cbxProfile.setSelectedItem("New profile");
+                            	}
                             	
                         	}
                         	
@@ -1072,21 +1079,19 @@ public class MainMenu {
 	                	if (profileName == null) {
 	                		return;
 	                	} else {
-	                		tempPrinter.setProfileName(profileName);
+	                		tempPrinter.setProfileName(profileName.trim());
 	                	}
 	                }
 	                
 	                if (!notAllowedProfileNames.contains(tempPrinter.getProfileName())) {
 	                    if (!profileExists(tempPrinter.getProfileName())) {
+	                        if (!Config.saveProfile(frmStudioBridge, tempPrinter)) return;
 	                        cbxProfile.addItem(tempPrinter.getProfileName());
-	                        Config.saveProfile(frmStudioBridge, tempPrinter);
 	                        cbxProfile.setSelectedItem(tempPrinter.getProfileName());
 	                        frmStudioBridge.pack();    
 	                    } else {
 	                        int result = new DialogTwoButtons(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "Warning! The profile: " + tempPrinter.getProfileName() + " already exists, do you want to overwrite it?", "Yes", "No").showDialog();
-	                        if (result == 0) {
-	                            Config.saveProfile(frmStudioBridge, tempPrinter);
-	                        }
+	                        if (result != 0 || !Config.saveProfile(frmStudioBridge, tempPrinter)) return;
 	                    }
 	                    
 	                    mainPrinter = tempPrinter;
@@ -1107,7 +1112,6 @@ public class MainMenu {
         	try {
             	
         		String oldProfileName = cbxProfile.getSelectedItem().toString();
-        		int oldProfilePosition = cbxProfile.getSelectedIndex();
         		
         		if (!notAllowedProfileNames.contains(oldProfileName)) {
         		
@@ -1118,21 +1122,35 @@ public class MainMenu {
 	            	if (profileName == null) {
 	            		return;
 	            	} else {
-	            		tempPrinter.setProfileName(profileName);
+	            		tempPrinter.setProfileName(profileName.trim());
 	            	}
 	                
 	                if (!notAllowedProfileNames.contains(tempPrinter.getProfileName())) {
-	                    
-	                    cbxProfile.addItem(tempPrinter.getProfileName());
-	                    Config.saveProfile(frmStudioBridge, tempPrinter);
-	                    cbxProfile.setSelectedItem(tempPrinter.getProfileName());
-	                    
-	                    cbxProfile.removeItemAt(oldProfilePosition);
-	                    
-	                    printerMap.remove(oldProfileName);
-	                    printerMap.put(tempPrinter.getProfileName(), tempPrinter);
-	                    
-	                    new File(ProfilesDir + System.getProperty("file.separator") + oldProfileName + ".sbp").delete();
+	                	
+	                	boolean renamed = !tempPrinter.getProfileName().equals(oldProfileName);
+	                	
+	                	// Do not silently overwrite another existing profile
+	                	if (renamed && profileExists(tempPrinter.getProfileName())) {
+	                		int result = new DialogTwoButtons(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "Warning! The profile: " + tempPrinter.getProfileName() + " already exists, do you want to overwrite it?", "Yes", "No").showDialog();
+	                		if (result != 0) return;
+	                	}
+	                	
+	                	// Keep the old profile if the new one could not be saved
+	                	if (!Config.saveProfile(frmStudioBridge, tempPrinter)) return;
+	                	
+	                	if (renamed) {
+	                		if (profileExists(tempPrinter.getProfileName())) cbxProfile.removeItem(tempPrinter.getProfileName());
+	                		cbxProfile.insertItemAt(tempPrinter.getProfileName(), cbxProfile.getSelectedIndex());
+	                		cbxProfile.removeItem(oldProfileName);
+	                		cbxProfile.setSelectedItem(tempPrinter.getProfileName());
+	                		
+	                		printerMap.remove(oldProfileName);
+	                		
+	                		// Only delete the old file after the profile was saved under its new name
+	                		new File(ProfilesDir + System.getProperty("file.separator") + oldProfileName + ".sbp").delete();
+	                	}
+	                	
+	                	printerMap.put(tempPrinter.getProfileName(), tempPrinter);
 	                    
 	                    mainPrinter = tempPrinter;
 	                    
