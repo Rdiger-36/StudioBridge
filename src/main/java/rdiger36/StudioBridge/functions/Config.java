@@ -188,7 +188,7 @@ public class Config {
 	    
 	    // Check if the configuration file exists.
 	    if (configFile.exists()) {  
-	    	Printer printer = new Printer(configFile.getName().replace(".sbp", ""), "", "", "", "");
+	    	Printer printer = new Printer(configFile.getName().replaceFirst("\\.sbp$", ""), "", "", "", "");
 	        
 	        try {
 	            // Open the configuration file for reading.

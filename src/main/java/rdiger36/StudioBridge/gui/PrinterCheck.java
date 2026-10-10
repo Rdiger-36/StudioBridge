@@ -70,7 +70,7 @@ public class PrinterCheck {
         dialPrinter.getContentPane().add(separator, "cell 0 1 2 1,growx,aligny center");
 
         // IP information
-        JLabel lblInfoIP = new JLabel("Connectivity check for the printer witc the IP-Address: " + IPAddress);
+        JLabel lblInfoIP = new JLabel("Connectivity check for the printer with the IP-Address: " + IPAddress);
         dialPrinter.getContentPane().add(lblInfoIP, "cell 0 2 2 1,alignx center,aligny top");
 
         // Ping test label
@@ -162,7 +162,7 @@ public class PrinterCheck {
 
                 // Handshake successful
                 SwingUtilities.invokeLater(() -> {
-                    lblHandshakeState.setText("Handshake was sucessfully between computer and printer!");
+                    lblHandshakeState.setText("Handshake between computer and printer was successful!");
                     lblHandshakeState.setIcon(Resize.setNewImageIconSize(new ImageIcon(ToolInfo.class.getResource("/success.png")), 16, 16));
                 });
 
