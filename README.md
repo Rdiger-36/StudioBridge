@@ -235,3 +235,5 @@ If the .jar file does not open directly, ensure Java is properly installed, and 
 
 # Support Me
 <a href="https://ko-fi.com/rdiger36"><img src="https://storage.ko-fi.com/cdn/kofi2.png?v=3" alt="Buy Me a Coffee at ko-fi.com" height="36" /></a>
+
+A big thank you to all my [supporters](https://github.com/Rdiger-36/Rdiger-36/blob/main/SUPPORTERS.md)!
