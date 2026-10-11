@@ -22,6 +22,7 @@
         <json.version>20260814</json.version>
         <junit.version>4.13.2</junit.version>
         <jnafilechooser.version>1.1.2</jnafilechooser.version>
+        <miglayout.version>5.2</miglayout.version>
     </properties>
 
     <repositories>
@@ -154,6 +155,19 @@
             <groupId>com.github.steos</groupId>
             <artifactId>jnafilechooser</artifactId>
             <version>${jnafilechooser.version}</version>
+            <exclusions>
+                <!-- Only the demo application of the library. It used to bring in
+                     MigLayout, which is declared on its own below. -->
+                <exclusion>
+                    <groupId>com.github.steos.jnafilechooser</groupId>
+                    <artifactId>jnafilechooser-demo</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.miglayout</groupId>
+            <artifactId>miglayout-swing</artifactId>
+            <version>${miglayout.version}</version>
         </dependency>
     </dependencies>
 

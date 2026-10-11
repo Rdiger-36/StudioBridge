@@ -4,11 +4,18 @@ on:
   push:
     branches: [ "main" ]
     tags: [ "v*" ]
+  # Build and test every pull request, packaging and release only run for tags
+  pull_request:
+    branches: [ "main" ]
+
+# Read only by default, the release job asks for write access itself
+permissions:
+  contents: read
 
 env:
   APP_NAME:    StudioBridge
   MAIN_JAR:    StudioBridge.jar
-  MODULES:     java.base,java.desktop,java.net.http,java.security.jgss,java.security.sasl,java.naming,jdk.crypto.ec
+  MODULES:     java.base,java.desktop,java.logging,java.net.http,java.security.jgss,java.security.sasl,java.naming,jdk.crypto.ec
   JAVA_OPTS:   "-Xmx512m"
   COPYRIGHT:   Rdiger-36
   VENDOR:      Rdiger-36
@@ -20,7 +27,7 @@ jobs:
 
   # ─────────────────────────────────────────────────────────────────────────
   # JAR — cross-platform fat JAR
-  # Runs on every push to main (CI check) and on tag pushes (release)
+  # Runs on every pull request and push to main (CI check) and on tag pushes (release)
   # ─────────────────────────────────────────────────────────────────────────
   build-jar:
     runs-on: ubuntu-latest
@@ -39,21 +46,36 @@ jobs:
         id: version
         run: echo "value=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
 
+      # The release, its files and the CHANGELOG.md section are named after the
+      # pom version, so a tag that does not match it would mix two versions.
+      - name: Check tag matches pom version
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          if [ "${GITHUB_REF_NAME}" != "v.${VERSION}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match the pom version ${VERSION}, expected v.${VERSION}."
+            exit 1
+          fi
+
       - name: Build fat JAR
         run: mvn clean package -q
 
       - name: Prepare JAR artifact
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           mkdir input
           cp target/*-jar-with-dependencies.jar input/${{ env.MAIN_JAR }}
           cp target/*-jar-with-dependencies.jar "target/StudioBridge-${{ steps.version.outputs.value }}.jar"
 
       - uses: actions/upload-artifact@v7
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           name: jar-release
           path: target/StudioBridge-*.jar
 
       - uses: actions/upload-artifact@v7
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           name: jar-input
           path: input/StudioBridge.jar
@@ -87,7 +109,7 @@ jobs:
         if: matrix.arch == 'arm64'
         shell: pwsh
         run: |
-          choco install wixtoolset --no-progress -y
+          choco install wixtoolset --version 3.14.1 --no-progress -y
           $wixDir = Get-ChildItem "C:\Program Files (x86)\WiX Toolset*\bin" |
             Select-Object -First 1 -ExpandProperty FullName
           echo "$wixDir" >> $env:GITHUB_PATH
@@ -201,11 +223,19 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get install -y libfuse2
 
+      # A fixed release with its checksum: AppImageKit is archived and its
+      # "continuous" build could change or vanish between two releases.
       - name: Download appimagetool
+        env:
+          APPIMAGETOOL_VERSION: "1.9.1"
+          SHA256_x86_64:  ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0
+          SHA256_aarch64: f0837e7448a0c1e4e650a93bb3e85802546e60654ef287576f46c71c126a9158
         run: |
           wget -q \
-            "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${{ matrix.arch }}.AppImage" \
+            "https://github.com/AppImage/appimagetool/releases/download/${APPIMAGETOOL_VERSION}/appimagetool-${{ matrix.arch }}.AppImage" \
             -O appimagetool
+          SHA_VAR="SHA256_${{ matrix.arch }}"
+          echo "${!SHA_VAR}  appimagetool" | sha256sum -c -
           chmod +x appimagetool
 
       - name: Download JAR
