@@ -9,6 +9,7 @@ import java.nio.file.StandardCopyOption;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 
 import rdiger36.StudioBridge.functions.Config;
@@ -249,21 +250,36 @@ public class ProfileManager {
     }
 
     /**
-     * Deletes the selected profile after asking.
+     * Deletes a profile after asking.
      *
      * @param name the profile to delete
      */
     public void delete(String name) {
-        int response = new DialogTwoButtons(frame, null, warningIcon(), I18n.t("profile.delete", "name", name), I18n.t("common.yes"), I18n.t("common.no")).showDialog();
-        if (response != 0) return;
+        delete(name, null);
+    }
+
+    /**
+     * Deletes a profile after asking. The main window keeps showing its profile unless it was
+     * the deleted one, then it switches to a new profile.
+     *
+     * @param name the profile to delete
+     * @param parent a dialog the questions belong to, or null for the main window
+     * @return true when the profile was deleted
+     */
+    public boolean delete(String name, JDialog parent) {
+        JFrame owner = parent == null ? frame : null;
+        int response = new DialogTwoButtons(owner, parent, warningIcon(), I18n.t("profile.delete", "name", name), I18n.t("common.yes"), I18n.t("common.no")).showDialog();
+        if (response != 0) return false;
         if (!deleteFile(name)) {
-            warn(I18n.t("profile.deleteFailed", "name", name));
-            return;
+            new DialogOneButton(owner, parent, warningIcon(), I18n.t("profile.deleteFailed", "name", name), I18n.t("common.ok")).showDialog();
+            return false;
         }
+        boolean shown = name.equals(list.getSelectedItem());
         MainMenu.printerMap.remove(name);
         removeFromList(name);
-        list.setSelectedIndex(-1);
+        if (shown) list.setSelectedIndex(-1);
         if (frame != null) frame.pack();
+        return true;
     }
 
     /** Removes a profile whose file can not be read any more from the list. */

@@ -1,4 +1,5 @@
 package rdiger36.StudioBridge.gui;
+import java.awt.Window;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -38,7 +39,8 @@ public class DialogOneButton {
      * @param buttonText The text for the button that closes the dialog.
      */
     public DialogOneButton(JFrame mainFrame, JDialog mainDial, ImageIcon icon, String message, String buttonText) {
-        dial = new JDialog();
+        // Owned by its parent: an ownerless dialog is blocked by a modal parent dialog and can not be clicked
+        dial = new JDialog(mainDial != null ? (Window) mainDial : mainFrame);
         dial.setResizable(false);
         dial.setTitle("StudioBridge");
         dial.setIconImage(Toolkit.getDefaultToolkit().getImage(DialogOneButton.class.getResource("/icon.png")));

@@ -1,8 +1,9 @@
 package rdiger36.StudioBridge.gui;
 
-import java.awt.Dialog.ModalExclusionType;
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.table.DefaultTableModel;
@@ -39,6 +41,9 @@ import javax.swing.JProgressBar;
 public class MultiPrinterSetup {
     private JTable table;
 
+    // Index of the column with the delete icon
+    private static final int COLUMN_DELETE = 6;
+
     // Saves edited rows and keeps the main window in step
     private final ProfileManager profiles;
     
@@ -54,10 +59,9 @@ public class MultiPrinterSetup {
      */
     public MultiPrinterSetup(JFrame frmStudioBridge, ProfileManager profiles) {
         this.profiles = profiles;
-        JDialog dialInfo = new JDialog();
-        dialInfo.setModalExclusionType(ModalExclusionType.APPLICATION_EXCLUDE);
-        dialInfo.setModal(true);
-        dialInfo.setAlwaysOnTop(true);
+        // A modal dialog of the main window: its own questions and messages belong to it and can be
+        // answered, the main window waits until it is closed
+        JDialog dialInfo = new JDialog(frmStudioBridge, true);
         dialInfo.setTitle(I18n.t("multi.title"));
         dialInfo.setIconImage(Toolkit.getDefaultToolkit().getImage(MultiPrinterSetup.class.getResource("/icon.png")));
         dialInfo.setBounds(100, 100, 602, 482);
@@ -78,10 +82,10 @@ public class MultiPrinterSetup {
         table.setFocusable(false);
         table.setModel(new DefaultTableModel(
             new Object[][] {},
-            new String[] { I18n.t("multi.columnProfile"), I18n.t("multi.columnName"), I18n.t("multi.columnIp"), I18n.t("multi.columnSerial"), I18n.t("multi.columnModel"), I18n.t("multi.columnSend") }
+            new String[] { I18n.t("multi.columnProfile"), I18n.t("multi.columnName"), I18n.t("multi.columnIp"), I18n.t("multi.columnSerial"), I18n.t("multi.columnModel"), I18n.t("multi.columnSend"), I18n.t("multi.columnDelete") }
         ) {
             Class<?>[] columnTypes = new Class[] {
-                Object.class, Object.class, Object.class, Object.class, Object.class, Boolean.class
+                Object.class, Object.class, Object.class, Object.class, Object.class, Boolean.class, Object.class
             };
 
             public Class<?> getColumnClass(int columnIndex) {
@@ -91,7 +95,7 @@ public class MultiPrinterSetup {
             // The profile name identifies the row, the other values can be adjusted for this send
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column != 0;
+                return column != 0 && column != COLUMN_DELETE;
             }
         });
 
@@ -129,6 +133,34 @@ public class MultiPrinterSetup {
         table.getColumnModel().getColumn(3).setPreferredWidth(159);
         table.getColumnModel().getColumn(4).setPreferredWidth(170);
         table.getColumnModel().getColumn(5).setPreferredWidth(93);
+        table.getColumnModel().getColumn(COLUMN_DELETE).setPreferredWidth(70);
+
+        // Delete column: a trash icon per row, a click asks and deletes that profile
+        FlatSVGIcon deleteIcon = new FlatSVGIcon("icons/delete.svg");
+        table.getColumnModel().getColumn(COLUMN_DELETE).setCellRenderer(new TableCellRenderer() {
+            private final JLabel cell = new JLabel(deleteIcon, SwingConstants.CENTER);
+            {
+                cell.setOpaque(true);
+                cell.setToolTipText(I18n.t("profile.deleteAction"));
+            }
+
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                cell.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+                return cell;
+            }
+        });
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int row = table.rowAtPoint(e.getPoint());
+                if (row < 0 || table.columnAtPoint(e.getPoint()) != COLUMN_DELETE) return;
+                stopEditing();
+                DefaultTableModel model = (DefaultTableModel) table.getModel();
+                String name = String.valueOf(model.getValueAt(row, 0));
+                if (profiles.delete(name, dialInfo)) model.removeRow(row);
+            }
+        });
         scrollPane.setViewportView(table);
 
         dialInfo.getContentPane().setLayout(new MigLayout("", "[188.00,grow][223.00,grow][390.00][]", "[grow][bottom][]"));
@@ -190,7 +222,7 @@ public class MultiPrinterSetup {
 	    List<Printer> printers = new ArrayList<>(MainMenu.printerMap.values());
 	    printers.sort((a, b) -> a.getProfileName().compareToIgnoreCase(b.getProfileName()));
 	    for (Printer printer : printers) {
-	    	model.addRow(new Object[]{printer.getProfileName(), printer.getPrinterName(), printer.getIpAdress(), printer.getSerialNumber(), printer.getPrinterModel(), false});
+	    	model.addRow(new Object[]{printer.getProfileName(), printer.getPrinterName(), printer.getIpAdress(), printer.getSerialNumber(), printer.getPrinterModel(), false, null});
         }
     }
 
@@ -324,7 +356,6 @@ public class MultiPrinterSetup {
 	            SwingUtilities.invokeLater(() -> {
 	                progressBar.setVisible(false);
 	                if (!stopThread) {
-	                    dialInfo.setModal(false);
 	                    if (printerSelected) {
 	                    	if (!errors.isEmpty()) {
 	                    		String errorsOn = "";
@@ -340,7 +371,6 @@ public class MultiPrinterSetup {
 	                    } else {
 	                    	new DialogOneButton(null, dialInfo, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("multi.noneSelected"), I18n.t("common.back")).showDialog();
 	                    }
-	                    dialInfo.setModal(true);
 	                }
 	            });
 	            
@@ -350,9 +380,7 @@ public class MultiPrinterSetup {
 	            SwingUtilities.invokeLater(() -> {
 	                progressBar.setVisible(false);
 	                if (!stopThread) {
-	                    dialInfo.setModal(false);
 	                    new DialogOneButton(null, dialInfo, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("send.slicerNotRunning"), I18n.t("common.ok")).showDialog();
-	                    dialInfo.setModal(true);
 	                }
 	            });                    	
 	        }
