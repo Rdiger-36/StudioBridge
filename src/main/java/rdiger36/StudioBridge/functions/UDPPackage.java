@@ -163,11 +163,10 @@ public class UDPPackage {
         Thread thread = new Thread(() -> {
             try (DatagramSocket socket = new DatagramSocket()) {
                 
-                // Default destination (configured in settings)
+                // Direct mode sends to the local slicer, otherwise broadcast to the network
                 String destionation = MainMenu.destionation4UDP;
                 
-                // Enable true broadcast mode when directMode is active
-                if (MainMenu.directMode) {
+                if (!MainMenu.directMode) {
                     socket.setBroadcast(true);
                     destionation = "255.255.255.255";
                 }
