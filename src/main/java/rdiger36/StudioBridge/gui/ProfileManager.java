@@ -146,6 +146,24 @@ public class ProfileManager {
     }
 
     /**
+     * Saves changed values of a listed profile without changing which profile the main window
+     * shows. When it is the one shown, the main window is refreshed with the new values.
+     *
+     * @param printer the profile with its new values, under its existing profile name
+     * @return true when it was saved
+     */
+    public boolean update(Printer printer) {
+        if (!Config.saveProfile(frame, printer)) return false;
+        String name = printer.getProfileName();
+        MainMenu.printerMap.put(name, printer);
+        if (name.equals(list.getSelectedItem())) {
+            MainMenu.mainPrinter = printer;
+            list.setSelectedItem(name); // fires the listener, which loads the new values
+        }
+        return true;
+    }
+
+    /**
      * Offers to save a new profile with data, asking for its name.
      *
      * @param printer the entered data; its profile name is set when it is saved

@@ -880,7 +880,7 @@ public class MainMenu {
         JMenuItem mntmMultiPrinterSetup = new JMenuItem(I18n.t("menu.multiPrinter"));
         mnSettings.add(mntmMultiPrinterSetup);
         
-        mntmMultiPrinterSetup.addActionListener(arg -> new MultiPrinterSetup(frmStudioBridge));
+        mntmMultiPrinterSetup.addActionListener(arg -> new MultiPrinterSetup(frmStudioBridge, profiles));
         
         // Action listener for sending the data package
         btnSendPackage.addActionListener(arg -> {

@@ -11,6 +11,7 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
 import javax.swing.table.DefaultTableModel;
 import net.miginfocom.swing.MigLayout;
 import rdiger36.StudioBridge.functions.*;
@@ -37,6 +38,9 @@ import javax.swing.JProgressBar;
  */
 public class MultiPrinterSetup {
     private JTable table;
+
+    // Saves edited rows and keeps the main window in step
+    private final ProfileManager profiles;
     
     private volatile boolean stopThread = false;
     private volatile boolean printerSelected = false;
@@ -48,7 +52,8 @@ public class MultiPrinterSetup {
      * 
      * @param frmStudioBridge The parent JFrame for positioning the dialog.
      */
-    public MultiPrinterSetup(JFrame frmStudioBridge) {
+    public MultiPrinterSetup(JFrame frmStudioBridge, ProfileManager profiles) {
+        this.profiles = profiles;
         JDialog dialInfo = new JDialog();
         dialInfo.setModalExclusionType(ModalExclusionType.APPLICATION_EXCLUDE);
         dialInfo.setModal(true);
@@ -57,8 +62,10 @@ public class MultiPrinterSetup {
         dialInfo.setIconImage(Toolkit.getDefaultToolkit().getImage(MultiPrinterSetup.class.getResource("/icon.png")));
         dialInfo.setBounds(100, 100, 602, 482);
         dialInfo.toFront();
+        dialInfo.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         dialInfo.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
+                if (!confirmClose(dialInfo)) return;
                 stopThread = true;
                 dialInfo.dispose();
             }
@@ -152,7 +159,11 @@ public class MultiPrinterSetup {
 
         JButton btnSendPrinters = new JButton(I18n.t("multi.sendSelected"));
         btnSendPrinters.addActionListener(e -> sendSelectedPrinters(frmStudioBridge, dialInfo, progressBar));
-        dialInfo.getContentPane().add(btnSendPrinters, "cell 0 1,grow");
+        dialInfo.getContentPane().add(btnSendPrinters, "cell 0 1,grow,split 2");
+
+        JButton btnSaveChanges = new JButton(I18n.t("multi.saveChanges"));
+        btnSaveChanges.addActionListener(e -> saveChanges(dialInfo, true));
+        dialInfo.getContentPane().add(btnSaveChanges, "cell 0 1,grow");
 
         JButton btnSelAll = new JButton(I18n.t("multi.selectAll"));
         btnSelAll.addActionListener(e -> setAllBooleans(true));
@@ -183,6 +194,79 @@ public class MultiPrinterSetup {
         }
     }
 
+    // The values of a table row as profile
+    private Printer rowPrinter(DefaultTableModel model, int row) {
+        return new Printer(String.valueOf(model.getValueAt(row, 0)), text(model.getValueAt(row, 1)), text(model.getValueAt(row, 2)), text(model.getValueAt(row, 3)), text(model.getValueAt(row, 4)));
+    }
+
+    private static String text(Object value) {
+        return value == null ? "" : value.toString();
+    }
+
+    // Whether a row differs from the profile as it is saved
+    private static boolean changed(Printer row, Printer saved) {
+        return saved == null
+                || !row.getPrinterName().equals(saved.getPrinterName())
+                || !row.getIpAdress().equals(saved.getIpAdress())
+                || !row.getSerialNumber().equals(saved.getSerialNumber())
+                || !row.getPrinterModel().equals(saved.getPrinterModel());
+    }
+
+    // Ends a cell edit that is still open, so its value counts
+    private void stopEditing() {
+        if (table.isEditing()) table.getCellEditor().stopCellEditing();
+    }
+
+    // Whether any row differs from its saved profile
+    private boolean hasChanges() {
+        stopEditing();
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        for (int i = 0; i < model.getRowCount(); i++) {
+            Printer row = rowPrinter(model, i);
+            if (changed(row, MainMenu.printerMap.get(row.getProfileName()))) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Saves every changed row to its profile. Incomplete rows are not saved and named.
+     *
+     * @param dialInfo the dialog, parent of the messages
+     * @param confirm whether to say so when everything was saved
+     * @return true when every changed row was saved
+     */
+    private boolean saveChanges(JDialog dialInfo, boolean confirm) {
+        stopEditing();
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        StringBuilder incomplete = new StringBuilder();
+        boolean allSaved = true;
+        for (int i = 0; i < model.getRowCount(); i++) {
+            Printer row = rowPrinter(model, i);
+            if (!changed(row, MainMenu.printerMap.get(row.getProfileName()))) continue;
+            if (row.getPrinterName().trim().isEmpty() || row.getIpAdress().trim().isEmpty()
+                    || row.getSerialNumber().trim().isEmpty() || row.getPrinterModel().isEmpty()) {
+                incomplete.append(row.getProfileName()).append("<br>");
+                allSaved = false;
+            } else if (!profiles.update(row)) {
+                allSaved = false;
+            }
+        }
+        if (incomplete.length() > 0) {
+            new DialogOneButton(null, dialInfo, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("multi.incomplete", "profiles", incomplete), I18n.t("common.ok")).showDialog();
+        } else if (allSaved && confirm) {
+            new DialogOneButton(null, dialInfo, new ImageIcon(MainMenu.class.getResource("/success.png")), I18n.t("multi.saved"), I18n.t("common.ok")).showDialog();
+        }
+        return allSaved;
+    }
+
+    // Asks about unsaved changes before closing; false keeps the dialog open
+    private boolean confirmClose(JDialog dialInfo) {
+        if (!hasChanges()) return true;
+        int response = new DialogTwoButtons(null, dialInfo, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("multi.unsaved"), I18n.t("multi.saveChanges"), I18n.t("common.continueWithoutSaving")).showDialog();
+        if (response == 1) return true;
+        return response == 0 && saveChanges(dialInfo, false);
+    }
+
     /**
      * Selects or deselects all printers in the table.
      * 
@@ -207,10 +291,19 @@ public class MultiPrinterSetup {
 
 	    stopThread = false;
 	    errors.clear();
+	    stopEditing();
+	    progressBar.setString(I18n.t("multi.checking"));
+	    progressBar.setVisible(true);
+
+	    // Read the table here on the EDT, the thread only gets a copy
+	    DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
+	    List<Printer> selected = new ArrayList<>();
+	    for (int i = 0; i < tableModel.getRowCount(); i++) {
+	        Boolean shouldSend = (Boolean) tableModel.getValueAt(i, 5);
+	        if (shouldSend != null && shouldSend) selected.add(rowPrinter(tableModel, i));
+	    }
+
 	    Thread sendingThread = new Thread(() -> {
-	        progressBar.setString(I18n.t("multi.checking"));
-	        progressBar.setVisible(true);
-	
 	        printerSelected = false;
 	        
 			// Determine which UDP port (2021 or 1990) is in use, or set to 0 if none is available
@@ -219,30 +312,12 @@ public class MultiPrinterSetup {
 	        // Check if a valid port was assigned to remoteUdpPort
 	        if (remoteUdpPort > 0) {
 	
-	            DefaultTableModel model = (DefaultTableModel) table.getModel();
-	            int rowCount = model.getRowCount();
-	            	                    
-	            for (int i = 0; i < rowCount && !stopThread; i++) {
-	                Boolean shouldSend = (Boolean) model.getValueAt(i, 5);
-	                if (shouldSend != null && shouldSend) {
-	                	
-	                	printerSelected = true;
-	                	
-	                	Printer printer = new Printer((String) model.getValueAt(i, 0), (String) model.getValueAt(i, 1), (String) model.getValueAt(i, 2), (String) model.getValueAt(i, 3), (String) model.getValueAt(i, 4));
-	
-	                    SwingUtilities.invokeLater(() -> progressBar.setString(I18n.t("multi.sending", "name", printer.getPrinterName())));
-	
-	                    if (!UDPPackage.send(frmStudioBridge, printer, remoteUdpPort, true)) {
-	                    	errors.add(printer.getPrinterName() + " - " + printer.getIpAdress() + " - " + printer.getPrinterModel());
-	                    } 
-	
-	                    try {
-	                        Thread.sleep(1000); // Simulierte Verzögerung
-	                    } catch (InterruptedException e) {
-	                        // Thread wurde unterbrochen, daher beenden wir den Prozess
-	                        Thread.currentThread().interrupt();
-	                        break;
-	                    }
+	            for (Printer printer : selected) {
+	                if (stopThread) break;
+	                printerSelected = true;
+	                SwingUtilities.invokeLater(() -> progressBar.setString(I18n.t("multi.sending", "name", printer.getPrinterName())));
+	                if (!UDPPackage.send(frmStudioBridge, printer, remoteUdpPort, true)) {
+	                    errors.add(printer.getPrinterName() + " - " + printer.getIpAdress() + " - " + printer.getPrinterModel());
 	                }
 	            }
 	
