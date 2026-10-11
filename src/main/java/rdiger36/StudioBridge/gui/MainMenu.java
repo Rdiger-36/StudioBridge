@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 import javax.swing.DefaultListCellRenderer;
@@ -93,7 +94,10 @@ public class MainMenu {
     // Set boolean for checking updates on startup
     public static boolean checkForUpdate = true;
     
-    // Set boolean for darkmode for GUI
+    // Theme setting: "auto" follows the light or dark mode of the operating system, else "light" or "dark"
+    public static String theme = UI.THEME_AUTO;
+    
+    // Whether the GUI is shown dark, worked out from the theme setting at startup
     public static boolean darkmode = false;
     
     // Control over the use of the last selected profile
@@ -155,6 +159,12 @@ public class MainMenu {
     		String name = I18n.raw(code, "profile.new");
     		if (name != null && !notAllowedProfileNames.contains(name)) notAllowedProfileNames.add(name);
     	}
+    }
+    
+    // The selected printer model, or "" when none is selected
+    private static String selectedModel(JComboBox<String> cbxModel) {
+    	Object selected = cbxModel.getSelectedItem();
+    	return selected == null ? "" : selected.toString();
     }
     
     // The selected profile, or NEW_PROFILE when the list has no selection
@@ -309,7 +319,8 @@ public class MainMenu {
         		System.setProperty( "apple.awt.application.appearance", "system" );
         		System.setProperty( "apple.laf.useScreenMenuBar", "true" );
         	}
-        	UI.changeLAF(darkmode); // Change the look and feel based on the dark mode setting
+        	darkmode = UI.isDark(theme);
+        	UI.changeLAF(darkmode); // Change the look and feel based on the theme setting
             startGUI();
         }
     }
@@ -618,6 +629,7 @@ public class MainMenu {
             } else {
                 System.err.println("Warning! There are no usable profiles in your profiles directory:");
                 System.err.println(profilesDir);
+                System.err.println("Create a profile in the StudioBridge window first, or point to your profiles with --customProfilesDir or --selectedPrinters.");
             }
         }
         return 1;
@@ -812,6 +824,7 @@ public class MainMenu {
         frmStudioBridge.getContentPane().add(lblDevName, "cell 0 6,growx,aligny center");
 
         JTextField txtName = new JTextField();
+        txtName.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, I18n.t("hint.name"));
         txtName.setText("");
         txtName.setColumns(10);
         ((AbstractDocument) txtName.getDocument()).setDocumentFilter(new LengthRestrictedDocumentFilter(25));
@@ -834,11 +847,13 @@ public class MainMenu {
 
         // Input fields for IP and Serial number
         JTextField txtIP = new JTextField();
+        txtIP.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, I18n.t("hint.ip"));
         frmStudioBridge.getContentPane().add(txtIP, "flowx,cell 1 3,growx");
         txtIP.setColumns(10);
         ((AbstractDocument) txtIP.getDocument()).setDocumentFilter(new LengthRestrictedDocumentFilter(15));
         
         JTextField txtSerial = new JTextField();
+        txtSerial.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, I18n.t("hint.serial"));
         txtSerial.setText("");
         txtSerial.setColumns(10);
         ((AbstractDocument) txtSerial.getDocument()).setDocumentFilter(new LengthRestrictedDocumentFilter(25));
@@ -851,29 +866,38 @@ public class MainMenu {
         JMenu mnSettings = new JMenu(I18n.t("menu.settings"));
         menuBar.add(mnSettings);
         
-        JCheckBoxMenuItem cbxmntmDarkmode = new JCheckBoxMenuItem(I18n.t("menu.darkmode"));
-        mnSettings.add(cbxmntmDarkmode);
-        cbxmntmDarkmode.setSelected(darkmode);
-        
-        // Action listener for dark mode toggle
-        cbxmntmDarkmode.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-            	
-            	boolean dark = cbxmntmDarkmode.isSelected();
+        // Theme menu: automatic (light or dark mode of the operating system), light or dark
+        JMenu mnTheme = new JMenu(I18n.t("menu.theme"));
+        mnSettings.add(mnTheme);
+        ButtonGroup themeGroup = new ButtonGroup();
+        String[][] themeChoices = {
+        	{UI.THEME_AUTO, I18n.t("menu.themeAuto")},
+        	{UI.THEME_LIGHT, I18n.t("menu.themeLight")},
+        	{UI.THEME_DARK, I18n.t("menu.themeDark")}
+        };
+        for (String[] choice : themeChoices) {
+        	JRadioButtonMenuItem item = new JRadioButtonMenuItem(choice[1]);
+        	item.setSelected(choice[0].equals(theme) || (UI.THEME_AUTO.equals(choice[0]) && !UI.THEME_LIGHT.equals(theme) && !UI.THEME_DARK.equals(theme)));
+        	item.addActionListener(arg -> {
+        		theme = choice[0];
+        		boolean dark = UI.isDark(theme);
+        		if (dark == MainMenu.darkmode) return;
+        		MainMenu.darkmode = dark;
 
-            	Point loc = frmStudioBridge.getLocationOnScreen();
-            	int state = frmStudioBridge.getExtendedState();
+        		Point loc = frmStudioBridge.getLocationOnScreen();
+        		int state = frmStudioBridge.getExtendedState();
 
-            	UI.changeLAF(dark);
-            	SwingUtilities.updateComponentTreeUI(frmStudioBridge);
-            	frmStudioBridge.pack();
-            	frmStudioBridge.setLocation(loc);
-            	frmStudioBridge.setExtendedState(state);
-            	frmStudioBridge.revalidate();
-            	frmStudioBridge.repaint();
-            }
-        });
+        		UI.changeLAF(dark);
+        		SwingUtilities.updateComponentTreeUI(frmStudioBridge);
+        		frmStudioBridge.pack();
+        		frmStudioBridge.setLocation(loc);
+        		frmStudioBridge.setExtendedState(state);
+        		frmStudioBridge.revalidate();
+        		frmStudioBridge.repaint();
+        	});
+        	themeGroup.add(item);
+        	mnTheme.add(item);
+        }
         
         JCheckBoxMenuItem cbxmntmRememberLastProfile = new JCheckBoxMenuItem(I18n.t("menu.rememberLastProfile"));
         cbxmntmRememberLastProfile.setSelected(rememberLastUsedProfile);
@@ -959,9 +983,9 @@ public class MainMenu {
         btnSendPackage.addActionListener(arg -> {
             	
         	// Set new printer object from GUI data
-        	Printer tempPrinter = new Printer(selectedProfile(cbxProfile), txtName.getText(), txtIP.getText(), txtSerial.getText(), cbxModel.getSelectedItem().toString());
+        	Printer tempPrinter = new Printer(selectedProfile(cbxProfile), txtName.getText(), txtIP.getText(), txtSerial.getText(), selectedModel(cbxModel));
         	
-            if (tempPrinter.getIpAdress().equals("") || tempPrinter.getSerialNumber().equals("") || tempPrinter.getPrinterName().equals("")) {
+            if (tempPrinter.getIpAdress().equals("") || tempPrinter.getSerialNumber().equals("") || tempPrinter.getPrinterName().equals("") || tempPrinter.getPrinterModel().equals("")) {
                 new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("input.check"), I18n.t("common.back")).showDialog();
                 return;
             }
@@ -1188,7 +1212,7 @@ public class MainMenu {
             	
             	try {
             	
-	            	Printer tempPrinter = new Printer(selectedProfile(cbxProfile), txtName.getText(), txtIP.getText(), txtSerial.getText(), cbxModel.getSelectedItem().toString());
+	            	Printer tempPrinter = new Printer(selectedProfile(cbxProfile), txtName.getText(), txtIP.getText(), txtSerial.getText(), selectedModel(cbxModel));
 	                
 	                if (tempPrinter.getProfileName().equals(NEW_PROFILE)) {
 	                	
@@ -1233,7 +1257,7 @@ public class MainMenu {
         		
         		if (!notAllowedProfileNames.contains(oldProfileName)) {
         		
-	            	Printer tempPrinter = new Printer(selectedProfile(cbxProfile), txtName.getText(), txtIP.getText(), txtSerial.getText(), cbxModel.getSelectedItem().toString());
+	            	Printer tempPrinter = new Printer(selectedProfile(cbxProfile), txtName.getText(), txtIP.getText(), txtSerial.getText(), selectedModel(cbxModel));
 	                	
 	            	String profileName = new SaveDialog(frmStudioBridge, tempPrinter.getProfileName(), I18n.t("common.save")).saveProfile();
 	            	
@@ -1308,6 +1332,11 @@ public class MainMenu {
         
         frmStudioBridge.pack();    
         frmStudioBridge.setVisible(true);    
+        
+        // First start: no profile yet, so explain what to enter
+        if (printerMap.isEmpty()) {
+        	SwingUtilities.invokeLater(() -> new DialogOneButton(frmStudioBridge, null, Resize.setNewImageIconSize(new ImageIcon(MainMenu.class.getResource("/icon.png")), 48, 48), I18n.t("start.noProfiles"), I18n.t("common.ok")).showDialog());
+        }
     }
 
     /**

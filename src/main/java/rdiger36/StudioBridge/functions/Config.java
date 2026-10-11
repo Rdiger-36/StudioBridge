@@ -11,12 +11,11 @@ import java.nio.charset.StandardCharsets;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
-import com.formdev.flatlaf.FlatLaf;
-
 import rdiger36.StudioBridge.gui.DialogOneButton;
 import rdiger36.StudioBridge.gui.DialogTwoButtons;
 import rdiger36.StudioBridge.gui.MainMenu;
 import rdiger36.StudioBridge.gui.SaveDialog;
+import rdiger36.StudioBridge.gui.UI;
 import rdiger36.StudioBridge.objects.Printer;
 
 /**
@@ -301,7 +300,7 @@ public class Config {
 	    StringBuilder config = new StringBuilder();
 	    
 	    // Append the dark mode setting to the configuration.
-	    config.append("enableDarkmode=" + FlatLaf.isLafDark());
+	    config.append("theme=" + MainMenu.theme);
 	    config.append(System.getProperty("line.separator")); // Add a new line.
 	    
 	    // Append the custom profiles path to the configuration.
@@ -388,6 +387,9 @@ public class Config {
 	 * @param configType the settings key.
 	 * @param wert the settings value.
 	 */
+	// Whether the settings file has a theme entry, which wins over the older enableDarkmode
+	private static boolean themeLoaded = false;
+	
 	private static void getAppConf(String configType, String wert) {
 	    
 	    // Switch statement to assign the value to the correct field based on the configuration type.
@@ -395,7 +397,14 @@ public class Config {
 	        
 	    	// Set the enableDarkmode setting
 	        case "enableDarkmode": 
-	        	MainMenu.darkmode = Boolean.valueOf(wert);
+	        	// Setting of older versions, kept as fixed choice until a theme is stored
+	        	if (!themeLoaded) MainMenu.theme = Boolean.valueOf(wert) ? UI.THEME_DARK : UI.THEME_LIGHT;
+	        	break;
+	        
+	        // Set the theme: auto, light or dark
+	        case "theme":
+	        	MainMenu.theme = wert;
+	        	themeLoaded = true;
 	        	break;
 	        
 	        // Set the customProfilesPath setting
