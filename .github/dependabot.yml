@@ -1,0 +1,44 @@
+# Weekly update pull requests for the Maven dependencies and the workflow actions.
+#
+# Maven does not update anything on its own: a build always uses exactly the
+# versions in pom.xml, so without these pull requests a fix in a dependency
+# never reaches a release.
+#
+# jnafilechooser comes from JitPack and is left out, like in the
+# versions-maven-plugin configuration of pom.xml.
+#
+# Every pull request is labelled "dependencies" so the release notes file it
+# where .github/release.yml expects it. Minor and patch updates are grouped
+# into one pull request per ecosystem; a major update gets its own.
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+    commit-message:
+      prefix: chore
+      include: scope
+    ignore:
+      - dependency-name: com.github.steos:jnafilechooser
+    groups:
+      maven-minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      actions:
+        patterns:
+          - "*"
