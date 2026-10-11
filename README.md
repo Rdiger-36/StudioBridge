@@ -77,7 +77,7 @@ The profile manager: edit, save, delete and send several printers
 
 Printer check
 
-![Printer check](https://github.com/user-attachments/assets/ccb139b0-e737-49a5-9b8c-0faf00316892)
+<img src="docs/screenshots/printer-check.png" width="607" alt="Printer check with both tests passed" />
 
 If the TCP handshake fails, restarting the printer often helps.
 
