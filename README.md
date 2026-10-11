@@ -89,6 +89,8 @@ The GUI is available in English and German. **Settings → Language** picks one:
 
 The new language is used after StudioBridge has been restarted. The output of the command line stays English.
 
+**Settings → Appearance** works the same way: "Automatic (system setting)" (default) follows the light or dark mode of the operating system, "Light" and "Dark" fix it. It changes right away.
+
 To add a language, copy `src/main/resources/i18n/en.properties` to `<code>.properties` (e.g. `fr.properties`), set `_name` to the language's name in itself, translate the values and add the code to `I18n.LANGUAGES`. Placeholders in braces (`{name}`, `{ip}`) must stay in place. Keys missing from a language fall back to English; `I18nTest` checks that every language has every English key with the same placeholders.
 
 # Arguments

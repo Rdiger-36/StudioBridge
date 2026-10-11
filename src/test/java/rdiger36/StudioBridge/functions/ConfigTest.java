@@ -84,4 +84,24 @@ public class ConfigTest {
         assertFalse(Config.isValidProfileName(".hidden"));
         assertFalse(Config.isValidProfileName(" padded "));
     }
+
+    @Test
+    public void themeIsSavedAndOlderDarkmodeSettingIsMigrated() throws Exception {
+        String oldTheme = MainMenu.theme;
+        String oldSavePath = MainMenu.savePath;
+        try {
+            MainMenu.theme = "dark";
+            assertTrue(saveSettings().contains("theme=dark"));
+
+            // A settings file of an older version only knows enableDarkmode
+            MainMenu.savePath = folder.getRoot().getAbsolutePath();
+            Files.write(new File(folder.getRoot(), "settings").toPath(), "enableDarkmode=true\n".getBytes(StandardCharsets.UTF_8));
+            MainMenu.theme = "auto";
+            Config.loadAppSettings();
+            assertTrue("dark".equals(MainMenu.theme));
+        } finally {
+            MainMenu.theme = oldTheme;
+            MainMenu.savePath = oldSavePath;
+        }
+    }
 }
