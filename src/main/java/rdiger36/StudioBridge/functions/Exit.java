@@ -45,31 +45,24 @@ public class Exit {
 
         String importedProfileSaved = checkImportedProfiles(profiles);
 
-        // Check if the selected profile is "New profile" and has unsaved data
-        if (printer.getPrinterModel().equals("New profile") &&
-            (printer.getIpAdress().length() > 0 || printer.getSerialNumber().length() > 0 || printer.getPrinterName().length() > 0)) {
-
-            Config.saveUnsavedNewProfile(mainFrame, printer);
-        }
-
-        // Check if there are changes in the existing profile
-        else if (MainMenu.mainPrinter != null) {
-            if (!printer.getIpAdress().equals(MainMenu.mainPrinter.getIpAdress()) ||
-                !printer.getSerialNumber().equals(MainMenu.mainPrinter.getSerialNumber()) ||
-                !printer.getPrinterName().equals(MainMenu.mainPrinter.getPrinterName()) ||
-                !printer.getPrinterModel().equals(MainMenu.mainPrinter.getPrinterModel())) {
-
+        switch (unsavedState(printer, MainMenu.mainPrinter)) {
+            case NEW_PROFILE:
+                // A new profile with entered data that has never been saved
                 Config.saveUnsavedNewProfile(mainFrame, printer);
-            }
-        }
-
-        // Check if there is exactly one unsaved imported profile
-        else if (importedProfileSaved.equals("oneUnsaved")) {
-            Config.saveUnsavedNewProfile(mainFrame, printer);
+                break;
+            case CHANGED_PROFILE:
+                // The selected profile was edited after it was loaded or saved
+                Config.saveUnsavedProfile(mainFrame, printer);
+                break;
+            default:
+                if (importedProfileSaved.equals("oneUnsaved")) {
+                    Config.saveUnsavedNewProfile(mainFrame, printer);
+                }
+                break;
         }
 
         // Check if several imported profiles are unsaved
-        else if (importedProfileSaved.equals("multipleUnsaved")) {
+        if (importedProfileSaved.equals("multipleUnsaved")) {
             int result = new DialogTwoButtons(
                     mainFrame,
                     null,
@@ -87,6 +80,36 @@ public class Exit {
         // Save user settings before exiting
         Config.saveUserSettings(mainFrame);
         System.exit(0);
+    }
+
+    /** What would be lost when StudioBridge closes now. */
+    enum UnsavedState { NONE, NEW_PROFILE, CHANGED_PROFILE }
+
+    /**
+     * Compares what is entered in the main window with the saved state of the selected profile.
+     *
+     * @param current the profile name and the values entered right now
+     * @param saved the state of the selected profile as it was loaded or last saved, or null
+     * @return NEW_PROFILE for an unsaved new profile with data, CHANGED_PROFILE for a saved profile
+     *         whose values were edited, NONE otherwise
+     */
+    static UnsavedState unsavedState(Printer current, Printer saved) {
+        if (MainMenu.notAllowedProfileNames.contains(current.getProfileName())) {
+            boolean hasData = !current.getIpAdress().trim().isEmpty()
+                    || !current.getSerialNumber().trim().isEmpty()
+                    || !current.getPrinterName().trim().isEmpty();
+            return hasData ? UnsavedState.NEW_PROFILE : UnsavedState.NONE;
+        }
+        if (saved == null || !current.getProfileName().equals(saved.getProfileName())) {
+            return UnsavedState.NONE;
+        }
+        boolean changed = !current.getIpAdress().equals(saved.getIpAdress())
+                || !current.getSerialNumber().equals(saved.getSerialNumber())
+                || !current.getPrinterName().equals(saved.getPrinterName())
+                // An empty model means the saved one is not in the model list (an old profile),
+                // the user can not clear the selection, so it is not a change
+                || (!current.getPrinterModel().isEmpty() && !current.getPrinterModel().equals(saved.getPrinterModel()));
+        return changed ? UnsavedState.CHANGED_PROFILE : UnsavedState.NONE;
     }
 
     /**
