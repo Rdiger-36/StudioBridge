@@ -87,10 +87,6 @@
                         <manifest>
                             <mainClass>${main.class}</mainClass>
                         </manifest>
-                        <!-- Lets FlatLaf use its Java 9+ classes from META-INF/versions -->
-                        <manifestEntries>
-                            <Multi-Release>true</Multi-Release>
-                        </manifestEntries>
                     </archive>
                 </configuration>
                 <executions>
