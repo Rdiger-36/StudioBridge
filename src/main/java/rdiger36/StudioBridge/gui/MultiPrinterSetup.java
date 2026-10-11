@@ -17,6 +17,11 @@ import rdiger36.StudioBridge.functions.*;
 import rdiger36.StudioBridge.objects.Printer;
 import rdiger36.StudioBridge.functions.I18n;
 
+import java.awt.Component;
+import java.util.List;
+import javax.swing.JComboBox;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.DefaultCellEditor;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JProgressBar;
@@ -70,14 +75,36 @@ public class MultiPrinterSetup {
             public Class<?> getColumnClass(int columnIndex) {
                 return columnTypes[columnIndex];
             }
+
+            // The profile name identifies the row, the other values can be adjusted for this send
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column != 0;
+            }
         });
+
+        // The model is picked from the same list as in the main window, not typed
+        table.getColumnModel().getColumn(4).setCellEditor(new DefaultCellEditor(new ModelComboBox()));
+        
+        // Shown as a combo box before it is clicked, so it is clear the model can be changed
+        table.getColumnModel().getColumn(4).setCellRenderer(new TableCellRenderer() {
+            private final JComboBox<String> box = new JComboBox<>();
+
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                box.removeAllItems();
+                box.addItem(value == null ? "" : value.toString());
+                return box;
+            }
+        });
+        table.setRowHeight(Math.max(table.getRowHeight(), new JComboBox<String>().getPreferredSize().height));
 
         // Set preferred column widths
         table.getColumnModel().getColumn(0).setPreferredWidth(110);
         table.getColumnModel().getColumn(1).setPreferredWidth(120);
         table.getColumnModel().getColumn(2).setPreferredWidth(164);
         table.getColumnModel().getColumn(3).setPreferredWidth(159);
-        table.getColumnModel().getColumn(4).setPreferredWidth(108);
+        table.getColumnModel().getColumn(4).setPreferredWidth(170);
         table.getColumnModel().getColumn(5).setPreferredWidth(93);
         scrollPane.setViewportView(table);
 
@@ -133,7 +160,9 @@ public class MultiPrinterSetup {
     private void importPrinters(JTable table) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         
-	    for (Printer printer : MainMenu.printerMap.values()) {
+	    List<Printer> printers = new ArrayList<>(MainMenu.printerMap.values());
+	    printers.sort((a, b) -> a.getProfileName().compareToIgnoreCase(b.getProfileName()));
+	    for (Printer printer : printers) {
 	    	model.addRow(new Object[]{printer.getProfileName(), printer.getPrinterName(), printer.getIpAdress(), printer.getSerialNumber(), printer.getPrinterModel(), false});
         }
     }
