@@ -27,7 +27,7 @@ import javax.swing.JButton;
 public class PrinterCheck {
     
     // Prevents multiple scans from running at the same time
-    boolean isRunning = false;
+    volatile boolean isRunning = false;
 
     /**
      * Creates and displays a modal dialog that performs connectivity checks

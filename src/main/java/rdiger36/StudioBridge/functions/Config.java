@@ -2,8 +2,11 @@ package rdiger36.StudioBridge.functions;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -149,16 +152,17 @@ public class Config {
 	     * The file is saved in the profiles directory defined by MainMenu.ProfilesDir, with the profile 
 	     * name and ".sbp" file extension.
 	     */
-	    FileOutputStream fos;
-	    try {
-	        // Create and open a file at the specified path with the profile name.
-	        fos = new FileOutputStream(MainMenu.ProfilesDir + System.getProperty("file.separator") + printer.getProfileName() + ".sbp");
+	    // Refuse names that can not be used as a file name
+	    if (!isValidProfileName(printer.getProfileName())) {
+	    	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! The profile name is not valid!<br>It must not be empty or contain any of these characters: \\ / : * ? \" &lt; &gt; |</html>", "Ok").showDialog();
+	    	return false;
+	    }
+	    
+	    // Create and open a file at the specified path with the profile name, it is closed automatically.
+	    try (OutputStream fos = new FileOutputStream(MainMenu.ProfilesDir + System.getProperty("file.separator") + printer.getProfileName() + ".sbp")) {
 	        
 	        // Write the content of the config to the file as bytes.
-	        fos.write(config.toString().getBytes());
-	        
-	        // Close the file stream after writing.
-	        fos.close();
+	        fos.write(config.toString().getBytes(StandardCharsets.UTF_8));
 	    } catch (Exception e1) {
 	    	// Show error if saving the file has failed
         	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to save the profile!</html>", "Ok").showDialog();
@@ -186,16 +190,12 @@ public class Config {
 	    // Variable to hold each line read from the configuration file.
 	    String line = "";
 	    
-	    // BufferedReader to read the contents of the configuration file.
-	    BufferedReader inputStream;
-	    
 	    // Check if the configuration file exists.
 	    if (configFile.exists()) {  
 	    	Printer printer = new Printer(configFile.getName().replace(".sbp", ""), "", "", "", "");
 	        
-	        try {
-	            // Open the configuration file for reading.
-	            inputStream = new BufferedReader(new FileReader(configFile));
+	        // Open the configuration file for reading, it is closed automatically.
+	        try (BufferedReader inputStream = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8))) {
 	            
 	            // Read each line of the file until the end.
 	            while((line = inputStream.readLine()) != null) {
@@ -209,9 +209,6 @@ public class Config {
 	                String[] parts = line.split("=", 2);
 	                getPrinterConf(parts[0], parts.length > 1 ? parts[1] : "", printer);
 	            }    
-	            
-	            // Close the BufferedReader after reading all lines.
-	            inputStream.close();
 	        } catch (Exception e) {
 	        	// Show error if reading the file has failed
 	        	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to read the profile file!</html>", "Ok").showDialog();
@@ -335,14 +332,9 @@ public class Config {
 	     * FileOutputStream to create and write the contents of the StringBuilder to 
 	     * a file at the specified save path.
 	     */
-	    FileOutputStream fos;
-	    try {
-	        // Create a FileOutputStream for the settings file.
-	        fos = new FileOutputStream(MainMenu.savePath + System.getProperty("file.separator") + "settings");
+	    try (OutputStream fos = new FileOutputStream(MainMenu.savePath + System.getProperty("file.separator") + "settings")) {
 	        // Write the configuration settings to the file.
-	        fos.write(config.toString().getBytes());
-	        // Close the output stream.
-	        fos.close();
+	        fos.write(config.toString().getBytes(StandardCharsets.UTF_8));
 	    } catch (Exception e1) {
 	    	// Show error if saving the file has failed
 	    	e1.printStackTrace();
@@ -366,7 +358,7 @@ public class Config {
 	        try {
 	            String line;
 	            // Open the settings file for reading using a BufferedReader.
-	            try (BufferedReader inputStream = new BufferedReader(new FileReader(userSettings))) {
+	            try (BufferedReader inputStream = new BufferedReader(new InputStreamReader(new FileInputStream(userSettings), StandardCharsets.UTF_8))) {
 	                // Read each line of the file.
 	                while((line = inputStream.readLine()) != null) {
 	                	
@@ -429,5 +421,21 @@ public class Config {
 	        default: 
 	        	break;
 	    }        
+	}
+	
+	/**
+	 * Checks whether a profile name can be used as file name for a profile.
+	 *
+	 * @param name the profile name to check.
+	 * @return true if the name is not empty, not reserved and contains no path or special characters.
+	 */
+	public static boolean isValidProfileName(String name) {
+		if (name == null || name.trim().isEmpty() || !name.equals(name.trim())) return false;
+		if (MainMenu.notAllowedProfileNames.contains(name)) return false;
+		if (name.startsWith(".")) return false;
+		for (char c : name.toCharArray()) {
+			if (c < 32 || "\\/:*?\"<>|".indexOf(c) >= 0) return false;
+		}
+		return true;
 	}
 }
