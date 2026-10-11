@@ -1,6 +1,8 @@
 package rdiger36.StudioBridge.gui;
 
+import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -22,6 +24,7 @@ import rdiger36.StudioBridge.functions.I18n;
 
 import java.awt.Component;
 import java.util.List;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.table.TableCellRenderer;
 import java.awt.BorderLayout;
@@ -41,8 +44,14 @@ import javax.swing.JProgressBar;
 public class MultiPrinterSetup {
     private JTable table;
 
-    // Index of the column with the delete icon
-    private static final int COLUMN_DELETE = 6;
+    // Column order: the send check box first, next to the profile; deleting last, apart from it
+    private static final int COL_SEND = 0;
+    private static final int COL_PROFILE = 1;
+    private static final int COL_NAME = 2;
+    private static final int COL_IP = 3;
+    private static final int COL_SERIAL = 4;
+    private static final int COL_MODEL = 5;
+    private static final int COL_DELETE = 6;
 
     // Saves edited rows and keeps the main window in step
     private final ProfileManager profiles;
@@ -82,29 +91,29 @@ public class MultiPrinterSetup {
         table.setFocusable(false);
         table.setModel(new DefaultTableModel(
             new Object[][] {},
-            new String[] { I18n.t("multi.columnProfile"), I18n.t("multi.columnName"), I18n.t("multi.columnIp"), I18n.t("multi.columnSerial"), I18n.t("multi.columnModel"), I18n.t("multi.columnSend"), I18n.t("multi.columnDelete") }
+            new String[] { "", I18n.t("multi.columnProfile"), I18n.t("multi.columnName"), I18n.t("multi.columnIp"), I18n.t("multi.columnSerial"), I18n.t("multi.columnModel"), "" }
         ) {
             Class<?>[] columnTypes = new Class[] {
-                Object.class, Object.class, Object.class, Object.class, Object.class, Boolean.class, Object.class
+                Boolean.class, Object.class, Object.class, Object.class, Object.class, Object.class, Object.class
             };
 
             public Class<?> getColumnClass(int columnIndex) {
                 return columnTypes[columnIndex];
             }
 
-            // The profile name identifies the row, the other values can be adjusted for this send
+            // The profile name identifies the row; the delete column is a button, not a value
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column != 0 && column != COLUMN_DELETE;
+                return column != COL_PROFILE && column != COL_DELETE;
             }
         });
 
         // The model is picked from the same list as in the main window, not typed
-        table.getColumnModel().getColumn(4).setCellEditor(new DefaultCellEditor(new ModelComboBox()));
+        table.getColumnModel().getColumn(COL_MODEL).setCellEditor(new DefaultCellEditor(new ModelComboBox()));
         
         // Shown with a drop-down arrow, in the colors of the table row, so it is clear the
         // model can be changed
-        table.getColumnModel().getColumn(4).setCellRenderer(new TableCellRenderer() {
+        table.getColumnModel().getColumn(COL_MODEL).setCellRenderer(new TableCellRenderer() {
             private final JPanel cell = new JPanel(new BorderLayout());
             private final JLabel text = new JLabel();
             private final JLabel arrow = new JLabel(new FlatSVGIcon("icons/chevron.svg"));
@@ -127,44 +136,87 @@ public class MultiPrinterSetup {
         table.setRowHeight(Math.max(table.getRowHeight(), new JComboBox<String>().getPreferredSize().height));
 
         // Set preferred column widths
-        table.getColumnModel().getColumn(0).setPreferredWidth(110);
-        table.getColumnModel().getColumn(1).setPreferredWidth(120);
-        table.getColumnModel().getColumn(2).setPreferredWidth(164);
-        table.getColumnModel().getColumn(3).setPreferredWidth(159);
-        table.getColumnModel().getColumn(4).setPreferredWidth(170);
-        table.getColumnModel().getColumn(5).setPreferredWidth(93);
-        table.getColumnModel().getColumn(COLUMN_DELETE).setPreferredWidth(70);
+        table.getColumnModel().getColumn(COL_SEND).setPreferredWidth(36);
+        table.getColumnModel().getColumn(COL_SEND).setMaxWidth(44);
+        table.getColumnModel().getColumn(COL_PROFILE).setPreferredWidth(120);
+        table.getColumnModel().getColumn(COL_NAME).setPreferredWidth(120);
+        table.getColumnModel().getColumn(COL_IP).setPreferredWidth(130);
+        table.getColumnModel().getColumn(COL_SERIAL).setPreferredWidth(150);
+        table.getColumnModel().getColumn(COL_MODEL).setPreferredWidth(170);
+        table.getColumnModel().getColumn(COL_DELETE).setPreferredWidth(36);
+        table.getColumnModel().getColumn(COL_DELETE).setMaxWidth(44);
 
-        // Delete column: a trash icon per row, a click asks and deletes that profile
-        FlatSVGIcon deleteIcon = new FlatSVGIcon("icons/delete.svg");
-        table.getColumnModel().getColumn(COLUMN_DELETE).setCellRenderer(new TableCellRenderer() {
-            private final JLabel cell = new JLabel(deleteIcon, SwingConstants.CENTER);
+        // Send column: a check box in the header selects or clears every row
+        JCheckBox headerBox = new JCheckBox();
+        headerBox.setHorizontalAlignment(SwingConstants.CENTER);
+        headerBox.setToolTipText(I18n.t("multi.selectAll"));
+        table.getColumnModel().getColumn(COL_SEND).setHeaderRenderer((t, value, isSelected, hasFocus, row, column) -> {
+            headerBox.setSelected(allSelected());
+            return headerBox;
+        });
+        table.getTableHeader().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (table.columnAtPoint(e.getPoint()) != COL_SEND) return;
+                stopEditing();
+                setAllBooleans(!allSelected());
+            }
+        });
+        table.getModel().addTableModelListener(e -> table.getTableHeader().repaint());
+        table.getTableHeader().setReorderingAllowed(false);
+
+        // Delete column: a grey trash icon per row that turns red under the mouse;
+        // a click asks and deletes that profile
+        FlatSVGIcon trashIcon = new FlatSVGIcon("icons/trash.svg");
+        FlatSVGIcon trashHoverIcon = new FlatSVGIcon("icons/trash-hover.svg");
+        int[] hoverRow = { -1 };
+        table.getColumnModel().getColumn(COL_DELETE).setCellRenderer(new TableCellRenderer() {
+            private final JLabel cell = new JLabel(trashIcon, SwingConstants.CENTER);
             {
                 cell.setOpaque(true);
-                cell.setToolTipText(I18n.t("profile.deleteAction"));
             }
 
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                cell.setIcon(row == hoverRow[0] ? trashHoverIcon : trashIcon);
                 cell.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
                 return cell;
             }
         });
+        table.addMouseMotionListener(new MouseAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                boolean onDelete = table.columnAtPoint(e.getPoint()) == COL_DELETE;
+                int row = onDelete ? table.rowAtPoint(e.getPoint()) : -1;
+                table.setCursor(Cursor.getPredefinedCursor(onDelete && row >= 0 ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+                table.setToolTipText(onDelete && row >= 0 ? I18n.t("profile.deleteAction") : null);
+                if (row != hoverRow[0]) {
+                    hoverRow[0] = row;
+                    table.repaint();
+                }
+            }
+        });
         table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseExited(MouseEvent e) {
+                hoverRow[0] = -1;
+                table.repaint();
+            }
+
             @Override
             public void mouseClicked(MouseEvent e) {
                 int row = table.rowAtPoint(e.getPoint());
-                if (row < 0 || table.columnAtPoint(e.getPoint()) != COLUMN_DELETE) return;
+                if (row < 0 || table.columnAtPoint(e.getPoint()) != COL_DELETE) return;
                 stopEditing();
                 DefaultTableModel model = (DefaultTableModel) table.getModel();
-                String name = String.valueOf(model.getValueAt(row, 0));
+                String name = String.valueOf(model.getValueAt(row, COL_PROFILE));
                 if (profiles.delete(name, dialInfo)) model.removeRow(row);
             }
         });
         scrollPane.setViewportView(table);
 
-        dialInfo.getContentPane().setLayout(new MigLayout("", "[188.00,grow][223.00,grow][390.00][]", "[grow][bottom][]"));
-        dialInfo.getContentPane().add(scrollPane, "cell 0 0 4 1,grow");
+        dialInfo.getContentPane().setLayout(new MigLayout("", "[][grow]", "[grow][bottom][]"));
+        dialInfo.getContentPane().add(scrollPane, "cell 0 0 2 1,grow");
 
         importPrinters(table);
 
@@ -173,7 +225,9 @@ public class MultiPrinterSetup {
         int rowHeight = table.getRowHeight();
         int tableHeaderHeight = table.getTableHeader().getPreferredSize().height;
         int visibleRows = Math.min(table.getRowCount(), maxVisibleRows);
-        int preferredHeight = (rowHeight * visibleRows) + tableHeaderHeight + 5;
+        // Rows, header and the scroll pane border, so up to ten rows fit without a scroll bar
+        Insets border = scrollPane.getInsets();
+        int preferredHeight = (rowHeight * visibleRows) + tableHeaderHeight + border.top + border.bottom + 2;
         int totalColumnWidth = 0;
 
         for (int col = 0; col < table.getColumnCount(); col++) {
@@ -187,23 +241,15 @@ public class MultiPrinterSetup {
         progressBar.setIndeterminate(true);
         progressBar.setVisible(false);
         progressBar.setStringPainted(true);
-        dialInfo.getContentPane().add(progressBar, "cell 1 1,grow");
+        dialInfo.getContentPane().add(progressBar, "cell 1 1,growx");
 
         JButton btnSendPrinters = new JButton(I18n.t("multi.sendSelected"));
         btnSendPrinters.addActionListener(e -> sendSelectedPrinters(frmStudioBridge, dialInfo, progressBar));
-        dialInfo.getContentPane().add(btnSendPrinters, "cell 0 1,grow,split 2");
+        dialInfo.getContentPane().add(btnSendPrinters, "cell 0 1,split 2");
 
         JButton btnSaveChanges = new JButton(I18n.t("multi.saveChanges"));
         btnSaveChanges.addActionListener(e -> saveChanges(dialInfo, true));
-        dialInfo.getContentPane().add(btnSaveChanges, "cell 0 1,grow");
-
-        JButton btnSelAll = new JButton(I18n.t("multi.selectAll"));
-        btnSelAll.addActionListener(e -> setAllBooleans(true));
-        dialInfo.getContentPane().add(btnSelAll, "cell 2 1,alignx right");
-
-        JButton btnDeSelAll = new JButton(I18n.t("multi.deselectAll"));
-        btnDeSelAll.addActionListener(e -> setAllBooleans(false));
-        dialInfo.getContentPane().add(btnDeSelAll, "cell 3 1,alignx left");
+        dialInfo.getContentPane().add(btnSaveChanges, "cell 0 1");
 
         dialInfo.requestFocus();
         dialInfo.pack();
@@ -222,13 +268,13 @@ public class MultiPrinterSetup {
 	    List<Printer> printers = new ArrayList<>(MainMenu.printerMap.values());
 	    printers.sort((a, b) -> a.getProfileName().compareToIgnoreCase(b.getProfileName()));
 	    for (Printer printer : printers) {
-	    	model.addRow(new Object[]{printer.getProfileName(), printer.getPrinterName(), printer.getIpAdress(), printer.getSerialNumber(), printer.getPrinterModel(), false, null});
+	    	model.addRow(new Object[]{false, printer.getProfileName(), printer.getPrinterName(), printer.getIpAdress(), printer.getSerialNumber(), printer.getPrinterModel(), null});
         }
     }
 
     // The values of a table row as profile
     private Printer rowPrinter(DefaultTableModel model, int row) {
-        return new Printer(String.valueOf(model.getValueAt(row, 0)), text(model.getValueAt(row, 1)), text(model.getValueAt(row, 2)), text(model.getValueAt(row, 3)), text(model.getValueAt(row, 4)));
+        return new Printer(String.valueOf(model.getValueAt(row, COL_PROFILE)), text(model.getValueAt(row, COL_NAME)), text(model.getValueAt(row, COL_IP)), text(model.getValueAt(row, COL_SERIAL)), text(model.getValueAt(row, COL_MODEL)));
     }
 
     private static String text(Object value) {
@@ -299,6 +345,16 @@ public class MultiPrinterSetup {
         return response == 0 && saveChanges(dialInfo, false);
     }
 
+    // Whether every row is selected for sending (false for an empty table)
+    private boolean allSelected() {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        if (model.getRowCount() == 0) return false;
+        for (int i = 0; i < model.getRowCount(); i++) {
+            if (!Boolean.TRUE.equals(model.getValueAt(i, COL_SEND))) return false;
+        }
+        return true;
+    }
+
     /**
      * Selects or deselects all printers in the table.
      * 
@@ -307,7 +363,7 @@ public class MultiPrinterSetup {
     private void setAllBooleans(boolean value) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         for (int i = 0; i < model.getRowCount(); i++) {
-            model.setValueAt(value, i, 5);
+            model.setValueAt(value, i, COL_SEND);
         }
     }
 
@@ -331,7 +387,7 @@ public class MultiPrinterSetup {
 	    DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
 	    List<Printer> selected = new ArrayList<>();
 	    for (int i = 0; i < tableModel.getRowCount(); i++) {
-	        Boolean shouldSend = (Boolean) tableModel.getValueAt(i, 5);
+	        Boolean shouldSend = (Boolean) tableModel.getValueAt(i, COL_SEND);
 	        if (shouldSend != null && shouldSend) selected.add(rowPrinter(tableModel, i));
 	    }
 
