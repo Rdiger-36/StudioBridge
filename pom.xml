@@ -104,7 +104,7 @@
                 <artifactId>versions-maven-plugin</artifactId>
                 <version>2.18.0</version>
                 <configuration>
-                    <!-- JitPack-Abhängigkeiten vom Auto-Update ausschließen -->
+                    <!-- Exclude JitPack dependencies from automatic updates -->
                     <excludes>
                         <exclude>com.github.steos:jnafilechooser</exclude>
                     </excludes>
