@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import rdiger36.StudioBridge.functions.I18n;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -57,7 +58,7 @@ public class SaveDialog {
             dial.setLocationRelativeTo(null);
         }
         
-        JLabel lblProfilename = new JLabel("Profilename:");
+        JLabel lblProfilename = new JLabel(I18n.t("profile.nameLabel"));
         lblProfilename.setHorizontalAlignment(SwingConstants.CENTER);
         
         dial.getContentPane().setLayout(new MigLayout("", "[grow][87px][grow][87px][grow]", "[14px,grow][23px,grow]"));

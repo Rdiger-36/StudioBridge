@@ -3,6 +3,7 @@ Version 2.1.4
    - Breaking:
       - "Send packages directly" and --direct now do what they say. Since 2.0.0 the setting was inverted: with the checkbox ticked the package went out as a broadcast to 255.255.255.255, and with the default setting it was sent to localhost. Now the checkbox and --direct send to Bambu Studio on this computer, and the default is the broadcast to the network. With the default setting StudioBridge therefore switches from localhost to broadcast. If your printer no longer shows up, tick "Send packages directly" in the settings or start the CLI with --direct (PR #41)
    - New Features:
+      - The GUI speaks German. Pick the language under Settings → Language: "Automatic (system language)", the default, follows the operating system and falls back to English, or choose English or Deutsch. The new language is used after a restart. The command line output stays English (PR #52)
       - --broadcast sends the UDP package as broadcast for this run, also when "Send packages directly" is ticked in the settings. Together with --direct it can not be combined (PR #50)
       - --version prints the version of StudioBridge (PR #50)
       - --sendonly ends with exit code 1 when a package could not be sent, Bambu Studio is not running or no profile was found, and with 0 when every package was sent, so a script or an autostart can tell whether it worked (PR #50)

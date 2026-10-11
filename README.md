@@ -80,6 +80,17 @@ If TCP Handshake is not working, then it helps to restart your printer.
 ![StudioBridgeDemo](https://github.com/user-attachments/assets/e5e197ab-54bf-4a6d-bc40-dd46607597f8)
 
 
+# Languages
+
+The GUI is available in English and German. **Settings → Language** picks one:
+
+- **Automatic (system language)** (default): follows the language of the operating system, English when it is not available.
+- **A fixed language**: always that one.
+
+The new language is used after StudioBridge has been restarted. The output of the command line stays English.
+
+To add a language, copy `src/main/resources/i18n/en.properties` to `<code>.properties` (e.g. `fr.properties`), set `_name` to the language's name in itself, translate the values and add the code to `I18n.LANGUAGES`. Placeholders in braces (`{name}`, `{ip}`) must stay in place. Keys missing from a language fall back to English; `I18nTest` checks that every language has every English key with the same placeholders.
+
 # Arguments
 
 To use StudioBridge from Terminal, CMD or PowerShell, start it with arguments:

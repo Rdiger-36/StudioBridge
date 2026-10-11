@@ -59,13 +59,13 @@ public class ProfilesPath {
             dial.setLocationRelativeTo(null);
         }
 
-        JLabel lblPath = new JLabel("Path:");
+        JLabel lblPath = new JLabel(I18n.t("path.label"));
         lblPath.setHorizontalAlignment(SwingConstants.CENTER);
 
         dial.getContentPane().setLayout(new MigLayout("", "[grow][grow][200px,grow][200px,grow][grow]", "[14px,grow][23px,grow]"));
         dial.getContentPane().add(lblPath, "cell 0 0 2 1,alignx left,aligny center");
 
-        JButton btnSave = new JButton("Save");
+        JButton btnSave = new JButton(I18n.t("common.save"));
         btnSave.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 response = textField.getText().toString();
@@ -81,7 +81,7 @@ public class ProfilesPath {
         dial.getContentPane().add(btnChooseDir, "cell 4 0,alignx right");
         dial.getContentPane().add(btnSave, "cell 2 1,alignx right,aligny center");
 
-        btnReset = new JButton("Reset to default");
+        btnReset = new JButton(I18n.t("path.reset"));
         dial.getContentPane().add(btnReset, "cell 3 1");
 
         btnReset.addActionListener(new ActionListener() {
@@ -95,7 +95,7 @@ public class ProfilesPath {
             public void actionPerformed(ActionEvent e) {
                 JnaFileChooser fc = new JnaFileChooser();
                 fc.setMode(Mode.Directories);
-                fc.setTitle("Choose profile save directory");
+                fc.setTitle(I18n.t("path.chooseTitle"));
 
                 boolean returnValue = fc.showOpenDialog(dial);
                 if (returnValue) {

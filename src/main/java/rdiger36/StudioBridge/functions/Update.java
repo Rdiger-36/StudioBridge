@@ -51,9 +51,9 @@ public class Update {
             SwingUtilities.invokeLater(() -> {
                 int response = new DialogTwoButtons(mainFrame, null,
                     new ImageIcon(MainMenu.class.getResource("/achtung.png")),
-                    "An update for StudioBridge is available!",
-                    "Open releases page",
-                    "Continue without update").showDialog();
+                    I18n.t("update.available"),
+                    I18n.t("update.openReleases"),
+                    I18n.t("update.continue")).showDialog();
 
                 if (response == 0) {
                     try {
