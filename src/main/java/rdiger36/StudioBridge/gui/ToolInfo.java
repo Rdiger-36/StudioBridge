@@ -61,12 +61,11 @@ public class ToolInfo {
         });
 
         JEditorPane dtrpnDeveloper = new JEditorPane("text/html", "<html><body>\r\n" +
-                I18n.t("info.iconSource") + ": <a href=\"https://www.flaticon.com/de/kostenlose-icons/3d-drucker\">Freepik - Flaticon</a>\r\n" +
-                "<br>\r\n" +
+                I18n.t("info.iconSource") + ": <a href=\"https://www.flaticon.com/de/kostenlose-icons/3d-drucker\">Freepik - Flaticon</a><br>\r\n" +
+                I18n.t("info.license") + ": GPL v3<br>\r\n" +
                 "<br>\r\n" +
                 // First release 2024, the end year follows the current year
                 "\u00A9 2024\u2013" + Year.now().getValue() + " Niklas (Rdiger-36)<br>\r\n" +
-                I18n.t("info.license") + ": GPL v3<br>\r\n" +
                 "<br>\r\n" +
                 "</body></html>");
         dtrpnDeveloper.setEditable(false);
