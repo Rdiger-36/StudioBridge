@@ -17,20 +17,15 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.io.IOException;
-import java.io.Reader;
 import java.net.URI;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.formdev.flatlaf.FlatClientProperties;
@@ -58,11 +53,10 @@ import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.text.AbstractDocument;
-import jnafilechooser.api.JnaFileChooser;
-import jnafilechooser.api.JnaFileChooser.Mode;
 import net.miginfocom.swing.MigLayout;
 import rdiger36.StudioBridge.functions.*;
 import rdiger36.StudioBridge.objects.*;
@@ -159,6 +153,12 @@ public class MainMenu {
     		String name = I18n.raw(code, "profile.new");
     		if (name != null && !notAllowedProfileNames.contains(name)) notAllowedProfileNames.add(name);
     	}
+    }
+    
+    // Whether every field a printer needs is filled in
+    private static boolean isComplete(Printer printer) {
+    	return !printer.getIpAdress().trim().isEmpty() && !printer.getSerialNumber().trim().isEmpty()
+    			&& !printer.getPrinterName().trim().isEmpty() && !printer.getPrinterModel().isEmpty();
     }
     
     // The selected printer model, or "" when none is selected
@@ -534,11 +534,13 @@ public class MainMenu {
 
                 if (!f.exists()) {
                     System.err.println("Profile does not exist: " + path);
+                    errors.add("Profile does not exist: " + path);
                     continue;
                 }
 
                 if (!f.getName().toLowerCase().endsWith(".sbp")) {
                     System.err.println("Invalid profile format (must end with .sbp): " + path);
+                    errors.add("Invalid profile format (must end with .sbp): " + path);
                     continue;
                 }
 
@@ -570,16 +572,22 @@ public class MainMenu {
 	            for (File file : profilesToUse) {
 	                if (file.isFile()) {  // Process only files, not subdirectories
 	                	System.out.println("Loading profile " + file.toString());
-	                    Properties properties = new Properties();
-	                    try (Reader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
-	                        properties.load(reader);
+	                    // Read like the GUI does: UTF-8, values taken as written
+	                    Printer printer;
+	                    try {
+	                        printer = Config.readProfile(file);
 	                    } catch (IOException e) {
 	                        System.err.println("Error loading file: " + file.getName());
-	                        e.printStackTrace();
+	                        errors.add("Error loading file: " + file.getName() + "\n");
 	                        continue;  // Process next file on error
 	                    }
 	
-	                    Printer printer = new Printer(file.getName() ,properties.getProperty("PrinterName"), properties.getProperty("IP-Address"), properties.getProperty("PrinterSN"), properties.getProperty("PrinterType"));
+	                    if (!isComplete(printer)) {
+	                        String errorMsg = "Error! Incomplete profile, IP-Address, serial number, name and model are needed: " + file.getName() + "\n";
+	                        System.err.println(errorMsg);
+	                        errors.add(errorMsg);
+	                        continue;
+	                    }
 	
 	                    // Send the UDP package
 	                    boolean sendSuccess = UDPPackage.send(null, printer, remoteUdpPort, false);
@@ -594,12 +602,6 @@ public class MainMenu {
 	                    }
 	                }
 	
-	                try {
-	                    Thread.sleep(1000); // Simulated delay
-	                } catch (InterruptedException e) {
-	                    Thread.currentThread().interrupt();
-	                    break;
-	                }
 	            }
 	
 	            // Log errors if any
@@ -701,6 +703,9 @@ public class MainMenu {
             }
         });
         frmStudioBridge.getContentPane().add(cbxProfile, "flowx,cell 1 2,growx");
+        
+        // Keeps profile files, this list, printerMap and mainPrinter in step
+        ProfileManager profiles = new ProfileManager(frmStudioBridge, cbxProfile);
 
         // Printer information labels
         JLabel lblIP = new JLabel(I18n.t("main.ipAddress"));
@@ -961,13 +966,18 @@ public class MainMenu {
                 String newProfilesDir = new ProfilesPath(frmStudioBridge).changePath();
                 
                 if (newProfilesDir.length() > 0 && new File(newProfilesDir).exists()) {
+                	// The list is replaced, so offer to save what is entered first
+                	Printer current = new Printer(selectedProfile(cbxProfile), txtName.getText(), txtIP.getText(), txtSerial.getText(), selectedModel(cbxModel));
+                	Exit.UnsavedState unsaved = Exit.unsavedState(current, mainPrinter);
+                	if (unsaved == Exit.UnsavedState.NEW_PROFILE && profiles.offerSaveNewOnExit(current) == ProfileManager.Choice.CANCEL) return;
+                	if (unsaved == Exit.UnsavedState.CHANGED_PROFILE && profiles.offerSaveChangesOnExit(current) == ProfileManager.Choice.CANCEL) return;
+                	
                     ProfilesDir = newProfilesDir;
                     useCustomProfilesDir = false; // A choice in the menu is saved again
                     cbxProfile.removeAllItems();
                     getAllProfiles(frmStudioBridge, cbxProfile);
                     if (cbxProfile.getItemCount() == 0) {
                         cbxProfile.setSelectedIndex(-1);
-                        mainPrinter = new Printer(NEW_PROFILE, "", "", "", "No model");
                     }
                     frmStudioBridge.pack();    
                 }
@@ -985,37 +995,41 @@ public class MainMenu {
         	// Set new printer object from GUI data
         	Printer tempPrinter = new Printer(selectedProfile(cbxProfile), txtName.getText(), txtIP.getText(), txtSerial.getText(), selectedModel(cbxModel));
         	
-            if (tempPrinter.getIpAdress().equals("") || tempPrinter.getSerialNumber().equals("") || tempPrinter.getPrinterName().equals("") || tempPrinter.getPrinterModel().equals("")) {
+            if (!isComplete(tempPrinter)) {
                 new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("input.check"), I18n.t("common.back")).showDialog();
                 return;
             }
 
-            // Check if the input data is changed or new
+            // Offer to save a new or changed profile, the data is sent either way
             if (tempPrinter.getProfileName().equals(NEW_PROFILE)) {
-            	tempPrinter.setProfileName(Config.saveUnsavedNewProfile(frame, tempPrinter));
-                if (!tempPrinter.getProfileName().equals("")) {
-                    cbxProfile.addItem(tempPrinter.getProfileName());
-                    cbxProfile.setSelectedItem(tempPrinter.getProfileName());
-                    frmStudioBridge.pack();    
-                    mainPrinter = tempPrinter;
-                } 
-            } else if (!tempPrinter.getIpAdress().equals(mainPrinter.getIpAdress()) || !tempPrinter.getSerialNumber().equals(mainPrinter.getSerialNumber()) || !tempPrinter.getPrinterName().equals(mainPrinter.getPrinterName()) || !tempPrinter.getPrinterModel().equals(mainPrinter.getPrinterModel())) {
-                if (Config.saveUnsavedProfile(frame, tempPrinter)) {
-                	mainPrinter = tempPrinter;
-                }
-            } 
-                            
-    		// Determine which UDP port (2021 or 1990) is in use, or set to 0 if none is available
-            int remoteUdpPort = UDPPackage.getAvailableUDPPort();
-
-            // Check if a valid port was assigned to remoteUdpPort
-            if (remoteUdpPort > 0) {
-            	// Send the data as currently entered, regardless of whether it was saved
-            	UDPPackage.send(frmStudioBridge, tempPrinter, remoteUdpPort, false);
-            } else {
-                // Show a warning if Bambu Studio is not running
-            	new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("send.slicerNotRunning"), I18n.t("common.ok")).showDialog();
-            }                      
+            	profiles.offerSaveNew(tempPrinter);
+            } else if (Exit.unsavedState(tempPrinter, mainPrinter) == Exit.UnsavedState.CHANGED_PROFILE) {
+            	profiles.offerSaveChanges(tempPrinter);
+            }
+            
+            // Looking for the slicer can take a few seconds on macOS (lsof), so not on the EDT
+            btnSendPackage.setEnabled(false);
+            new SwingWorker<Integer, Void>() {
+            	@Override protected Integer doInBackground() {
+            		return UDPPackage.getAvailableUDPPort();
+            	}
+            	@Override protected void done() {
+            		btnSendPackage.setEnabled(true);
+            		int remoteUdpPort = 0;
+            		try {
+            			remoteUdpPort = get();
+            		} catch (Exception e) {
+            			e.printStackTrace();
+            		}
+            		if (remoteUdpPort > 0) {
+            			// Send the data as currently entered, regardless of whether it was saved
+            			UDPPackage.send(frmStudioBridge, tempPrinter, remoteUdpPort, false);
+            		} else {
+            			// Show a warning if Bambu Studio is not running
+            			new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("send.slicerNotRunning"), I18n.t("common.ok")).showDialog();
+            		}
+            	}
+            }.execute();
         });
         
         // Action listener for opening new GUI to check the printer stats
@@ -1049,11 +1063,24 @@ public class MainMenu {
             private void setProfile(String profile) {
             	
             	if (profile != null) {
-                   	mainPrinter = Config.loadProfile(frmStudioBridge, profile);
+            		Printer loaded = Config.loadProfile(frmStudioBridge, profile);
+            		if (loaded == null) {
+            			// The file is gone or unreadable: drop it from the list and start a new profile.
+            			// Changing the list from inside its own listener does not fire, so do it afterwards.
+            			String name = cbxProfile.getSelectedItem().toString();
+            			SwingUtilities.invokeLater(() -> {
+            				profiles.forget(name);
+            				cbxProfile.setSelectedIndex(-1);
+            			});
+            			return;
+            		}
+                   	mainPrinter = loaded;
                 	MainMenu.lastUsedProfile = mainPrinter.getProfileName();
                 	txtName.setText(mainPrinter.getPrinterName());
                 	txtIP.setText(mainPrinter.getIpAdress());
                 	txtSerial.setText(mainPrinter.getSerialNumber());
+                	// A model that is not in the list (old or empty profile) shows no model, not the previous one
+                	cbxModel.setSelectedIndex(-1);
                 	cbxModel.setSelectedItem(mainPrinter.getPrinterModel());
             	} else {
                    	mainPrinter = null;
@@ -1084,19 +1111,7 @@ public class MainMenu {
             	// What is entered right now, compared on exit with the saved state in mainPrinter
             	Printer current = new Printer(profile, name, ip, serial, model);
             	
-                // List to store all profiles except for the special entries
-                ArrayList<String> profileList = new ArrayList<>();
-
-                // Iterate through all items in the JComboBox
-                for (int i = 0; i < cbxProfile.getItemCount(); i++) {
-                    String item = cbxProfile.getItemAt(i);
-                    
-                    if (!notAllowedProfileNames.contains(item)) {
-                        profileList.add(item);
-                    }
-                }
-            	
-                Exit.closeApp(frmStudioBridge, profileList, current);
+                Exit.closeApp(frmStudioBridge, current, profiles);
             }
         });
         
@@ -1146,24 +1161,7 @@ public class MainMenu {
         // Import a profile file: it is stored in the profiles directory under a name the user picks
         miImportProfile.addActionListener(arg -> {
         	File importFile = FileChooser.chooseProfile(frmStudioBridge, I18n.t("profile.importTitle"));
-        	if (importFile == null) return;
-        	
-        	String profileName = new SaveDialog(frmStudioBridge, I18n.t("profile.importedName"), I18n.t("profile.setName")).saveProfile();
-        	if (profileName == null) return;
-        	profileName = profileName.trim();
-        	if (profileName.equals("")) profileName = I18n.t("profile.importedName");
-        	
-        	Printer imported = Config.loadProfile(frmStudioBridge, importFile.getAbsolutePath());
-        	if (imported == null) return;
-        	imported.setProfileName(profileName);
-        	
-        	// Only list the imported profile if it could be saved
-        	if (Config.saveProfile(frmStudioBridge, imported)) {
-        		printerMap.put(profileName, imported);
-        		if (((DefaultComboBoxModel<String>) cbxProfile.getModel()).getIndexOf(profileName) < 0) cbxProfile.addItem(profileName);
-        		cbxProfile.setSelectedItem(profileName);
-        		frmStudioBridge.pack();
-        	}
+        	if (importFile != null) profiles.importProfile(importFile);
         });
         
         // Copyright button
@@ -1182,127 +1180,40 @@ public class MainMenu {
         pnlBottom.add(btnCheckPrinter);
         
         // Action listener for deleting profiles
-        miDeleteProfile.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            	
-            	String profile = selectedProfile(cbxProfile);
-            	
-            	if (!notAllowedProfileNames.contains(profile)) {
-            	
-                    int response = new DialogTwoButtons(frmStudioBridge, null,new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("profile.delete", "name", cbxProfile.getSelectedItem()), I18n.t("common.yes"), I18n.t("common.no")).showDialog();
-                    
-                    if (response == 0) {
-                        new File(ProfilesDir + System.getProperty("file.separator") + cbxProfile.getSelectedItem() + ".sbp").delete();
-                        cbxProfile.removeItem(cbxProfile.getSelectedItem());
-                        cbxProfile.setSelectedIndex(-1);
-                        mainPrinter = new Printer(NEW_PROFILE, "", "", "", "no model");
-                        printerMap.remove(profile);
-                        cbxModel.setSelectedIndex(-1);
-                        frmStudioBridge.pack();    
-                    }
-            	}
-            }
+        miDeleteProfile.addActionListener(arg -> {
+        	String profile = selectedProfile(cbxProfile);
+        	if (!notAllowedProfileNames.contains(profile)) profiles.delete(profile);
         });
                 
         // Action listener for saving profiles
-        btnSaveProfile.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {          
-            	
-            	try {
-            	
-	            	Printer tempPrinter = new Printer(selectedProfile(cbxProfile), txtName.getText(), txtIP.getText(), txtSerial.getText(), selectedModel(cbxModel));
-	                
-	                if (tempPrinter.getProfileName().equals(NEW_PROFILE)) {
-	                	
-	                	String profileName = new SaveDialog(frmStudioBridge, tempPrinter.getPrinterName(), I18n.t("common.save")).saveProfile();
-	                	
-	                	if (profileName == null) {
-	                		return;
-	                	} else {
-	                		tempPrinter.setProfileName(profileName.trim());
-	                	}
-	                }
-	                
-	                if (!notAllowedProfileNames.contains(tempPrinter.getProfileName())) {
-	                    if (!profileExists(tempPrinter.getProfileName())) {
-	                        if (!Config.saveProfile(frmStudioBridge, tempPrinter)) return;
-	                        cbxProfile.addItem(tempPrinter.getProfileName());
-	                        cbxProfile.setSelectedItem(tempPrinter.getProfileName());
-	                        frmStudioBridge.pack();    
-	                    } else {
-	                        int result = new DialogTwoButtons(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("profile.exists", "name", tempPrinter.getProfileName()), I18n.t("common.yes"), I18n.t("common.no")).showDialog();
-	                        if (result != 0 || !Config.saveProfile(frmStudioBridge, tempPrinter)) return;
-	                    }
-	                    
-	                    mainPrinter = tempPrinter;
-	                    
-	                    if (printerMap.containsKey(mainPrinter.getProfileName())) {
-	                    	printerMap.replace(mainPrinter.getProfileName(), mainPrinter);
-	                    } else {
-	                    	printerMap.put(mainPrinter.getProfileName(), tempPrinter);
-	                    }
-	                    
-	                }
-	            } catch (Exception ex) {}
-            	
-            }
+        btnSaveProfile.addActionListener(arg -> {
+        	Printer tempPrinter = new Printer(selectedProfile(cbxProfile), txtName.getText(), txtIP.getText(), txtSerial.getText(), selectedModel(cbxModel));
+        	if (!isComplete(tempPrinter)) {
+        		new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("input.check"), I18n.t("common.back")).showDialog();
+        		return;
+        	}
+        	if (notAllowedProfileNames.contains(tempPrinter.getProfileName())) {
+        		profiles.saveNew(tempPrinter);
+        	} else {
+        		// Saving the selected profile replaces its own file, no need to ask
+        		profiles.store(tempPrinter, null);
+        	}
         });
         
         miRenameProfile.addActionListener(arg -> {
-        	try {
-            	
-        		String oldProfileName = selectedProfile(cbxProfile);
-        		
-        		if (!notAllowedProfileNames.contains(oldProfileName)) {
-        		
-	            	Printer tempPrinter = new Printer(selectedProfile(cbxProfile), txtName.getText(), txtIP.getText(), txtSerial.getText(), selectedModel(cbxModel));
-	                	
-	            	String profileName = new SaveDialog(frmStudioBridge, tempPrinter.getProfileName(), I18n.t("common.save")).saveProfile();
-	            	
-	            	if (profileName == null) {
-	            		return;
-	            	} else {
-	            		tempPrinter.setProfileName(profileName.trim());
-	            	}
-	                
-	                if (!notAllowedProfileNames.contains(tempPrinter.getProfileName())) {
-	                	
-	                	boolean renamed = !tempPrinter.getProfileName().equals(oldProfileName);
-	                	
-	                	// Do not silently overwrite another existing profile
-	                	if (renamed && profileExists(tempPrinter.getProfileName())) {
-	                		int result = new DialogTwoButtons(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("profile.exists", "name", tempPrinter.getProfileName()), I18n.t("common.yes"), I18n.t("common.no")).showDialog();
-	                		if (result != 0) return;
-	                	}
-	                	
-	                	// Keep the old profile if the new one could not be saved
-	                	if (!Config.saveProfile(frmStudioBridge, tempPrinter)) return;
-	                	
-	                	if (renamed) {
-	                		if (profileExists(tempPrinter.getProfileName())) cbxProfile.removeItem(tempPrinter.getProfileName());
-	                		cbxProfile.insertItemAt(tempPrinter.getProfileName(), cbxProfile.getSelectedIndex());
-	                		cbxProfile.removeItem(oldProfileName);
-	                		cbxProfile.setSelectedItem(tempPrinter.getProfileName());
-	                		
-	                		printerMap.remove(oldProfileName);
-	                		
-	                		// Only delete the old file after the profile was saved under its new name
-	                		new File(ProfilesDir + System.getProperty("file.separator") + oldProfileName + ".sbp").delete();
-	                	}
-	                	
-	                	printerMap.put(tempPrinter.getProfileName(), tempPrinter);
-	                    
-	                    mainPrinter = tempPrinter;
-	                    
-	                    frmStudioBridge.pack();    
-	                }
-        		}
-                
-            } catch (Exception ex) {
-            	ex.printStackTrace();
-            }
+        	String oldProfileName = selectedProfile(cbxProfile);
+        	if (notAllowedProfileNames.contains(oldProfileName)) return;
+        	
+        	Printer tempPrinter = new Printer(oldProfileName, txtName.getText(), txtIP.getText(), txtSerial.getText(), selectedModel(cbxModel));
+        	String newName = profiles.askName(oldProfileName, I18n.t("common.save"));
+        	if (newName == null) return;
+        	
+        	if (newName.equals(oldProfileName)) {
+        		profiles.store(tempPrinter, null);
+        	} else if (profiles.confirmOverwrite(newName, oldProfileName)) {
+        		tempPrinter.setProfileName(newName);
+        		profiles.store(tempPrinter, oldProfileName);
+        	}
         });
         
 
@@ -1354,14 +1265,19 @@ public class MainMenu {
         if (directory.exists() && directory.isDirectory()) {
             File dir = new File(ProfilesDir);
             File[] filesList = dir.listFiles((d, name) -> name.toLowerCase().endsWith(".sbp"));
+            
+            // Filling the empty list selects its first entry, whose listener overwrites lastUsedProfile
+            String remembered = lastUsedProfile;
             if (filesList != null) {
             	
             	printerMap.clear();
+            	Arrays.sort(filesList, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
             	
                 for (File file : filesList) {
                     if (file.isFile() && !file.getName().startsWith(".")) {
                     	
                     	Printer printer = Config.loadProfile(mainFrame, file.toString());
+                    	if (printer == null) continue; // unreadable, already reported
                     	
                     	printerMap.put(printer.getProfileName(), printer);
                     	
@@ -1371,8 +1287,8 @@ public class MainMenu {
             }
             
             if (rememberLastUsedProfile) {
-            	if (((DefaultComboBoxModel<String>)comboBox.getModel()).getIndexOf(lastUsedProfile) != -1) {
-            		comboBox.setSelectedItem(lastUsedProfile);
+            	if (((DefaultComboBoxModel<String>)comboBox.getModel()).getIndexOf(remembered) != -1) {
+            		comboBox.setSelectedItem(remembered);
             	}
             }
             // Without a remembered profile the list keeps the first profile, which it selects when filled
@@ -1383,18 +1299,4 @@ public class MainMenu {
         }
     }
     
-    /**
-     * Checks if a profile already exists in the combo box.
-     *
-     * @param comboBox The combo box containing the profiles.
-     * @param entry The profile name to check.
-     * @return True if the profile exists, false otherwise.
-     */
-    private static boolean profileExists(String entry) {
-    	if (MainMenu.printerMap.containsKey(entry)) {
-    		return true; // Entry exists
-    	} else {
-    		 return false; // Entry does not exist
-    	}
-    }
 }
