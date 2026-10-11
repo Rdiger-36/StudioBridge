@@ -7,6 +7,8 @@ import java.awt.Desktop;
 import java.awt.Dialog.ModalExclusionType;
 import java.awt.Font;
 import java.awt.Toolkit;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.URI;
@@ -35,6 +37,8 @@ import rdiger36.StudioBridge.functions.Resize;
  */
 public class ToolInfo {
 
+    private static final String GITHUB_URL = "https://github.com/Rdiger-36/StudioBridge";
+
     /**
      * Constructs a ToolInfo dialog.
      *
@@ -57,9 +61,6 @@ public class ToolInfo {
         });
 
         JEditorPane dtrpnDeveloper = new JEditorPane("text/html", "<html><body>\r\n" +
-                I18n.t("info.developer") + ": Niklas (Rdiger-36)<br>\r\n" +
-                "GitHub: <a href=\"https://github.com/Rdiger-36/StudioBridge\">StudioBridge Repo</a><br>\r\n" +
-                "<br>\r\n" +
                 I18n.t("info.iconSource") + ": <a href=\"https://www.flaticon.com/de/kostenlose-icons/3d-drucker\">Freepik - Flaticon</a>\r\n" +
                 "<br>\r\n" +
                 "<br>\r\n" +
@@ -84,17 +85,8 @@ public class ToolInfo {
                     dtrpnDeveloper.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                 } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                     try {
-                        String clickedText = dtrpnDeveloper.getDocument().getText(
-                                e.getSourceElement().getStartOffset(),
-                                e.getSourceElement().getEndOffset() - e.getSourceElement().getStartOffset());
-
-                        if (clickedText.equals("StudioBridge Repo")) {
-               			 clickedText = "https://github.com/Rdiger-36/StudioBridge";
-               		 } else if (clickedText.equals("Freepik - Flaticon")) {
-               			 clickedText = "https://www.flaticon.com/de/kostenlose-icons/3d-drucker";
-               		 }
-               		 
-   					Desktop.getDesktop().browse(new URI(clickedText));
+                        // The link target itself, independent of its shown text
+                        Desktop.getDesktop().browse(e.getURL().toURI());
    				} catch (Exception e1) {
    					e1.printStackTrace();
    				}
@@ -109,6 +101,20 @@ public class ToolInfo {
         lbueberschrift.setFont(new Font("Segoe UI", Font.BOLD, 16));
         ImageIcon icon = Resize.setNewImageIconSize(new ImageIcon(ToolInfo.class.getResource("/icon.png")), 64, 64);
         lbueberschrift.setIcon(icon);
+
+        // The title opens the GitHub repository
+        lbueberschrift.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        lbueberschrift.setToolTipText(GITHUB_URL);
+        lbueberschrift.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                try {
+                    Desktop.getDesktop().browse(new URI(GITHUB_URL));
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
 
         JSeparator separator = new JSeparator();
 
