@@ -56,16 +56,21 @@ public class Config {
 	    if (response == 0) {
 	        // Get the profile name by showing a save dialog.
 	        // The text from the 'txtName' field is used as the initial suggestion for the profile name.
-	        String profileName = new SaveDialog(mainFrame, printer.getProfileName(), "Save").saveProfile().trim();
+	        String profileName = new SaveDialog(mainFrame, printer.getProfileName(), "Save").saveProfile();
 	        
-	        // Save the profile with the entered name and associated details (model, IP, serial number), when the profile name is set.
-	        if (!profileName.equals("")) {
-	        	printer.setProfileName(profileName);
-	        	saveProfile(mainFrame, printer);
+	        // The dialog returns null when it was closed without confirming.
+	        if (profileName == null || profileName.trim().equals("")) {
+	        	return "";
+	        }
+	        
+	        // Save the profile with the entered name and associated details (model, IP, serial number).
+	        printer.setProfileName(profileName.trim());
+	        if (!saveProfile(mainFrame, printer)) {
+	        	return "";
 	        }
 	        
 	        // Return the name of the saved profile.
-	        return profileName;
+	        return printer.getProfileName();
 	    }
 	    
 	    // If the user chooses to continue without saving, return an empty string.
@@ -97,10 +102,8 @@ public class Config {
 	    if (response == 0) {
 	        
 	        // Save the profile using the selected name and the provided profile details.
-	        saveProfile(mainFrame, printer);
-	        
-	        // Return true indicating that the profile has been saved.
-	        return true;
+	        // Return whether the profile has been saved.
+	        return saveProfile(mainFrame, printer);
 	    }
 	    
 	    // If the user chooses to continue without saving, return false.

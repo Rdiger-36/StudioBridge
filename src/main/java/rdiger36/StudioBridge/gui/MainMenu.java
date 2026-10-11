@@ -819,7 +819,6 @@ public class MainMenu {
             	tempPrinter.setProfileName(Config.saveUnsavedNewProfile(frame, tempPrinter));
                 if (!tempPrinter.getProfileName().equals("")) {
                     cbxProfile.addItem(tempPrinter.getProfileName());
-                    Config.saveProfile(frame, tempPrinter);
                     cbxProfile.setSelectedItem(tempPrinter.getProfileName());
                     frmStudioBridge.pack();    
                     mainPrinter = tempPrinter;
@@ -835,7 +834,8 @@ public class MainMenu {
 
             // Check if a valid port was assigned to remoteUdpPort
             if (remoteUdpPort > 0) {
-            	UDPPackage.send(frmStudioBridge, mainPrinter, remoteUdpPort, false);
+            	// Send the data as currently entered, regardless of whether it was saved
+            	UDPPackage.send(frmStudioBridge, tempPrinter, remoteUdpPort, false);
             } else {
                 // Show a warning if Bambu Studio is not running
             	new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Bambu Studio is not running!</html>", "Ok").showDialog();
