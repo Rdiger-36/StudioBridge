@@ -48,6 +48,8 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JRadioButtonMenuItem;
+import javax.swing.UIManager;
+import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
@@ -117,11 +119,11 @@ public class MainMenu {
     public static String lastUsedProfile;
     
     // Contains the names of profiles which are not allowed to set
-    public static List<String> notAllowedProfileNames = new ArrayList<String>(List.of("New profile", "Import profile", "---", ""));
+    // Names a profile can not have: empty, and the placeholder for a new profile in every language
+    public static List<String> notAllowedProfileNames = new ArrayList<String>(List.of("New profile", ""));
     
-    // The entries of the profile list that are not profiles, in the language of the GUI
+    // Profile name of a new, not yet saved profile, also shown as placeholder of the empty profile list
     public static String NEW_PROFILE = "New profile";
-    public static String IMPORT_PROFILE = "Import profile";
     
     // Language setting: a language code, or "auto" for the language of the operating system
     public static String language = I18n.AUTO;
@@ -139,20 +141,23 @@ public class MainMenu {
     public static HashMap<String, Printer> printerMap;
     
     /**
-     * Applies the language setting to the texts of the GUI. The special entries of the profile
-     * list are reserved in every language, so a last used profile stored under another language
-     * is never taken for a real profile.
+     * Applies the language setting to the texts of the GUI. The placeholder name of a new profile
+     * is reserved in every language, so a last used profile stored under another language is never
+     * taken for a real profile.
      */
     static void applyLanguage() {
     	I18n.setLanguage(language);
     	NEW_PROFILE = I18n.t("profile.new");
-    	IMPORT_PROFILE = I18n.t("profile.import");
     	for (String code : I18n.LANGUAGES) {
-    		for (String key : new String[] {"profile.new", "profile.import"}) {
-    			String name = I18n.raw(code, key);
-    			if (name != null && !notAllowedProfileNames.contains(name)) notAllowedProfileNames.add(name);
-    		}
+    		String name = I18n.raw(code, "profile.new");
+    		if (name != null && !notAllowedProfileNames.contains(name)) notAllowedProfileNames.add(name);
     	}
+    }
+    
+    // The selected profile, or NEW_PROFILE when the list has no selection
+    private static String selectedProfile(JComboBox<String> cbxProfile) {
+    	Object selected = cbxProfile.getSelectedItem();
+    	return selected == null ? NEW_PROFILE : selected.toString();
     }
     
     public static void main(String[] args) {
@@ -667,7 +672,19 @@ public class MainMenu {
         
         JComboBox<String> cbxProfile = new JComboBox<>();
         cbxProfile.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        cbxProfile.setModel(new DefaultComboBoxModel<String>(new String[] {NEW_PROFILE, IMPORT_PROFILE, "---"}));
+        // Only real profiles are listed, no selection means a new profile
+        cbxProfile.setModel(new DefaultComboBoxModel<String>());
+        cbxProfile.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                JLabel lbl = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (index == -1 && value == null) {
+                    lbl.setText(NEW_PROFILE);
+                    lbl.setForeground(UIManager.getColor("Label.disabledForeground"));
+                }
+                return lbl;
+            }
+        });
         frmStudioBridge.getContentPane().add(cbxProfile, "flowx,cell 1 2,growx");
 
         // Printer information labels
@@ -918,12 +935,9 @@ public class MainMenu {
                     ProfilesDir = newProfilesDir;
                     useCustomProfilesDir = false; // A choice in the menu is saved again
                     cbxProfile.removeAllItems();
-                    cbxProfile.addItem(NEW_PROFILE);
-                    cbxProfile.addItem(IMPORT_PROFILE);
-                    cbxProfile.addItem("---");
                     getAllProfiles(frmStudioBridge, cbxProfile);
-                    if (cbxProfile.getItemCount() <= 3) {
-                        cbxProfile.setSelectedIndex(0);
+                    if (cbxProfile.getItemCount() == 0) {
+                        cbxProfile.setSelectedIndex(-1);
                         mainPrinter = new Printer(NEW_PROFILE, "", "", "", "No model");
                     }
                     frmStudioBridge.pack();    
@@ -940,7 +954,7 @@ public class MainMenu {
         btnSendPackage.addActionListener(arg -> {
             	
         	// Set new printer object from GUI data
-        	Printer tempPrinter = new Printer(cbxProfile.getSelectedItem().toString(), txtName.getText(), txtIP.getText(), txtSerial.getText(), cbxModel.getSelectedItem().toString());
+        	Printer tempPrinter = new Printer(selectedProfile(cbxProfile), txtName.getText(), txtIP.getText(), txtSerial.getText(), cbxModel.getSelectedItem().toString());
         	
             if (tempPrinter.getIpAdress().equals("") || tempPrinter.getSerialNumber().equals("") || tempPrinter.getPrinterName().equals("")) {
                 new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("input.check"), I18n.t("common.back")).showDialog();
@@ -991,69 +1005,14 @@ public class MainMenu {
             @Override
             public void actionPerformed(ActionEvent e) {
                             	
-            	if (cbxProfile.getSelectedItem() != null) {
-                                	
-                	if (cbxProfile.getSelectedItem().toString().equals(IMPORT_PROFILE)) {
-                	                		
-                		JnaFileChooser fc = new JnaFileChooser();
-                        fc.setMode(Mode.Files);
-                        fc.setTitle(I18n.t("profile.importTitle"));
-
-                        boolean returnValue = fc.showOpenDialog(frame);
-                        if (returnValue) {
-                        	String profilePath = fc.getSelectedFile().getAbsolutePath();
-                        	String profileName = fc.getSelectedFile().getName().replace(".sbp", "");
-                    		
-                        	profileName = new SaveDialog(frmStudioBridge, I18n.t("profile.importedName"), I18n.t("profile.setName")).saveProfile();
-                        	
-                        	if (profileName != null) {
-                            	profileName = profileName.trim();
-                            	if (profileName.equals("")) profileName = I18n.t("profile.importedName");
-                            	
-                            	setProfile(profilePath);
-                            	mainPrinter.setProfileName(profileName);
-                            	
-                            	// Only list the imported profile if it could be saved
-                            	if (Config.saveProfile(frmStudioBridge, mainPrinter)) {
-                            		if (!profileExists(profileName)) cbxProfile.addItem(profileName);
-                            		cbxProfile.setSelectedItem(profileName);
-                            		printerMap.put(profileName, mainPrinter);
-                            	} else {
-                            		cbxProfile.setSelectedItem(NEW_PROFILE);
-                            	}
-                            	
-                        	}
-                        	
-                        } else {
-                        	cbxProfile.setSelectedItem(NEW_PROFILE);
-                        }
-                		
-                	} else if (cbxProfile.getSelectedItem().toString().equals("---")) {
-                    	
-                		if (MainMenu.lastUsedProfile != null) {
-                		
-                        	if (!notAllowedProfileNames.contains(MainMenu.lastUsedProfile)) {
-                        		cbxProfile.setSelectedItem(MainMenu.lastUsedProfile);
-                        	} else {
-                        		cbxProfile.setSelectedItem(NEW_PROFILE);
-                        		cbxModel.setSelectedIndex(-1);
-                        	}
-                			
-                		} else {
-                			cbxProfile.setSelectedItem(NEW_PROFILE);
-                			cbxModel.setSelectedIndex(-1);
-                		}
-                		
-                		
-                	} else if (cbxProfile.getSelectedItem().toString().equals(NEW_PROFILE)) {
-                		String profilePath = null;  
-                        setProfile(profilePath);
-            		} else {
-                	    // Construct the path to the profile configuration file.
-                	    String profilePath = MainMenu.ProfilesDir + System.getProperty("file.separator") + cbxProfile.getSelectedItem().toString() + ".sbp";   
-                        setProfile(profilePath);
-                	}
-                }
+            	if (cbxProfile.getSelectedItem() == null) {
+            		// No selection: a new profile
+            		setProfile(null);
+            	} else {
+            		// Construct the path to the profile configuration file.
+            		String profilePath = MainMenu.ProfilesDir + System.getProperty("file.separator") + cbxProfile.getSelectedItem().toString() + ".sbp";
+            		setProfile(profilePath);
+            	}
                 
                 frmStudioBridge.pack();
             }
@@ -1083,9 +1042,7 @@ public class MainMenu {
             @Override
             public void windowClosing(WindowEvent e) {
             	
-            	String profile = (cbxProfile.getSelectedItem() != null)
-            	        ? cbxProfile.getSelectedItem().toString()
-            	        : "";
+            	String profile = selectedProfile(cbxProfile);
 
             	String name = txtName.getText();
             	String ip = txtIP.getText();
@@ -1105,7 +1062,6 @@ public class MainMenu {
                 for (int i = 0; i < cbxProfile.getItemCount(); i++) {
                     String item = cbxProfile.getItemAt(i);
                     
-                    // Only add profiles that are not "New profile", "Import profile", or "---"
                     if (!notAllowedProfileNames.contains(item)) {
                         profileList.add(item);
                     }
@@ -1117,15 +1073,8 @@ public class MainMenu {
         
         getAllProfiles(frmStudioBridge, cbxProfile); // Load all profiles into the combo box
         
-        JButton btnEditProfile = new JButton("");
-        btnEditProfile.setRequestFocusEnabled(false);
-        btnEditProfile.setMargin(new Insets(2, 2, 2, 2));
-        btnEditProfile.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnEditProfile.setContentAreaFilled(false);
-        btnEditProfile.setIcon(Resize.setNewImageIconSize(new ImageIcon(ToolInfo.class.getResource("/edit.png")), 16, 16));
-        frmStudioBridge.getContentPane().add(btnEditProfile, "cell 1 2,alignx right");
-        
         JButton btnSaveProfile = new JButton("");
+        btnSaveProfile.setToolTipText(I18n.t("profile.saveChanges"));
         btnSaveProfile.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnSaveProfile.setRequestFocusEnabled(false);
         btnSaveProfile.setMargin(new Insets(2, 2, 2, 2));
@@ -1133,14 +1082,59 @@ public class MainMenu {
         btnSaveProfile.setIcon(Resize.setNewImageIconSize(new ImageIcon(ToolInfo.class.getResource("/save.png")), 16, 16));
         frmStudioBridge.getContentPane().add(btnSaveProfile, "cell 1 2,alignx right");
                 
-        // Buttons for profile actions
-        JButton btnDeleteProfile = new JButton("");
-        btnDeleteProfile.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnDeleteProfile.setMargin(new Insets(2, 2, 2, 2));
-        btnDeleteProfile.setContentAreaFilled(false);
-        btnDeleteProfile.setRequestFocusEnabled(false);
-        btnDeleteProfile.setIcon(Resize.setNewImageIconSize(new ImageIcon(ToolInfo.class.getResource("/delete.png")), 16, 16));
-        frmStudioBridge.getContentPane().add(btnDeleteProfile, "cell 1 2,alignx right");
+        // Menu with the other profile actions, so the profile list only holds real profiles
+        JPopupMenu mnProfileActions = new JPopupMenu();
+        JMenuItem miNewProfile = new JMenuItem(I18n.t("profile.new"));
+        JMenuItem miImportProfile = new JMenuItem(I18n.t("profile.import"));
+        JMenuItem miRenameProfile = new JMenuItem(I18n.t("profile.rename"), Resize.setNewImageIconSize(new ImageIcon(ToolInfo.class.getResource("/edit.png")), 16, 16));
+        JMenuItem miDeleteProfile = new JMenuItem(I18n.t("profile.deleteAction"), Resize.setNewImageIconSize(new ImageIcon(ToolInfo.class.getResource("/delete.png")), 16, 16));
+        mnProfileActions.add(miNewProfile);
+        mnProfileActions.add(miImportProfile);
+        mnProfileActions.addSeparator();
+        mnProfileActions.add(miRenameProfile);
+        mnProfileActions.add(miDeleteProfile);
+        
+        JButton btnProfileActions = new JButton("\u22EF");
+        btnProfileActions.setToolTipText(I18n.t("profile.actions"));
+        btnProfileActions.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnProfileActions.setMargin(new Insets(2, 6, 2, 6));
+        btnProfileActions.setRequestFocusEnabled(false);
+        btnProfileActions.addActionListener(arg -> {
+        	// Renaming and deleting need a saved profile
+        	boolean profileSelected = cbxProfile.getSelectedItem() != null;
+        	miRenameProfile.setEnabled(profileSelected);
+        	miDeleteProfile.setEnabled(profileSelected);
+        	mnProfileActions.show(btnProfileActions, 0, btnProfileActions.getHeight());
+        });
+        frmStudioBridge.getContentPane().add(btnProfileActions, "cell 1 2,alignx right");
+        
+        // New profile: clear the selection, the listener empties the fields
+        miNewProfile.addActionListener(arg -> cbxProfile.setSelectedIndex(-1));
+        
+        // Import a profile file: it is stored in the profiles directory under a name the user picks
+        miImportProfile.addActionListener(arg -> {
+        	JnaFileChooser fc = new JnaFileChooser();
+        	fc.setMode(Mode.Files);
+        	fc.setTitle(I18n.t("profile.importTitle"));
+        	if (!fc.showOpenDialog(frame)) return;
+        	
+        	String profileName = new SaveDialog(frmStudioBridge, I18n.t("profile.importedName"), I18n.t("profile.setName")).saveProfile();
+        	if (profileName == null) return;
+        	profileName = profileName.trim();
+        	if (profileName.equals("")) profileName = I18n.t("profile.importedName");
+        	
+        	Printer imported = Config.loadProfile(frmStudioBridge, fc.getSelectedFile().getAbsolutePath());
+        	if (imported == null) return;
+        	imported.setProfileName(profileName);
+        	
+        	// Only list the imported profile if it could be saved
+        	if (Config.saveProfile(frmStudioBridge, imported)) {
+        		printerMap.put(profileName, imported);
+        		if (((DefaultComboBoxModel<String>) cbxProfile.getModel()).getIndexOf(profileName) < 0) cbxProfile.addItem(profileName);
+        		cbxProfile.setSelectedItem(profileName);
+        		frmStudioBridge.pack();
+        	}
+        });
         
         // Copyright button
         JButton btnCopy = new JButton("© Niklas (Rdiger-36)");
@@ -1157,11 +1151,11 @@ public class MainMenu {
         frmStudioBridge.getContentPane().add(btnCopy, "cell 1 8,alignx right");
         
         // Action listener for deleting profiles
-        btnDeleteProfile.addActionListener(new ActionListener() {
+        miDeleteProfile.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
             	
-            	String profile = cbxProfile.getSelectedItem().toString();
+            	String profile = selectedProfile(cbxProfile);
             	
             	if (!notAllowedProfileNames.contains(profile)) {
             	
@@ -1170,7 +1164,7 @@ public class MainMenu {
                     if (response == 0) {
                         new File(ProfilesDir + System.getProperty("file.separator") + cbxProfile.getSelectedItem() + ".sbp").delete();
                         cbxProfile.removeItem(cbxProfile.getSelectedItem());
-                        cbxProfile.setSelectedIndex(0);
+                        cbxProfile.setSelectedIndex(-1);
                         mainPrinter = new Printer(NEW_PROFILE, "", "", "", "no model");
                         printerMap.remove(profile);
                         cbxModel.setSelectedIndex(-1);
@@ -1187,7 +1181,7 @@ public class MainMenu {
             	
             	try {
             	
-	            	Printer tempPrinter = new Printer(cbxProfile.getSelectedItem().toString(), txtName.getText(), txtIP.getText(), txtSerial.getText(), cbxModel.getSelectedItem().toString());
+	            	Printer tempPrinter = new Printer(selectedProfile(cbxProfile), txtName.getText(), txtIP.getText(), txtSerial.getText(), cbxModel.getSelectedItem().toString());
 	                
 	                if (tempPrinter.getProfileName().equals(NEW_PROFILE)) {
 	                	
@@ -1225,14 +1219,14 @@ public class MainMenu {
             }
         });
         
-        btnEditProfile.addActionListener(arg -> {
+        miRenameProfile.addActionListener(arg -> {
         	try {
             	
-        		String oldProfileName = cbxProfile.getSelectedItem().toString();
+        		String oldProfileName = selectedProfile(cbxProfile);
         		
         		if (!notAllowedProfileNames.contains(oldProfileName)) {
         		
-	            	Printer tempPrinter = new Printer(cbxProfile.getSelectedItem().toString(), txtName.getText(), txtIP.getText(), txtSerial.getText(), cbxModel.getSelectedItem().toString());
+	            	Printer tempPrinter = new Printer(selectedProfile(cbxProfile), txtName.getText(), txtIP.getText(), txtSerial.getText(), cbxModel.getSelectedItem().toString());
 	                	
 	            	String profileName = new SaveDialog(frmStudioBridge, tempPrinter.getProfileName(), I18n.t("common.save")).saveProfile();
 	            	
@@ -1345,10 +1339,7 @@ public class MainMenu {
             		comboBox.setSelectedItem(lastUsedProfile);
             	}
             }
-            // If still on "New profile" and real profiles exist, default to the first one
-            if (NEW_PROFILE.equals(comboBox.getSelectedItem()) && comboBox.getItemCount() > 3) {
-            	comboBox.setSelectedIndex(3);
-            }
+            // Without a remembered profile the list keeps the first profile, which it selects when filled
             
         } else {
             new DialogOneButton(null, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("profile.directoryFailed", "path", ProfilesDir), I18n.t("common.close")).showDialog();

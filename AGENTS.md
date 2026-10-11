@@ -39,9 +39,10 @@ printer would send. `mvn package` builds the fat JAR and runs the tests.
   its key in every language file; `I18nTest` holds every language to the
   English keys and placeholders (`{name}`). The command line output, the UDP
   package and identifiers stay English.
-- The special entries of the profile list ("New profile", "Import profile")
-  are shown translated, so compare against `MainMenu.NEW_PROFILE` and
-  `MainMenu.IMPORT_PROFILE`, never against a literal.
+- The profile list only holds saved profiles. No selection means a new
+  profile, whose name is `MainMenu.NEW_PROFILE` (translated, reserved in every
+  language); read the selection with `selectedProfile()`, never compare
+  against a literal. New, import, rename and delete live in the "⋯" menu.
 - Identifiers, comments, commit messages and PR descriptions are written in
   English.
 
