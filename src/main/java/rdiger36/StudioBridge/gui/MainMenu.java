@@ -1024,7 +1024,7 @@ public class MainMenu {
         JMenuItem miNewProfile = new JMenuItem(I18n.t("profile.new"), new FlatSVGIcon("icons/new.svg"));
         JMenuItem miImportProfile = new JMenuItem(I18n.t("profile.import"), new FlatSVGIcon("icons/import.svg"));
         JMenuItem miRenameProfile = new JMenuItem(I18n.t("profile.rename"), new FlatSVGIcon("icons/edit.svg"));
-        JMenuItem miDeleteProfile = new JMenuItem(I18n.t("profile.deleteAction"), new FlatSVGIcon("icons/delete.svg"));
+        JMenuItem miDeleteProfile = new JMenuItem(I18n.t("profile.deleteAction"), new FlatSVGIcon("icons/trash-hover.svg"));
         mnProfileActions.add(miNewProfile);
         mnProfileActions.add(miImportProfile);
         mnProfileActions.addSeparator();
