@@ -81,6 +81,12 @@ Test connection
 
 If the TCP handshake fails, restarting the printer often helps.
 
+# Demo
+
+Switching profiles, the profile menu and sending a printer to Bambu Studio:
+
+<img src="docs/screenshots/demo.gif" width="460" alt="StudioBridge demo: switching profiles, profile menu, sending a package" />
+
 # Languages
 
 The GUI is available in English and German. **Settings → Language** picks one:
