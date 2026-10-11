@@ -537,7 +537,7 @@ jobs:
           |---|---|
           | **Apple Silicon (M-Series)** | [⬇ ${A}_macOS_arm64.dmg](${BASE}/${A}_macOS_arm64.dmg) |
 
-          ### JAR (all platforms, requires Java 21+)
+          ### JAR (all platforms, requires Java 11+)
           | | |
           |---|---|
           | **Standalone JAR** | [⬇ ${A}.jar](${BASE}/${A}.jar) |
