@@ -49,6 +49,7 @@ import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.UIManager;
 import javax.swing.JPopupMenu;
@@ -820,14 +821,16 @@ public class MainMenu {
         JSeparator separator_1 = new JSeparator();
         frmStudioBridge.getContentPane().add(separator_1, "cell 0 7 2 1,growx,aligny center");
         
+        // Bottom row: copyright on the left, the actions on the right
+        JPanel pnlBottom = new JPanel(new MigLayout("insets 0", "[]push[][]", "[]"));
+        frmStudioBridge.getContentPane().add(pnlBottom, "cell 0 8 2 1,growx");
+        
         // Button to send package
         JButton btnSendPackage = new JButton(I18n.t("main.sendPackage"));
         btnSendPackage.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        frmStudioBridge.getContentPane().add(btnSendPackage, "cell 0 8");
         
         JButton btnCheckPrinter = new JButton(I18n.t("main.checkPrinter"));
-        btnCheckPrinter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));  
-        frmStudioBridge.getContentPane().add(btnCheckPrinter, "flowx,cell 1 8");
+        btnCheckPrinter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         // Input fields for IP and Serial number
         JTextField txtIP = new JTextField();
@@ -1147,13 +1150,14 @@ public class MainMenu {
         btnCopy.setMargin(new Insets(0, 0, 0, 0));
         btnCopy.setBorderPainted(false);
         btnCopy.setContentAreaFilled(false);
-        btnCopy.setHorizontalAlignment(SwingConstants.RIGHT);
-        btnCopy.setVerticalAlignment(SwingConstants.BOTTOM);
+        btnCopy.setHorizontalAlignment(SwingConstants.LEFT);
         btnCopy.setFont(new Font("Segoe UI", Font.PLAIN, 10));
         
         // Action listener for copyright button
         btnCopy.addActionListener(arg -> new ToolInfo(frmStudioBridge));
-        frmStudioBridge.getContentPane().add(btnCopy, "cell 1 8,alignx right");
+        pnlBottom.add(btnCopy, "aligny center");
+        pnlBottom.add(btnSendPackage);
+        pnlBottom.add(btnCheckPrinter);
         
         // Action listener for deleting profiles
         miDeleteProfile.addActionListener(new ActionListener() {
