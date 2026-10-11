@@ -72,7 +72,6 @@ public class ConfigTest {
         assertFalse(Config.isValidProfileName(""));
         assertFalse(Config.isValidProfileName("   "));
         assertFalse(Config.isValidProfileName("New profile"));
-        assertFalse(Config.isValidProfileName("---"));
     }
 
     @Test

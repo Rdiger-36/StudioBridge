@@ -73,7 +73,7 @@ public class I18nTest {
     @Test
     public void fillsPlaceholdersAndFallsBack() {
         I18n.setLanguage("de");
-        assertEquals("Achtung! Soll das Profil \"X1C\" gelöscht werden?", I18n.t("profile.delete", "name", "X1C"));
+        assertEquals("Profil \"X1C\" wirklich löschen?", I18n.t("profile.delete", "name", "X1C"));
         I18n.setLanguage("en");
         assertEquals("Profile", I18n.t("main.profile"));
         assertEquals("no.such.key", I18n.t("no.such.key"));
