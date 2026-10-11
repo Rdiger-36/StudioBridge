@@ -40,7 +40,7 @@ Version 2.1.4
    - Maintenance:
       - The version shown in StudioBridge is taken from pom.xml, so a release only bumps it in one place (PR #42)
       - Typos in dialogs and CLI output fixed, outdated code documentation corrected, unused files removed (PR #45)
-      - Pre-release tags like v.2.1.5-beta can be packaged: the installers get the numeric version, which is all jpackage accepts. The JAR declares itself multi-release, so FlatLaf uses its newer Java code. The README states Java 11 everywhere and explains running the JAR without outdated steps (PR #58)
+      - Pre-release tags like v.2.1.5-beta can be packaged: the installers get the numeric version, which is all jpackage accepts. The README states Java 11 everywhere and explains running the JAR without outdated steps (PR #58)
 
 -----------------------------------------------------------------------------------------------
 Version 2.1.3
