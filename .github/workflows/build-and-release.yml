@@ -420,6 +420,23 @@ jobs:
 
           rm -rf jar-natives
 
+      # The Info.plist of jpackage declares no localizations, so macOS shows the
+      # native dialogs (file chooser, menus) in English even on a German system.
+      # Its own template, plus the languages StudioBridge ships, fixes that.
+      - name: Prepare localized Info.plist
+        run: |
+          mkdir -p jpackage-resources
+          jimage extract --dir jimage-extract \
+            --include 'regex:.*Info-lite\.plist\.template' \
+            "$JAVA_HOME/lib/modules"
+          cp jimage-extract/jdk.jpackage/jdk/jpackage/internal/resources/Info-lite.plist.template \
+            jpackage-resources/Info.plist
+          LANGS=$(ls src/main/resources/i18n/*.properties | xargs -n1 basename | sed 's/\.properties$//' \
+            | sed 's|.*|    <string>&</string>|')
+          LANGS="$LANGS" perl -0pi -e 's|(<key>CFBundleAllowMixedLocalizations</key>\s*<true/>)|$1\n  <key>CFBundleLocalizations</key>\n  <array>\n$ENV{LANGS}\n  </array>|' \
+            jpackage-resources/Info.plist
+          grep -A4 CFBundleLocalizations jpackage-resources/Info.plist
+
       - name: Build signed DMG
         env:
           APPLE_TEAM_ID:   ${{ secrets.APPLE_TEAM_ID }}
@@ -444,6 +461,7 @@ jobs:
             --mac-sign \
             --mac-signing-key-user-name "Developer ID Application: ${APPLE_TEAM_NAME} (${APPLE_TEAM_ID})" \
             --mac-entitlements .github/entitlements.plist \
+            --resource-dir jpackage-resources \
             --add-launcher "StudioBridgeCLI=cli-mac.properties" \
             --dest dmg-output
 
