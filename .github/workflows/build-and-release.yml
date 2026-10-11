@@ -474,6 +474,89 @@ jobs:
         with:
           path: artifacts
 
+      # Only CHANGELOG.md is needed, for the detailed changes of this version
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: CHANGELOG.md
+          sparse-checkout-cone-mode: false
+          path: source
+
+      - name: Build release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.build-jar.outputs.version }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          # The section of CHANGELOG.md for exactly this version: everything
+          # between its "Version <x>" line and the next separator. An exact
+          # string compare, so 2.1.4 can not match the heading of 2.1.4-beta.
+          NOTES="$(awk -v v="Version ${VERSION}" '
+            $0 == v { found = 1; next }
+            found && /^---/ { exit }
+            found { print }
+          ' source/CHANGELOG.md)"
+
+          # The merged pull requests since the previous release, grouped by the
+          # categories of .github/release.yml. Not fatal: a release without the
+          # overview is worth more than no release at all.
+          GENERATED=""
+          if ! GENERATED="$(gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
+                --method POST -f tag_name="${TAG}" --jq '.body')"; then
+            echo "::warning::Could not generate the pull request overview for ${TAG}."
+            GENERATED=""
+          fi
+
+          BASE="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}"
+          A="StudioBridge-${VERSION}"
+
+          {
+            if [[ -n "${GENERATED//[[:space:]]/}" ]]; then
+              printf '%s\n\n' "${GENERATED}"
+            fi
+
+            cat <<EOF
+          ---
+          ## Downloads
+
+          ### Windows
+          | | Installer (MSI) | Portable (ZIP) |
+          |---|---|---|
+          | **x86 (Intel/AMD)** | [⬇ ${A}_win_x86.msi](${BASE}/${A}_win_x86.msi) | [⬇ NO-INSTALL x86](${BASE}/${A}_win_x86_NO-INSTALL.zip) |
+          | **ARM64** | [⬇ ${A}_win_arm64.msi](${BASE}/${A}_win_arm64.msi) | [⬇ NO-INSTALL arm64](${BASE}/${A}_win_arm64_NO-INSTALL.zip) |
+
+          ### Linux
+          | | AppImage |
+          |---|---|
+          | **x86_64 (Intel/AMD)** | [⬇ ${A}-x86_64.AppImage](${BASE}/${A}-x86_64.AppImage) |
+          | **aarch64 (ARM)** | [⬇ ${A}-aarch64.AppImage](${BASE}/${A}-aarch64.AppImage) |
+
+          ### macOS
+          | | DMG |
+          |---|---|
+          | **Apple Silicon (M-Series)** | [⬇ ${A}_macOS_arm64.dmg](${BASE}/${A}_macOS_arm64.dmg) |
+
+          ### JAR (alle Plattformen, erfordert Java 21+)
+          | | |
+          |---|---|
+          | **Standalone JAR** | [⬇ ${A}.jar](${BASE}/${A}.jar) |
+
+          ## Detailed changes
+
+          EOF
+
+            if [[ -n "${NOTES//[[:space:]]/}" ]]; then
+              # Fenced, because the changelog is indented plain text: as
+              # markdown its deeper levels would turn into code blocks.
+              echo '```'
+              printf '%s\n' "${NOTES}"
+              echo '```'
+            else
+              echo "No CHANGELOG.md section for ${VERSION}."
+            fi
+          } > release-notes.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -485,33 +568,7 @@ jobs:
             artifacts/linux-aarch64/*
             artifacts/macos-arm64/*
           name: "Version ${{ needs.build-jar.outputs.version }}"
-          generate_release_notes: true
-          append_body: true
-          body: |
-            ---
-            ## Downloads
-
-            ### Windows
-            | | Installer (MSI) | Portable (ZIP) |
-            |---|---|---|
-            | **x86 (Intel/AMD)** | [⬇ StudioBridge-${{ needs.build-jar.outputs.version }}_win_x86.msi](https://github.com/Rdiger-36/StudioBridge/releases/download/${{ github.ref_name }}/StudioBridge-${{ needs.build-jar.outputs.version }}_win_x86.msi) | [⬇ NO-INSTALL x86](https://github.com/Rdiger-36/StudioBridge/releases/download/${{ github.ref_name }}/StudioBridge-${{ needs.build-jar.outputs.version }}_win_x86_NO-INSTALL.zip) |
-            | **ARM64** | [⬇ StudioBridge-${{ needs.build-jar.outputs.version }}_win_arm64.msi](https://github.com/Rdiger-36/StudioBridge/releases/download/${{ github.ref_name }}/StudioBridge-${{ needs.build-jar.outputs.version }}_win_arm64.msi) | [⬇ NO-INSTALL arm64](https://github.com/Rdiger-36/StudioBridge/releases/download/${{ github.ref_name }}/StudioBridge-${{ needs.build-jar.outputs.version }}_win_arm64_NO-INSTALL.zip) |
-
-            ### Linux
-            | | AppImage |
-            |---|---|
-            | **x86_64 (Intel/AMD)** | [⬇ StudioBridge-${{ needs.build-jar.outputs.version }}-x86_64.AppImage](https://github.com/Rdiger-36/StudioBridge/releases/download/${{ github.ref_name }}/StudioBridge-${{ needs.build-jar.outputs.version }}-x86_64.AppImage) |
-            | **aarch64 (ARM)** | [⬇ StudioBridge-${{ needs.build-jar.outputs.version }}-aarch64.AppImage](https://github.com/Rdiger-36/StudioBridge/releases/download/${{ github.ref_name }}/StudioBridge-${{ needs.build-jar.outputs.version }}-aarch64.AppImage) |
-
-            ### macOS
-            | | DMG |
-            |---|---|
-            | **Apple Silicon (M-Series)** | [⬇ StudioBridge-${{ needs.build-jar.outputs.version }}_macOS_arm64.dmg](https://github.com/Rdiger-36/StudioBridge/releases/download/${{ github.ref_name }}/StudioBridge-${{ needs.build-jar.outputs.version }}_macOS_arm64.dmg) |
-
-            ### JAR (alle Plattformen, erfordert Java 21+)
-            | | |
-            |---|---|
-            | **Standalone JAR** | [⬇ StudioBridge-${{ needs.build-jar.outputs.version }}.jar](https://github.com/Rdiger-36/StudioBridge/releases/download/${{ github.ref_name }}/StudioBridge-${{ needs.build-jar.outputs.version }}.jar) |
+          body_path: release-notes.md
           prerelease: ${{ contains(github.ref_name, '-') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

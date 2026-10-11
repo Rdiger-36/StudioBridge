@@ -1,3 +1,10 @@
+# How GitHub groups the pull requests of a release.
+#
+# Read by the releases/generate-notes API, which the release job of
+# build-and-release.yml calls for every tag. A pull request lands in the first
+# category whose labels it carries, so a PR labelled "breaking change" and "bug"
+# is listed under Breaking Changes only. An unlabelled PR ends up under Other
+# Changes, which is why every PR is labelled before it is merged.
 changelog:
   exclude:
     labels:
@@ -24,6 +31,11 @@ changelog:
     - title: "📝 Documentation"
       labels:
         - documentation
+    - title: "🧹 Maintenance"
+      labels:
+        - maintenance
+    # The catch-all has to stay last: it matches everything, so a category
+    # after it would never be reached.
     - title: "🔍 Other Changes"
       labels:
         - "*"
