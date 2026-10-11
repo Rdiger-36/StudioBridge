@@ -49,10 +49,10 @@ Successfully tested on:
 - Linux Ubuntu 25.10 ARM and x86
 - macOS M-Series (Apple Silicon)
 
-> **Note for Intel Mac users:** macOS 27 (September 2026) removes Rosetta 2 support. Native Intel (x86) builds are no longer provided. Intel Mac users can use the `.jar` release with Java 21+.
+> **Note for Intel Mac users:** macOS 27 (September 2026) removes Rosetta 2 support. Native Intel (x86) builds are no longer provided. Intel Mac users can use the `.jar` release with Java 11+.
 
 # Requirements
-- min. Java 21 (only for .jar compiled release)
+- min. Java 11 (only for .jar compiled release)
 
 # Preview
 Lightmode
