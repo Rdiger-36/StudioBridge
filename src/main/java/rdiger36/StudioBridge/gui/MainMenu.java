@@ -1121,17 +1121,15 @@ public class MainMenu {
         
         // Import a profile file: it is stored in the profiles directory under a name the user picks
         miImportProfile.addActionListener(arg -> {
-        	JnaFileChooser fc = new JnaFileChooser();
-        	fc.setMode(Mode.Files);
-        	fc.setTitle(I18n.t("profile.importTitle"));
-        	if (!fc.showOpenDialog(frame)) return;
+        	File importFile = FileChooser.chooseProfile(frmStudioBridge, I18n.t("profile.importTitle"));
+        	if (importFile == null) return;
         	
         	String profileName = new SaveDialog(frmStudioBridge, I18n.t("profile.importedName"), I18n.t("profile.setName")).saveProfile();
         	if (profileName == null) return;
         	profileName = profileName.trim();
         	if (profileName.equals("")) profileName = I18n.t("profile.importedName");
         	
-        	Printer imported = Config.loadProfile(frmStudioBridge, fc.getSelectedFile().getAbsolutePath());
+        	Printer imported = Config.loadProfile(frmStudioBridge, importFile.getAbsolutePath());
         	if (imported == null) return;
         	imported.setProfileName(profileName);
         	

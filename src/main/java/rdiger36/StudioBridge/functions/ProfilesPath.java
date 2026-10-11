@@ -1,5 +1,6 @@
 package rdiger36.StudioBridge.functions;
 import java.awt.Toolkit;
+import java.io.File;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -12,8 +13,6 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
-import jnafilechooser.api.JnaFileChooser;
-import jnafilechooser.api.JnaFileChooser.Mode;
 import net.miginfocom.swing.MigLayout;
 import rdiger36.StudioBridge.gui.MainMenu;
 import rdiger36.StudioBridge.gui.SaveDialog;
@@ -93,13 +92,9 @@ public class ProfilesPath {
         btnChooseDir.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JnaFileChooser fc = new JnaFileChooser();
-                fc.setMode(Mode.Directories);
-                fc.setTitle(I18n.t("path.chooseTitle"));
-
-                boolean returnValue = fc.showOpenDialog(dial);
-                if (returnValue) {
-                    textField.setText(fc.getSelectedFile().getAbsolutePath());
+                File dir = FileChooser.chooseDirectory(dial, I18n.t("path.chooseTitle"));
+                if (dir != null) {
+                    textField.setText(dir.getAbsolutePath());
                 }
             }
         });
