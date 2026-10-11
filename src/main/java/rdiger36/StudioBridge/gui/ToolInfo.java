@@ -9,6 +9,7 @@ import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.URI;
+import rdiger36.StudioBridge.functions.I18n;
 
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
@@ -43,7 +44,7 @@ public class ToolInfo {
         dialInfo.setModalExclusionType(ModalExclusionType.APPLICATION_EXCLUDE);
         dialInfo.setModal(true);
         dialInfo.setAlwaysOnTop(true);
-        dialInfo.setTitle("StudioBridge Info");
+        dialInfo.setTitle(I18n.t("info.title"));
         dialInfo.setResizable(false);
         dialInfo.setIconImage(Toolkit.getDefaultToolkit().getImage(ToolInfo.class.getResource("/icon.png")));
         dialInfo.setBounds(100, 100, 386, 250);
@@ -55,10 +56,10 @@ public class ToolInfo {
         });
 
         JEditorPane dtrpnDeveloper = new JEditorPane("text/html", "<html><body>\r\n" +
-                "Developer: Niklas (Rdiger-36)<br>\r\n" +
+                I18n.t("info.developer") + ": Niklas (Rdiger-36)<br>\r\n" +
                 "GitHub: <a href=\"https://github.com/Rdiger-36/StudioBridge\">StudioBridge Repo</a><br>\r\n" +
                 "<br>\r\n" +
-                "Icon Source: <a href=\"https://www.flaticon.com/de/kostenlose-icons/3d-drucker\">Freepik - Flaticon</a>\r\n" +
+                I18n.t("info.iconSource") + ": <a href=\"https://www.flaticon.com/de/kostenlose-icons/3d-drucker\">Freepik - Flaticon</a>\r\n" +
                 "<br>\r\n" +
                 "<br>\r\n" +
                 "</body></html>");

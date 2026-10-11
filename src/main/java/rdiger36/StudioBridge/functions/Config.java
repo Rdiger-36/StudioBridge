@@ -47,19 +47,19 @@ public class Config {
 	public static String saveUnsavedNewProfile(JFrame mainFrame, Printer printer) {
 	    
 	    // Display a dialog that warns the user about unsaved profile changes.
-	    // The dialog has two buttons: "Save new profile" and "Continue without saving".
+	    // The dialog has two buttons: I18n.t("profile.saveNew") and I18n.t("common.continueWithoutSaving").
 	    // The user's choice is stored in the variable 'response'.
 	    int response = new DialogTwoButtons(mainFrame, null, 
 	        new ImageIcon(MainMenu.class.getResource("/achtung.png")), 
-	        "<html>Warning! The new profile has not been saved yet!</html>", 
-	        "Save new profile", 
-	        "Continue without saving").showDialog();
+	        I18n.t("profile.unsavedNew"), 
+	        I18n.t("profile.saveNew"), 
+	        I18n.t("common.continueWithoutSaving")).showDialog();
 	    
 	    // If the user chooses to save the profile (response == 0):
 	    if (response == 0) {
 	        // Get the profile name by showing a save dialog.
 	        // The text from the 'txtName' field is used as the initial suggestion for the profile name.
-	        String profileName = new SaveDialog(mainFrame, printer.getProfileName(), "Save").saveProfile();
+	        String profileName = new SaveDialog(mainFrame, printer.getProfileName(), I18n.t("common.save")).saveProfile();
 	        
 	        // The dialog returns null when it was closed without confirming.
 	        if (profileName == null || profileName.trim().equals("")) {
@@ -94,12 +94,12 @@ public class Config {
 	public static boolean saveUnsavedProfile(JFrame mainFrame, Printer printer) {
 	    
 	    // Display a dialog warning the user that the current profile contains unsaved changes.
-	    // The dialog has two buttons: "Save profile" and "Continue without saving".
+	    // The dialog has two buttons: I18n.t("profile.saveChanges") and I18n.t("common.continueWithoutSaving").
 	    int response = new DialogTwoButtons(mainFrame, null, 
 	        new ImageIcon(MainMenu.class.getResource("/achtung.png")), 
-	        "<html>Warning! The selected profile contains changes!</html>", 
-	        "Save profile", 
-	        "Continue without saving").showDialog();
+	        I18n.t("profile.unsavedChanges"), 
+	        I18n.t("profile.saveChanges"), 
+	        I18n.t("common.continueWithoutSaving")).showDialog();
 	    
 	    // If the user chooses to save the profile (response == 0):
 	    if (response == 0) {
@@ -154,7 +154,7 @@ public class Config {
 	     */
 	    // Refuse names that can not be used as a file name
 	    if (!isValidProfileName(printer.getProfileName())) {
-	    	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! The profile name is not valid!<br>It must not be empty or contain any of these characters: \\ / : * ? \" &lt; &gt; |</html>", "Ok").showDialog();
+	    	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("profile.invalidName"), I18n.t("common.ok")).showDialog();
 	    	return false;
 	    }
 	    
@@ -165,7 +165,7 @@ public class Config {
 	        fos.write(config.toString().getBytes(StandardCharsets.UTF_8));
 	    } catch (Exception e1) {
 	    	// Show error if saving the file has failed
-        	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to save the profile!</html>", "Ok").showDialog();
+        	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("profile.saveFailed"), I18n.t("common.ok")).showDialog();
         	return false;
 	    }
 	    
@@ -211,7 +211,7 @@ public class Config {
 	            }    
 	        } catch (Exception e) {
 	        	// Show error if reading the file has failed
-	        	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to read the profile file!</html>", "Ok").showDialog();
+	        	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("profile.readFailed"), I18n.t("common.ok")).showDialog();
 	        	return null;
 	        }
             return printer;
@@ -330,6 +330,10 @@ public class Config {
 	    config.append("showJarInfo=" + MainMenu.jarInfo);
 	    config.append(System.getProperty("line.separator")); // Add a new line.
 	    
+	    // Append the language of the GUI ("auto" follows the operating system) to the configuration.
+	    config.append("language=" + MainMenu.language);
+	    config.append(System.getProperty("line.separator")); // Add a new line.
+	    
 	    /** 
 	     * FileOutputStream to create and write the contents of the StringBuilder to 
 	     * a file at the specified save path.
@@ -340,7 +344,7 @@ public class Config {
 	    } catch (Exception e1) {
 	    	// Show error if saving the file has failed
 	    	e1.printStackTrace();
-        	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to write the config to the config file!</html>", "Ok").showDialog();
+        	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("settings.writeFailed"), I18n.t("common.ok")).showDialog();
         }    
 	}
 	
@@ -372,7 +376,7 @@ public class Config {
 	        } catch (Exception e) {
 	        	// Show error if reading the file has failed
 	        	e.printStackTrace();
-	        	new DialogOneButton(null, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to read the config file!</html>", "Ok").showDialog();
+	        	new DialogOneButton(null, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("settings.readFailed"), I18n.t("common.ok")).showDialog();
 	        }    
 	    }
 	}
@@ -417,6 +421,11 @@ public class Config {
         	// Set the showJarInfo setting
 	        case "showJarInfo": 
 	        	MainMenu.jarInfo = Boolean.valueOf(wert);
+	        	break;
+	        
+	        // Set the language of the GUI
+	        case "language":
+	        	MainMenu.language = wert;
 	        	break;
 	        
 	        // Default case if no known configuration type is found (does nothing).

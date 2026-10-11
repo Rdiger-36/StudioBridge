@@ -15,6 +15,7 @@ import javax.swing.table.DefaultTableModel;
 import net.miginfocom.swing.MigLayout;
 import rdiger36.StudioBridge.functions.*;
 import rdiger36.StudioBridge.objects.Printer;
+import rdiger36.StudioBridge.functions.I18n;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -42,7 +43,7 @@ public class MultiPrinterSetup {
         dialInfo.setModalExclusionType(ModalExclusionType.APPLICATION_EXCLUDE);
         dialInfo.setModal(true);
         dialInfo.setAlwaysOnTop(true);
-        dialInfo.setTitle("Multiple Printer Setup");
+        dialInfo.setTitle(I18n.t("multi.title"));
         dialInfo.setIconImage(Toolkit.getDefaultToolkit().getImage(MultiPrinterSetup.class.getResource("/icon.png")));
         dialInfo.setBounds(100, 100, 602, 482);
         dialInfo.toFront();
@@ -60,7 +61,7 @@ public class MultiPrinterSetup {
         table.setFocusable(false);
         table.setModel(new DefaultTableModel(
             new Object[][] {},
-            new String[] { "Profil", "Name", "IP-Address", "Serial", "Model", "Send Package" }
+            new String[] { I18n.t("multi.columnProfile"), I18n.t("multi.columnName"), I18n.t("multi.columnIp"), I18n.t("multi.columnSerial"), I18n.t("multi.columnModel"), I18n.t("multi.columnSend") }
         ) {
             Class<?>[] columnTypes = new Class[] {
                 Object.class, Object.class, Object.class, Object.class, Object.class, Boolean.class
@@ -106,15 +107,15 @@ public class MultiPrinterSetup {
         progressBar.setStringPainted(true);
         dialInfo.getContentPane().add(progressBar, "cell 1 1,grow");
 
-        JButton btnSendPrinters = new JButton("Send selected Printers");
+        JButton btnSendPrinters = new JButton(I18n.t("multi.sendSelected"));
         btnSendPrinters.addActionListener(e -> sendSelectedPrinters(frmStudioBridge, dialInfo, progressBar));
         dialInfo.getContentPane().add(btnSendPrinters, "cell 0 1,grow");
 
-        JButton btnSelAll = new JButton("Select All");
+        JButton btnSelAll = new JButton(I18n.t("multi.selectAll"));
         btnSelAll.addActionListener(e -> setAllBooleans(true));
         dialInfo.getContentPane().add(btnSelAll, "cell 2 1,alignx right");
 
-        JButton btnDeSelAll = new JButton("Deselect All");
+        JButton btnDeSelAll = new JButton(I18n.t("multi.deselectAll"));
         btnDeSelAll.addActionListener(e -> setAllBooleans(false));
         dialInfo.getContentPane().add(btnDeSelAll, "cell 3 1,alignx left");
 
@@ -162,7 +163,7 @@ public class MultiPrinterSetup {
 	    stopThread = false;
 	    errors.clear();
 	    Thread sendingThread = new Thread(() -> {
-	        progressBar.setString("Check Printers...");
+	        progressBar.setString(I18n.t("multi.checking"));
 	        progressBar.setVisible(true);
 	
 	        printerSelected = false;
@@ -184,7 +185,7 @@ public class MultiPrinterSetup {
 	                	
 	                	Printer printer = new Printer((String) model.getValueAt(i, 0), (String) model.getValueAt(i, 1), (String) model.getValueAt(i, 2), (String) model.getValueAt(i, 3), (String) model.getValueAt(i, 4));
 	
-	                    SwingUtilities.invokeLater(() -> progressBar.setString("Send Package for " + printer.getPrinterName()));
+	                    SwingUtilities.invokeLater(() -> progressBar.setString(I18n.t("multi.sending", "name", printer.getPrinterName())));
 	
 	                    if (!UDPPackage.send(frmStudioBridge, printer, remoteUdpPort, true)) {
 	                    	errors.add(printer.getPrinterName() + " - " + printer.getIpAdress() + " - " + printer.getPrinterModel());
@@ -212,12 +213,12 @@ public class MultiPrinterSetup {
 	                    			errorsOn = errorsOn + error + "<br>";
 	                    		}
 	                    		
-	                    		new DialogOneButton(null, dialInfo, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Attention! Following printers could not sent :<br>" + errorsOn + "</html>", "Ok").showDialog();
+	                    		new DialogOneButton(null, dialInfo, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("multi.failed", "printers", errorsOn), I18n.t("common.ok")).showDialog();
 	                    	} else {
-	                    		new DialogOneButton(null, dialInfo, new ImageIcon(MainMenu.class.getResource("/success.png")), "<html>Packages sent successfully.<br>The Printer(s) will appear in the next 60 seconds in Bambu Studio.<br>You can close this Programm when your printer(s) appear in Bambu Studio</html>", "Ok").showDialog();
+	                    		new DialogOneButton(null, dialInfo, new ImageIcon(MainMenu.class.getResource("/success.png")), I18n.t("multi.success"), I18n.t("common.ok")).showDialog();
 	                    	}
 	                    } else {
-	                    	new DialogOneButton(null, dialInfo, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Attention! Please select at least one printer!</html>", "Back").showDialog();
+	                    	new DialogOneButton(null, dialInfo, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("multi.noneSelected"), I18n.t("common.back")).showDialog();
 	                    }
 	                    dialInfo.setModal(true);
 	                }
@@ -230,7 +231,7 @@ public class MultiPrinterSetup {
 	                progressBar.setVisible(false);
 	                if (!stopThread) {
 	                    dialInfo.setModal(false);
-	                    new DialogOneButton(null, dialInfo, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Bambu Studio is not running!</html>", "Ok").showDialog();
+	                    new DialogOneButton(null, dialInfo, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("send.slicerNotRunning"), I18n.t("common.ok")).showDialog();
 	                    dialInfo.setModal(true);
 	                }
 	            });                    	

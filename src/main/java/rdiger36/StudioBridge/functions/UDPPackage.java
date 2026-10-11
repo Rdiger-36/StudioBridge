@@ -72,11 +72,11 @@ public class UDPPackage {
         	
         	UDPPackage.startBroadcast(printer.getSerialNumber(), message);
 
-            if (!multiMode && mainFrame != null) new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/success.png")), "<html>Package sent successfully.<br>The Printer will appear in the next 60 seconds in Bambu Studio.<br>You can close this program when your printer(s) appear in Bambu Studio</html>", "Ok").showDialog();
+            if (!multiMode && mainFrame != null) new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/success.png")), I18n.t("send.success"), I18n.t("common.ok")).showDialog();
 
         } catch (Exception e) {
             // Show a warning that the package could not be sent to Bambu Studio
-        	 if (!multiMode && mainFrame != null) new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Failed to send the package!</html>", "Ok").showDialog();
+        	 if (!multiMode && mainFrame != null) new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("send.failed"), I18n.t("common.ok")).showDialog();
         	 return false;
         }
         

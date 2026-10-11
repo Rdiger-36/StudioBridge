@@ -74,9 +74,9 @@ public class Exit {
                     mainFrame,
                     null,
                     new ImageIcon(MainMenu.class.getResource("/achtung.png")),
-                    "<html>Warning! There are several unsaved imported profiles!<br>Do you want to go back to save them?</html>",
-                    "Yes",
-                    "No"
+                    I18n.t("profile.unsavedImports"),
+                    I18n.t("common.yes"),
+                    I18n.t("common.no")
             ).showDialog();
 
             if (result == 0) {

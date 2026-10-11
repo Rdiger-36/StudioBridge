@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -46,6 +47,7 @@ import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
@@ -117,6 +119,13 @@ public class MainMenu {
     // Contains the names of profiles which are not allowed to set
     public static List<String> notAllowedProfileNames = new ArrayList<String>(List.of("New profile", "Import profile", "---", ""));
     
+    // The entries of the profile list that are not profiles, in the language of the GUI
+    public static String NEW_PROFILE = "New profile";
+    public static String IMPORT_PROFILE = "Import profile";
+    
+    // Language setting: a language code, or "auto" for the language of the operating system
+    public static String language = I18n.AUTO;
+    
     // Contains the profiles which were set by CLI option
     public static List<String> profilesListCLI = new ArrayList<String>();
     
@@ -128,6 +137,23 @@ public class MainMenu {
     
     // Create static HashMap containing printer objects with profilename as key, will be used for multi printer setup
     public static HashMap<String, Printer> printerMap;
+    
+    /**
+     * Applies the language setting to the texts of the GUI. The special entries of the profile
+     * list are reserved in every language, so a last used profile stored under another language
+     * is never taken for a real profile.
+     */
+    static void applyLanguage() {
+    	I18n.setLanguage(language);
+    	NEW_PROFILE = I18n.t("profile.new");
+    	IMPORT_PROFILE = I18n.t("profile.import");
+    	for (String code : I18n.LANGUAGES) {
+    		for (String key : new String[] {"profile.new", "profile.import"}) {
+    			String name = I18n.raw(code, key);
+    			if (name != null && !notAllowedProfileNames.contains(name)) notAllowedProfileNames.add(name);
+    		}
+    	}
+    }
     
     public static void main(String[] args) {
     	
@@ -146,6 +172,7 @@ public class MainMenu {
         migrateOldDataDirectory();
         Config.loadAppSettings();
         migrateLegacyProfilesPathSetting();
+        applyLanguage();
         
         savedDirectMode = directMode;
         savedProfilesDir = ProfilesDir;
@@ -627,7 +654,7 @@ public class MainMenu {
         frmStudioBridge.getContentPane().setLayout(new MigLayout("", "[76.00px][]", "[35px:n,grow][10px:10px:10px][][][][][][10px:n][35px:n,grow]"));
 
         // Add informational label
-        JLabel lblInfo = new JLabel("<html>This program sends a specific data package to Bambu<br>Studio. This allows the printer to be used in different networks</html>");
+        JLabel lblInfo = new JLabel(I18n.t("main.info"));
         frmStudioBridge.getContentPane().add(lblInfo, "cell 0 0 2 1,growx,aligny center");
         
         // Separator
@@ -635,22 +662,22 @@ public class MainMenu {
         frmStudioBridge.getContentPane().add(separator, "cell 0 1 2 1,growx,aligny center");
         
         // Profile selection components
-        JLabel lblProfile = new JLabel("Profile");
+        JLabel lblProfile = new JLabel(I18n.t("main.profile"));
         frmStudioBridge.getContentPane().add(lblProfile, "flowy,cell 0 2,grow");
         
         JComboBox<String> cbxProfile = new JComboBox<>();
         cbxProfile.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        cbxProfile.setModel(new DefaultComboBoxModel<String>(new String[] {"New profile", "Import profile", "---"}));
+        cbxProfile.setModel(new DefaultComboBoxModel<String>(new String[] {NEW_PROFILE, IMPORT_PROFILE, "---"}));
         frmStudioBridge.getContentPane().add(cbxProfile, "flowx,cell 1 2,growx");
 
         // Printer information labels
-        JLabel lblIP = new JLabel("IP-Address");
+        JLabel lblIP = new JLabel(I18n.t("main.ipAddress"));
         frmStudioBridge.getContentPane().add(lblIP, "cell 0 3,growx,aligny center");
 
-        JLabel lblSerial = new JLabel("Serial number");
+        JLabel lblSerial = new JLabel(I18n.t("main.serialNumber"));
         frmStudioBridge.getContentPane().add(lblSerial, "flowx,cell 0 4,growx,aligny center");
 
-        JLabel lblDevModel = new JLabel("Model");
+        JLabel lblDevModel = new JLabel(I18n.t("main.model"));
         frmStudioBridge.getContentPane().add(lblDevModel, "flowx,cell 0 5,growx,aligny center");
 
         String[] items = {
@@ -677,12 +704,15 @@ public class MainMenu {
                 );
                 
                 if (index == -1 && cbxModel.getSelectedIndex() == -1) {
-                    lbl.setText("Please select a printer model");
+                    lbl.setText(I18n.t("main.selectModel"));
                     return lbl;
                 }
 
                 String text = value.toString();
                 boolean isCategory = text.endsWith("-Series");
+                
+                // The series entries keep their English value, only the shown text is translated
+                if (isCategory) lbl.setText(I18n.t("main.modelSeries", "series", text.substring(0, text.indexOf('-'))));
 
                 if (index >= 0) {  
                     if (isCategory) {
@@ -758,7 +788,7 @@ public class MainMenu {
 
         
         // Printer name input field
-        JLabel lblDevName = new JLabel("Name");
+        JLabel lblDevName = new JLabel(I18n.t("main.name"));
         frmStudioBridge.getContentPane().add(lblDevName, "cell 0 6,growx,aligny center");
 
         JTextField txtName = new JTextField();
@@ -772,11 +802,11 @@ public class MainMenu {
         frmStudioBridge.getContentPane().add(separator_1, "cell 0 7 2 1,growx,aligny center");
         
         // Button to send package
-        JButton btnSendPackage = new JButton("Send package");
+        JButton btnSendPackage = new JButton(I18n.t("main.sendPackage"));
         btnSendPackage.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         frmStudioBridge.getContentPane().add(btnSendPackage, "cell 0 8");
         
-        JButton btnCheckPrinter = new JButton("Check Printer");
+        JButton btnCheckPrinter = new JButton(I18n.t("main.checkPrinter"));
         btnCheckPrinter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));  
         frmStudioBridge.getContentPane().add(btnCheckPrinter, "flowx,cell 1 8");
 
@@ -796,10 +826,10 @@ public class MainMenu {
         JMenuBar menuBar = new JMenuBar();
         frmStudioBridge.setJMenuBar(menuBar);
         
-        JMenu mnSettings = new JMenu("Settings");
+        JMenu mnSettings = new JMenu(I18n.t("menu.settings"));
         menuBar.add(mnSettings);
         
-        JCheckBoxMenuItem cbxmntmDarkmode = new JCheckBoxMenuItem("Darkmode");
+        JCheckBoxMenuItem cbxmntmDarkmode = new JCheckBoxMenuItem(I18n.t("menu.darkmode"));
         mnSettings.add(cbxmntmDarkmode);
         cbxmntmDarkmode.setSelected(darkmode);
         
@@ -823,7 +853,7 @@ public class MainMenu {
             }
         });
         
-        JCheckBoxMenuItem cbxmntmRememberLastProfile = new JCheckBoxMenuItem("Remember last used profile");
+        JCheckBoxMenuItem cbxmntmRememberLastProfile = new JCheckBoxMenuItem(I18n.t("menu.rememberLastProfile"));
         cbxmntmRememberLastProfile.setSelected(rememberLastUsedProfile);
         mnSettings.add(cbxmntmRememberLastProfile);
         
@@ -834,7 +864,7 @@ public class MainMenu {
             }
         });
         
-        JCheckBoxMenuItem cbxmntmSetSendingMode = new JCheckBoxMenuItem("Send packages directly");
+        JCheckBoxMenuItem cbxmntmSetSendingMode = new JCheckBoxMenuItem(I18n.t("menu.sendDirectly"));
         cbxmntmSetSendingMode.setSelected(directMode);
         mnSettings.add(cbxmntmSetSendingMode);
         
@@ -843,9 +873,9 @@ public class MainMenu {
             public void itemStateChanged(ItemEvent e) {
             	
             	if (cbxmntmSetSendingMode.isSelected()) {
-            		new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>The mode for sending UDP packets has been changed to localhost!<br>Data will now be sent directly to Bambu Studio on your local machine.</html>", "Ok").showDialog();
+            		new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("mode.direct"), I18n.t("common.ok")).showDialog();
             	} else {
-            		new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>The mode for sending UDP packets has been changed to broadcast!<br>Data will now be sent to the broadcast address of your current network.</html>", "Ok").showDialog();
+            		new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("mode.broadcast"), I18n.t("common.ok")).showDialog();
             	}
             	
                 directMode = cbxmntmSetSendingMode.isSelected();
@@ -853,9 +883,29 @@ public class MainMenu {
             }
         });
         
+        // Language menu: automatic (language of the operating system) or one of the shipped languages
+        JMenu mnLanguage = new JMenu(I18n.t("menu.language"));
+        mnSettings.add(mnLanguage);
+        ButtonGroup languageGroup = new ButtonGroup();
+        List<String> languageChoices = new ArrayList<>();
+        languageChoices.add(I18n.AUTO);
+        languageChoices.addAll(I18n.LANGUAGES);
+        for (String code : languageChoices) {
+        	JRadioButtonMenuItem item = new JRadioButtonMenuItem(I18n.AUTO.equals(code) ? I18n.t("menu.languageAuto") : I18n.name(code));
+        	item.setSelected(code.equals(language) || (!I18n.LANGUAGES.contains(language) && I18n.AUTO.equals(code)));
+        	item.addActionListener(arg -> {
+        		if (code.equals(language)) return;
+        		language = code;
+        		// The texts are set when the window is built, so a new language needs a restart
+        		new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("language.restart"), I18n.t("common.ok")).showDialog();
+        	});
+        	languageGroup.add(item);
+        	mnLanguage.add(item);
+        }
+        
         mnSettings.add(new JSeparator());
         
-        JMenuItem mntmChangeProfilesPath = new JMenuItem("Set custom profiles path");
+        JMenuItem mntmChangeProfilesPath = new JMenuItem(I18n.t("menu.profilesPath"));
         mnSettings.add(mntmChangeProfilesPath);
         
         // Action listener for changing the profiles path
@@ -868,20 +918,20 @@ public class MainMenu {
                     ProfilesDir = newProfilesDir;
                     useCustomProfilesDir = false; // A choice in the menu is saved again
                     cbxProfile.removeAllItems();
-                    cbxProfile.addItem("New profile");
-                    cbxProfile.addItem("Import profile");
+                    cbxProfile.addItem(NEW_PROFILE);
+                    cbxProfile.addItem(IMPORT_PROFILE);
                     cbxProfile.addItem("---");
                     getAllProfiles(frmStudioBridge, cbxProfile);
                     if (cbxProfile.getItemCount() <= 3) {
                         cbxProfile.setSelectedIndex(0);
-                        mainPrinter = new Printer("New profile", "", "", "", "No model");
+                        mainPrinter = new Printer(NEW_PROFILE, "", "", "", "No model");
                     }
                     frmStudioBridge.pack();    
                 }
             }
         });
         
-        JMenuItem mntmMultiPrinterSetup = new JMenuItem("Multiple Printer Setup");
+        JMenuItem mntmMultiPrinterSetup = new JMenuItem(I18n.t("menu.multiPrinter"));
         mnSettings.add(mntmMultiPrinterSetup);
         
         mntmMultiPrinterSetup.addActionListener(arg -> new MultiPrinterSetup(frmStudioBridge));
@@ -893,12 +943,12 @@ public class MainMenu {
         	Printer tempPrinter = new Printer(cbxProfile.getSelectedItem().toString(), txtName.getText(), txtIP.getText(), txtSerial.getText(), cbxModel.getSelectedItem().toString());
         	
             if (tempPrinter.getIpAdress().equals("") || tempPrinter.getSerialNumber().equals("") || tempPrinter.getPrinterName().equals("")) {
-                new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Attention! Please check your inputs!</html>", "Back").showDialog();
+                new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("input.check"), I18n.t("common.back")).showDialog();
                 return;
             }
 
             // Check if the input data is changed or new
-            if (tempPrinter.getProfileName().equals("New profile")) {
+            if (tempPrinter.getProfileName().equals(NEW_PROFILE)) {
             	tempPrinter.setProfileName(Config.saveUnsavedNewProfile(frame, tempPrinter));
                 if (!tempPrinter.getProfileName().equals("")) {
                     cbxProfile.addItem(tempPrinter.getProfileName());
@@ -921,7 +971,7 @@ public class MainMenu {
             	UDPPackage.send(frmStudioBridge, tempPrinter, remoteUdpPort, false);
             } else {
                 // Show a warning if Bambu Studio is not running
-            	new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>Warning! Bambu Studio is not running!</html>", "Ok").showDialog();
+            	new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("send.slicerNotRunning"), I18n.t("common.ok")).showDialog();
             }                      
         });
         
@@ -929,7 +979,7 @@ public class MainMenu {
         btnCheckPrinter.addActionListener(arg -> {
 				
 			if (txtIP.getText().equals("")) {
-				new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>You must enter a valid IP-Address!</html>", "Ok").showDialog();
+				new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("input.ipRequired"), I18n.t("common.ok")).showDialog();
 			} else {
 				new PrinterCheck(frmStudioBridge, txtIP.getText());
 			}
@@ -943,22 +993,22 @@ public class MainMenu {
                             	
             	if (cbxProfile.getSelectedItem() != null) {
                                 	
-                	if (cbxProfile.getSelectedItem().toString().equals("Import profile")) {
+                	if (cbxProfile.getSelectedItem().toString().equals(IMPORT_PROFILE)) {
                 	                		
                 		JnaFileChooser fc = new JnaFileChooser();
                         fc.setMode(Mode.Files);
-                        fc.setTitle("Choose profile to import");
+                        fc.setTitle(I18n.t("profile.importTitle"));
 
                         boolean returnValue = fc.showOpenDialog(frame);
                         if (returnValue) {
                         	String profilePath = fc.getSelectedFile().getAbsolutePath();
                         	String profileName = fc.getSelectedFile().getName().replace(".sbp", "");
                     		
-                        	profileName = new SaveDialog(frmStudioBridge, "New imported profile", "Set profile name").saveProfile();
+                        	profileName = new SaveDialog(frmStudioBridge, I18n.t("profile.importedName"), I18n.t("profile.setName")).saveProfile();
                         	
                         	if (profileName != null) {
                             	profileName = profileName.trim();
-                            	if (profileName.equals("")) profileName = "New imported profile";
+                            	if (profileName.equals("")) profileName = I18n.t("profile.importedName");
                             	
                             	setProfile(profilePath);
                             	mainPrinter.setProfileName(profileName);
@@ -969,13 +1019,13 @@ public class MainMenu {
                             		cbxProfile.setSelectedItem(profileName);
                             		printerMap.put(profileName, mainPrinter);
                             	} else {
-                            		cbxProfile.setSelectedItem("New profile");
+                            		cbxProfile.setSelectedItem(NEW_PROFILE);
                             	}
                             	
                         	}
                         	
                         } else {
-                        	cbxProfile.setSelectedItem("New profile");
+                        	cbxProfile.setSelectedItem(NEW_PROFILE);
                         }
                 		
                 	} else if (cbxProfile.getSelectedItem().toString().equals("---")) {
@@ -985,17 +1035,17 @@ public class MainMenu {
                         	if (!notAllowedProfileNames.contains(MainMenu.lastUsedProfile)) {
                         		cbxProfile.setSelectedItem(MainMenu.lastUsedProfile);
                         	} else {
-                        		cbxProfile.setSelectedItem("New profile");
+                        		cbxProfile.setSelectedItem(NEW_PROFILE);
                         		cbxModel.setSelectedIndex(-1);
                         	}
                 			
                 		} else {
-                			cbxProfile.setSelectedItem("New profile");
+                			cbxProfile.setSelectedItem(NEW_PROFILE);
                 			cbxModel.setSelectedIndex(-1);
                 		}
                 		
                 		
-                	} else if (cbxProfile.getSelectedItem().toString().equals("New profile")) {
+                	} else if (cbxProfile.getSelectedItem().toString().equals(NEW_PROFILE)) {
                 		String profilePath = null;  
                         setProfile(profilePath);
             		} else {
@@ -1019,7 +1069,7 @@ public class MainMenu {
                 	cbxModel.setSelectedItem(mainPrinter.getPrinterModel());
             	} else {
                    	mainPrinter = null;
-                	MainMenu.lastUsedProfile = "New profile";
+                	MainMenu.lastUsedProfile = NEW_PROFILE;
                 	txtName.setText("");
                 	txtIP.setText("");
                 	txtSerial.setText("");
@@ -1060,7 +1110,7 @@ public class MainMenu {
                     			,txtSerial.getText()
                     			,cbxModel.getSelectedItem().toString());
                 	} else {
-                		if (mainPrinter == null) mainPrinter = new Printer("New profile", "", "", "", "no model");
+                		if (mainPrinter == null) mainPrinter = new Printer(NEW_PROFILE, "", "", "", "no model");
                 	}
             	}
 	            	
@@ -1131,13 +1181,13 @@ public class MainMenu {
             	
             	if (!notAllowedProfileNames.contains(profile)) {
             	
-                    int response = new DialogTwoButtons(frmStudioBridge, null,new ImageIcon(MainMenu.class.getResource("/achtung.png")), "Attention! Do you want to delete the profile: \"" + cbxProfile.getSelectedItem() + "\"?", "Yes", "No").showDialog();
+                    int response = new DialogTwoButtons(frmStudioBridge, null,new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("profile.delete", "name", cbxProfile.getSelectedItem()), I18n.t("common.yes"), I18n.t("common.no")).showDialog();
                     
                     if (response == 0) {
                         new File(ProfilesDir + System.getProperty("file.separator") + cbxProfile.getSelectedItem() + ".sbp").delete();
                         cbxProfile.removeItem(cbxProfile.getSelectedItem());
                         cbxProfile.setSelectedIndex(0);
-                        mainPrinter = new Printer("New profile", "", "", "", "no model");
+                        mainPrinter = new Printer(NEW_PROFILE, "", "", "", "no model");
                         printerMap.remove(profile);
                         cbxModel.setSelectedIndex(-1);
                         frmStudioBridge.pack();    
@@ -1155,9 +1205,9 @@ public class MainMenu {
             	
 	            	Printer tempPrinter = new Printer(cbxProfile.getSelectedItem().toString(), txtName.getText(), txtIP.getText(), txtSerial.getText(), cbxModel.getSelectedItem().toString());
 	                
-	                if (tempPrinter.getProfileName().equals("New profile")) {
+	                if (tempPrinter.getProfileName().equals(NEW_PROFILE)) {
 	                	
-	                	String profileName = new SaveDialog(frmStudioBridge, tempPrinter.getPrinterName(), "Save").saveProfile();
+	                	String profileName = new SaveDialog(frmStudioBridge, tempPrinter.getPrinterName(), I18n.t("common.save")).saveProfile();
 	                	
 	                	if (profileName == null) {
 	                		return;
@@ -1173,7 +1223,7 @@ public class MainMenu {
 	                        cbxProfile.setSelectedItem(tempPrinter.getProfileName());
 	                        frmStudioBridge.pack();    
 	                    } else {
-	                        int result = new DialogTwoButtons(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "Warning! The profile: " + tempPrinter.getProfileName() + " already exists, do you want to overwrite it?", "Yes", "No").showDialog();
+	                        int result = new DialogTwoButtons(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("profile.exists", "name", tempPrinter.getProfileName()), I18n.t("common.yes"), I18n.t("common.no")).showDialog();
 	                        if (result != 0 || !Config.saveProfile(frmStudioBridge, tempPrinter)) return;
 	                    }
 	                    
@@ -1200,7 +1250,7 @@ public class MainMenu {
         		
 	            	Printer tempPrinter = new Printer(cbxProfile.getSelectedItem().toString(), txtName.getText(), txtIP.getText(), txtSerial.getText(), cbxModel.getSelectedItem().toString());
 	                	
-	            	String profileName = new SaveDialog(frmStudioBridge, tempPrinter.getProfileName(), "Save").saveProfile();
+	            	String profileName = new SaveDialog(frmStudioBridge, tempPrinter.getProfileName(), I18n.t("common.save")).saveProfile();
 	            	
 	            	if (profileName == null) {
 	            		return;
@@ -1214,7 +1264,7 @@ public class MainMenu {
 	                	
 	                	// Do not silently overwrite another existing profile
 	                	if (renamed && profileExists(tempPrinter.getProfileName())) {
-	                		int result = new DialogTwoButtons(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "Warning! The profile: " + tempPrinter.getProfileName() + " already exists, do you want to overwrite it?", "Yes", "No").showDialog();
+	                		int result = new DialogTwoButtons(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("profile.exists", "name", tempPrinter.getProfileName()), I18n.t("common.yes"), I18n.t("common.no")).showDialog();
 	                		if (result != 0) return;
 	                	}
 	                	
@@ -1251,9 +1301,7 @@ public class MainMenu {
         
         if (jarInfo) {
         
-	        int response = new DialogTwoButtons(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "<html>You are currently running this application in raw mode (via .jar).<br>"
-	        		+ "For the official version for your OS and CPU architecture, please visit the GitHub repository.\r\n"
-	        		+ "", "Open GitHub", "Close and never show again").showDialog();
+	        int response = new DialogTwoButtons(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("jar.info"), I18n.t("jar.openGithub"), I18n.t("jar.neverShow")).showDialog();
 	        
 	        if (response == 0) {
 	            try {
@@ -1314,12 +1362,12 @@ public class MainMenu {
             	}
             }
             // If still on "New profile" and real profiles exist, default to the first one
-            if ("New profile".equals(comboBox.getSelectedItem()) && comboBox.getItemCount() > 3) {
+            if (NEW_PROFILE.equals(comboBox.getSelectedItem()) && comboBox.getItemCount() > 3) {
             	comboBox.setSelectedIndex(3);
             }
             
         } else {
-            new DialogOneButton(null, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), "Error! Directory " + ProfilesDir + " could not be created!", "Close").showDialog();
+            new DialogOneButton(null, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("profile.directoryFailed", "path", ProfilesDir), I18n.t("common.close")).showDialog();
             System.exit(0);
         }
     }
