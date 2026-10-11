@@ -83,9 +83,9 @@ If the TCP handshake fails, restarting the printer often helps.
 
 # Demo
 
-Switching profiles, the profile menu and sending a printer to Bambu Studio:
+Sending a printer with StudioBridge, then connecting it in Bambu Studio with its access code:
 
-<img src="docs/screenshots/demo.gif" width="460" alt="StudioBridge demo: switching profiles, profile menu, sending a package" />
+<img src="docs/screenshots/demo.gif" width="460" alt="StudioBridge demo: choosing a profile, sending it, and the printer appearing and connecting in Bambu Studio" />
 
 # Languages
 
