@@ -17,10 +17,13 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -95,6 +98,13 @@ public class MainMenu {
     // Set specific profiles directory via cmdline
     public static boolean useCustomProfilesDir = false;
     
+    // Set when --direct or --broadcast was given, which then only applies to this run
+    public static boolean directModeFromArgs = false;
+    
+    // Values of the settings file, written back instead of values that were only set by start arguments
+    public static boolean savedDirectMode = false;
+    public static String savedProfilesDir;
+    
     // Set specific profile via cmdline
     public static boolean useSpecificProfiles = false;
     
@@ -129,26 +139,34 @@ public class MainMenu {
     	
         boolean sendOnly = false;
         boolean showHelp = false;
+        boolean showVersion = false;
+        boolean forceDirect = false;
+        boolean forceBroadcast = false;
 
         migrateOldDataDirectory();
         Config.loadAppSettings();
         migrateLegacyProfilesPathSetting();
+        
+        savedDirectMode = directMode;
+        savedProfilesDir = ProfilesDir;
 
         final Map<String, String> valid = new LinkedHashMap<>();
 
         valid.put("Starting options:", "");
         valid.put("--noupdate", "Skip search for latest updates on startup");
         valid.put("--sendonly", "Start with no GUI, only send data from all printers to Bambu Studio");
-        valid.put("--direct", "Send UDP package directly to Bambu Studio, not over broadcast");
+        valid.put("--direct", "Send the UDP package directly to Bambu Studio on this computer");
+        valid.put("--broadcast", "Send the UDP package as broadcast to the network");
+        valid.put("--version", "Show the version of StudioBridge");
         valid.put("--help", "Show help for StudioBridge");
 
         valid.put("", "");
 
         valid.put("Profile options:", "");
         valid.put("--customProfilesDir='/path/to/profiles/'",
-                  "Set custom profiles directory which will be loaded from this for StudioBridgeCLI");
+                  "Load the profiles from this directory (only for this run)");
         valid.put("--selectedPrinters='/path/to/profile.sbp/','/path/to/other/profile2.sbp/'",
-                  "Set single profiles which will be used for StudioBridgeCLI (single and multi profiles comma-separated)");
+                  "Send only these profiles, comma-separated (requires --sendonly)");
 
 
         // Initialize arguments
@@ -159,13 +177,22 @@ public class MainMenu {
                 showHelp = true;
                 break;
             }
+            if ("--version".equals(arg)) {
+                showVersion = true;
+                continue;
+            }
             if ("--noupdate".equals(arg)) {
                 checkForUpdate = false;
                 continue;
             }
             
             if ("--direct".equals(arg)) {
-                directMode = true;
+                forceDirect = true;
+                continue;
+            }
+            
+            if ("--broadcast".equals(arg)) {
+                forceBroadcast = true;
                 continue;
             }
             
@@ -214,8 +241,32 @@ public class MainMenu {
             System.exit(1);
         }
         
+        if (showVersion) {
+            System.out.println(title + " " + version);
+            return;
+        }
+        
+        String conflict = null;
+        if (forceDirect && forceBroadcast) {
+            conflict = "--direct and --broadcast can not be combined.";
+        } else if (useSpecificProfiles && !sendOnly) {
+            conflict = "--selectedPrinters only works together with --sendonly.";
+        }
+        if (conflict != null) {
+            printHeader();
+            System.out.println("Error! " + conflict);
+            System.out.println();
+            printUsage(valid);
+            System.exit(1);
+        }
+        
+        if (forceDirect || forceBroadcast) {
+            directMode = forceDirect;
+            directModeFromArgs = true;
+        }
+        
         if (sendOnly) {
-            startNoGUI();
+            System.exit(startNoGUI());
         } else {
         	
         	if (localMachine.getOs().equals("macos")) {
@@ -250,7 +301,7 @@ public class MainMenu {
             if (localMachine.getOs().equals("windows")) {
                 prog = "./StudioBridgeCLI.exe";
             } else if (localMachine.getOs().equals("linux")) {
-                prog = "./StudioBridge.appimage";
+                prog = "./StudioBridge.AppImage";
             } else if (localMachine.getOs().equals("macos")) {
                 prog = "/Applications/StudioBridge.app/Contents/MacOS/StudioBridgeCLI";
             }
@@ -260,7 +311,7 @@ public class MainMenu {
         System.out.println("  " + prog + " [OPTIONS]");
         System.out.println();
         System.out.println("Options:");
-        System.out.println("  You can combine every option with each other");
+        System.out.println("  Options can be combined, except --direct with --broadcast");
         System.out.println();
 
         final int indent = 6;
@@ -304,7 +355,7 @@ public class MainMenu {
            	System.out.println("  " + prog + " --sendonly --selectedPrinters='/home/rdiger-36/Documents/My P1S.sbp','/home/rdiger-36/Desktop/H2D-Pro Work.sbp'");
         } else if (localMachine.getOs().equals("macos")) {
         	System.out.println("  " + prog + " --sendonly --customProfilesDir='/Users/rdiger-36/Documents/StudioBridgeProfiles'");
-           	System.out.println("  " + prog + " --sendonly --selectedPrinters='/Users/rdiger-36/Documents/My P1S.sbp','/Users/rdiger-36/Desktop/Profiles/H2D-Pro Work.sbp.sbp'");
+           	System.out.println("  " + prog + " --sendonly --selectedPrinters='/Users/rdiger-36/Documents/My P1S.sbp','/Users/rdiger-36/Desktop/Profiles/H2D-Pro Work.sbp'");
         }
     }
 
@@ -410,7 +461,12 @@ public class MainMenu {
     }
 
     // CLI mode, no GUI
-    private static void startNoGUI() {
+    /**
+     * Sends all profiles without GUI and waits until the broadcasts are finished.
+     *
+     * @return the exit code: 0 if every package was sent, 1 otherwise.
+     */
+    private static int startNoGUI() {
     	
     	printHeader();
     	
@@ -469,7 +525,7 @@ public class MainMenu {
 	                if (file.isFile()) {  // Process only files, not subdirectories
 	                	System.out.println("Loading profile " + file.toString());
 	                    Properties properties = new Properties();
-	                    try (FileReader reader = new FileReader(file)) {
+	                    try (Reader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
 	                        properties.load(reader);
 	                    } catch (IOException e) {
 	                        System.err.println("Error loading file: " + file.getName());
@@ -513,7 +569,10 @@ public class MainMenu {
 	            if (errors.isEmpty()) {
 	                System.out.println("All Packages successfully sent. The printer(s) will appear in the next 60 seconds in Bambu Studio.");
 	            }
-	            System.out.println("The program stays online for the next 60 seconds and will exit automatically.");
+	            System.out.println("The program keeps sending for about 50 seconds and will exit automatically.");
+	            
+	            UDPPackage.awaitBroadcasts();
+	            return errors.isEmpty() ? 0 : 1;
 	
 	        } else {
 	            System.err.println("Warning! Bambu Studio is not running!");
@@ -526,6 +585,7 @@ public class MainMenu {
                 System.err.println(profilesDir);
             }
         }
+        return 1;
     }
 
 	/**
@@ -789,6 +849,7 @@ public class MainMenu {
             	}
             	
                 directMode = cbxmntmSetSendingMode.isSelected();
+                directModeFromArgs = false; // A choice in the menu is saved again
             }
         });
         
@@ -805,6 +866,7 @@ public class MainMenu {
                 
                 if (newProfilesDir.length() > 0 && new File(newProfilesDir).exists()) {
                     ProfilesDir = newProfilesDir;
+                    useCustomProfilesDir = false; // A choice in the menu is saved again
                     cbxProfile.removeAllItems();
                     cbxProfile.addItem("New profile");
                     cbxProfile.addItem("Import profile");

@@ -152,6 +152,20 @@ public class UDPPackage {
     }
 
     /**
+     * Waits until all running broadcasts have sent their last package.
+     */
+    public static void awaitBroadcasts() {
+        for (Thread thread : runningBroadcasts.values()) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
+    }
+
+    /**
      * Starts a background thread that sends the given message as a UDP broadcast
      * or to a specific destination address. The message is sent to multiple ports
      * in 10 intervals.
