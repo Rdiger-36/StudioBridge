@@ -96,8 +96,7 @@ public class ToolInfo {
             }
         });
 
-        JLabel lbueberschrift = new JLabel("StudioBridge v" + MainMenu.version.substring(0, 1) + "." +
-                MainMenu.version.substring(1, 2) + "." + MainMenu.version.substring(2, 3));
+        JLabel lbueberschrift = new JLabel("StudioBridge v" + MainMenu.version);
         lbueberschrift.setHorizontalAlignment(SwingConstants.CENTER);
         lbueberschrift.setIconTextGap(25);
         lbueberschrift.setForeground(new Color(229, 152, 67));
