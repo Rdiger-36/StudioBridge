@@ -1087,33 +1087,17 @@ public class MainMenu {
             	        ? cbxProfile.getSelectedItem().toString()
             	        : "";
 
-            	String name = txtName.getText().trim();
-            	String ip = txtIP.getText().trim();
-            	String serial = txtSerial.getText().trim();
+            	String name = txtName.getText();
+            	String ip = txtIP.getText();
+            	String serial = txtSerial.getText();
 
             	String model = (cbxModel.getSelectedItem() != null)
             	        ? cbxModel.getSelectedItem().toString()
             	        : "";
             	
-            	boolean isValid =
-            	        !profile.isEmpty() &&
-            	        !name.isEmpty() &&
-            	        !ip.isEmpty() &&
-            	        !serial.isEmpty() &&
-            	        !model.isEmpty();
-
-            	if (mainPrinter == null) {
-                	if (isValid) {
-                		if (mainPrinter == null) mainPrinter = new Printer(cbxProfile.getSelectedItem().toString()
-                    			,txtName.getText()
-                    			,txtIP.getText()
-                    			,txtSerial.getText()
-                    			,cbxModel.getSelectedItem().toString());
-                	} else {
-                		if (mainPrinter == null) mainPrinter = new Printer(NEW_PROFILE, "", "", "", "no model");
-                	}
-            	}
-	            	
+            	// What is entered right now, compared on exit with the saved state in mainPrinter
+            	Printer current = new Printer(profile, name, ip, serial, model);
+            	
                 // List to store all profiles except for the special entries
                 ArrayList<String> profileList = new ArrayList<>();
 
@@ -1127,7 +1111,7 @@ public class MainMenu {
                     }
                 }
             	
-                Exit.closeApp(frmStudioBridge, profileList, mainPrinter);
+                Exit.closeApp(frmStudioBridge, profileList, current);
             }
         });
         

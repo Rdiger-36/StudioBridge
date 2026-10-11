@@ -8,6 +8,7 @@ Version 2.1.4
       - --version prints the version of StudioBridge (PR #50)
       - --sendonly ends with exit code 1 when a package could not be sent, Bambu Studio is not running or no profile was found, and with 0 when every package was sent, so a script or an autostart can tell whether it worked (PR #50)
    - Fixes:
+      - Closing StudioBridge asks again before entered data is lost. The check compared the saved profile with itself, so a new profile that was filled in but never saved, or changes to a saved profile, were dropped without a question. Now a new profile with data offers to save it, and an edited profile offers to save the changes (PR #53)
       - --direct, --broadcast and --customProfilesDir only apply to the run they are given for. Until now they were written into the settings when the GUI was closed, so a single start with --direct switched the sending mode for good (PR #50)
       - --selectedPrinters without --sendonly is reported as error instead of being ignored (PR #50)
       - Profiles sent with --sendonly are read as UTF-8 like in the GUI (PR #50)
