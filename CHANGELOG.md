@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------------------------------
-Version 2.1.4
+Version 2.2.0
    - Breaking:
       - "Send packages directly" and --direct now do what they say. Since 2.0.0 the setting was inverted: with the checkbox ticked the package went out as a broadcast to 255.255.255.255, and with the default setting it was sent to localhost. Now the checkbox and --direct send to Bambu Studio on this computer, and the default is the broadcast to the network. With the default setting StudioBridge therefore switches from localhost to broadcast. If your printer no longer shows up, tick "Send packages directly" in the settings or start the CLI with --direct (PR #41)
    - New Features:
