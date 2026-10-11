@@ -6,7 +6,7 @@ Version 2.1.4
       - Light or dark mode follows the operating system by default, like the language. Settings → Appearance offers "Automatic (system setting)", "Light" and "Dark"; a dark mode chosen in an older version is kept (PR #56)
       - A first start without profiles explains what to enter, the input fields show examples, and the command line says how to get a profile when there is none (PR #56)
       - The profile list only holds your profiles. "New profile", "Import profile" and the "---" separator were entries of the list, so picking one by accident opened a file dialog or jumped back. They moved into a menu button next to the list, together with renaming and deleting a profile, each with its own icon; saving stays a button of its own. The profile icons are sharp on high resolution screens now. With no profile selected, the list shows "New profile" as placeholder (PR #54)
-      - Importing a profile and choosing the profiles folder use the file dialog of the operating system on macOS and Linux too (the Finder dialog on macOS, the GTK dialog on Linux). Until now only Windows had its native dialog, the others got the Java one. The import dialog only offers .sbp files. The macOS app now declares its languages, so these system dialogs appear in German on a German Mac instead of in English (PR #54)
+      - Importing a profile uses the file dialog of the operating system on macOS and Linux too (the Finder dialog on macOS, the GTK dialog on Linux), and so does choosing the profiles folder on macOS. Until now only Windows had its native dialog, the others got the Java one. The import dialog only offers .sbp files. The macOS app now declares its languages, so these system dialogs appear in German on a German Mac instead of in English (PR #54)
       - The GUI speaks German. Pick the language under Settings → Language: "Automatic (system language)", the default, follows the operating system and falls back to English, or choose English or Deutsch. The new language is used after a restart. The command line output stays English (PR #52)
       - --broadcast sends the UDP package as broadcast for this run, also when "Send packages directly" is ticked in the settings. Together with --direct it can not be combined (PR #50)
       - --version prints the version of StudioBridge (PR #50)
@@ -38,6 +38,7 @@ Version 2.1.4
    - Maintenance:
       - The version shown in StudioBridge is taken from pom.xml, so a release only bumps it in one place (PR #42)
       - Typos in dialogs and CLI output fixed, outdated code documentation corrected, unused files removed (PR #45)
+      - Pre-release tags like v.2.1.5-beta can be packaged: the installers get the numeric version, which is all jpackage accepts. The JAR declares itself multi-release, so FlatLaf uses its newer Java code. The README states Java 11 everywhere and explains running the JAR without outdated steps (PR #58)
 
 -----------------------------------------------------------------------------------------------
 Version 2.1.3
