@@ -1,9 +1,9 @@
 -----------------------------------------------------------------------------------------------
 Version 2.2.0
    - Breaking:
-      - "Send packages directly" and --direct now do what they say. Since 2.0.0 the setting was inverted: with the checkbox ticked the package went out as a broadcast to 255.255.255.255, and with the default setting it was sent to localhost. Now the checkbox and --direct send to Bambu Studio on this computer, and the default is the broadcast to the network. With the default setting StudioBridge therefore switches from localhost to broadcast. If your printer no longer shows up, tick "Send packages directly" in the settings or start the CLI with --direct (PR #41)
+      - "Send to this computer only" (formerly "Send packages directly") and --direct now do what they say. Since 2.0.0 the setting was inverted: with the checkbox ticked the package went out as a broadcast to 255.255.255.255, and with the default setting it was sent to localhost. Now the checkbox and --direct send to Bambu Studio on this computer, and the default is the broadcast to the network. With the default setting StudioBridge therefore switches from localhost to broadcast. If your printer no longer shows up, tick "Send to this computer only" in the settings or start the CLI with --direct (PR #41)
    - New Features:
-      - The main window is narrower: the info text wraps, both buttons share the bottom row, and the developer and icon credits moved from the "© Niklas" link into "About StudioBridge", which now also shows the copyright and the license; its title opens the GitHub repository (in the app menu on macOS, in a new Help menu on Windows and Linux) (PR #60)
+      - The main window is narrower: the info text wraps, both buttons share the bottom row, and the "© Niklas" link moved into "About StudioBridge" (in the app menu on macOS, in a new Help menu on Windows and Linux), which shows the icon credits, the license and the copyright; its title opens the GitHub repository (PR #60)
       - "Multiple Printer Setup" is now the "Profile manager". Changes made in its table can be saved to the profiles with "Save changes", which also refreshes the main window when the profile is shown there; closing it with unsaved changes asks first. The check box to send a printer is the first column, next to its name, with a check box in the header for all printers; a profile is deleted with the grey trash icon at the end of its row, which turns red under the mouse. Sending the selected printers works as before (PR #61)
       - In the profile manager the model is picked from the same list as in the main window instead of being typed (shown with a drop-down arrow in the colors of the table), the printers are sorted by name, and the profile name can no longer be edited there by accident (PR #59)
       - Light or dark mode follows the operating system by default, like the language. Settings → Appearance offers "Automatic (system setting)", "Light" and "Dark"; a dark mode chosen in an older version is kept (PR #56)
@@ -12,7 +12,7 @@ Version 2.2.0
       - Importing a profile uses the file dialog of the operating system on macOS and Linux too (the Finder dialog on macOS, the GTK dialog on Linux), and so does choosing the profiles folder on macOS. Until now only Windows had its native dialog, the others got the Java one. The import dialog only offers .sbp files. The macOS app now declares its languages, so these system dialogs appear in German on a German Mac instead of in English (PR #54)
       - The English texts are reworded like the German ones: shorter messages without "Warning! ... !", sentence case ("Test connection", "Send selected", "IP address"), and "Delete" in the profile menu has the same trash icon as the profile manager (PR #63)
       - The GUI speaks German. Pick the language under Settings → Language: "Automatic (system language)", the default, follows the operating system and falls back to English, or choose English or Deutsch. The new language is used after a restart. The command line output stays English (PR #52)
-      - --broadcast sends the UDP package as broadcast for this run, also when "Send packages directly" is ticked in the settings. Together with --direct it can not be combined (PR #50)
+      - --broadcast sends the UDP package as broadcast for this run, also when "Send to this computer only" is ticked in the settings. Together with --direct it can not be combined (PR #50)
       - --version prints the version of StudioBridge (PR #50)
       - --sendonly ends with exit code 1 when a package could not be sent, Bambu Studio is not running or no profile was found, and with 0 when every package was sent, so a script or an autostart can tell whether it worked (PR #50)
    - Fixes:
@@ -33,7 +33,7 @@ Version 2.2.0
       - The send button sends the data currently entered. Until now it sent the last saved state of the profile, so a changed IP address was ignored after "Continue without saving", and declining to save a new profile sent an empty printer (PR #40)
       - Closing the "Save profile" dialog with the window button no longer crashes StudioBridge, and a new profile is no longer saved twice (PR #40)
       - Renaming a profile to its own name no longer deletes it. The old profile file is only removed once the profile has been saved under its new name, and renaming onto another existing profile asks before overwriting it (PR #44)
-      - Profile names that can not be used as a file name are refused with a message: empty names, the reserved entries of the profile list, names starting with a dot and names containing \ / : * ? " < > | (PR #44)
+      - Profile names that can not be used as a file name are refused with a message: empty names, the placeholder "New profile", names starting with a dot and names containing \ / : * ? " < > | (PR #44)
       - Saving and importing a profile only add it to the profile list after the file was written (PR #44)
       - Printer names with umlauts and other non-ASCII characters arrive unchanged in Bambu Studio. Profiles, settings and the UDP package are read and written as UTF-8 (PR #44)
       - Pressing send again for the same printer replaces the running broadcast instead of starting a second one next to it (PR #44)
@@ -46,7 +46,7 @@ Version 2.2.0
       - Release notes list the merged pull requests by category and add the section of this changelog (PR #46)
       - FlatLaf, JNA, org.json, the Maven plugins and the GitHub Actions are updated; Dependabot proposes updates weekly from now on (PR #47, PR #48, PR #49)
       - Pull requests are built and tested automatically. A release fails early if its tag does not match the version, and the Linux build uses a fixed, checked version of appimagetool (PR #51)
-      - Pre-release tags like v.2.1.5-beta can be packaged: the installers get the numeric version, which is all jpackage accepts. The README states Java 11 everywhere and explains running the JAR without outdated steps (PR #58)
+      - Pre-release tags like v.2.2.1-beta can be packaged: the installers get the numeric version, which is all jpackage accepts. The README states Java 11 everywhere and explains running the JAR without outdated steps (PR #58)
 
 -----------------------------------------------------------------------------------------------
 Version 2.1.3
