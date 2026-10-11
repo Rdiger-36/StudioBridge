@@ -33,6 +33,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
+
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -1079,32 +1081,35 @@ public class MainMenu {
         btnSaveProfile.setRequestFocusEnabled(false);
         btnSaveProfile.setMargin(new Insets(2, 2, 2, 2));
         btnSaveProfile.setContentAreaFilled(false);
-        btnSaveProfile.setIcon(Resize.setNewImageIconSize(new ImageIcon(ToolInfo.class.getResource("/save.png")), 16, 16));
+        btnSaveProfile.setIcon(new FlatSVGIcon("icons/save.svg"));
         frmStudioBridge.getContentPane().add(btnSaveProfile, "cell 1 2,alignx right");
                 
         // Menu with the other profile actions, so the profile list only holds real profiles
         JPopupMenu mnProfileActions = new JPopupMenu();
-        JMenuItem miNewProfile = new JMenuItem(I18n.t("profile.new"));
-        JMenuItem miImportProfile = new JMenuItem(I18n.t("profile.import"));
-        JMenuItem miRenameProfile = new JMenuItem(I18n.t("profile.rename"), Resize.setNewImageIconSize(new ImageIcon(ToolInfo.class.getResource("/edit.png")), 16, 16));
-        JMenuItem miDeleteProfile = new JMenuItem(I18n.t("profile.deleteAction"), Resize.setNewImageIconSize(new ImageIcon(ToolInfo.class.getResource("/delete.png")), 16, 16));
+        JMenuItem miNewProfile = new JMenuItem(I18n.t("profile.new"), new FlatSVGIcon("icons/new.svg"));
+        JMenuItem miImportProfile = new JMenuItem(I18n.t("profile.import"), new FlatSVGIcon("icons/import.svg"));
+        JMenuItem miRenameProfile = new JMenuItem(I18n.t("profile.rename"), new FlatSVGIcon("icons/edit.svg"));
+        JMenuItem miDeleteProfile = new JMenuItem(I18n.t("profile.deleteAction"), new FlatSVGIcon("icons/delete.svg"));
         mnProfileActions.add(miNewProfile);
         mnProfileActions.add(miImportProfile);
         mnProfileActions.addSeparator();
         mnProfileActions.add(miRenameProfile);
         mnProfileActions.add(miDeleteProfile);
         
-        JButton btnProfileActions = new JButton("\u22EF");
+        // Looks like the save button: a plain icon without a button frame
+        JButton btnProfileActions = new JButton(new FlatSVGIcon("icons/menu.svg"));
         btnProfileActions.setToolTipText(I18n.t("profile.actions"));
         btnProfileActions.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnProfileActions.setMargin(new Insets(2, 6, 2, 6));
+        btnProfileActions.setMargin(new Insets(2, 2, 2, 2));
+        btnProfileActions.setContentAreaFilled(false);
         btnProfileActions.setRequestFocusEnabled(false);
         btnProfileActions.addActionListener(arg -> {
         	// Renaming and deleting need a saved profile
         	boolean profileSelected = cbxProfile.getSelectedItem() != null;
         	miRenameProfile.setEnabled(profileSelected);
         	miDeleteProfile.setEnabled(profileSelected);
-        	mnProfileActions.show(btnProfileActions, 0, btnProfileActions.getHeight());
+        	// Right-aligned to the button, so the menu opens inside the window
+        	mnProfileActions.show(btnProfileActions, btnProfileActions.getWidth() - mnProfileActions.getPreferredSize().width, btnProfileActions.getHeight());
         });
         frmStudioBridge.getContentPane().add(btnProfileActions, "cell 1 2,alignx right");
         

@@ -42,7 +42,7 @@ printer would send. `mvn package` builds the fat JAR and runs the tests.
 - The profile list only holds saved profiles. No selection means a new
   profile, whose name is `MainMenu.NEW_PROFILE` (translated, reserved in every
   language); read the selection with `selectedProfile()`, never compare
-  against a literal. New, import, rename and delete live in the "⋯" menu.
+  against a literal. New, import, rename and delete live in the menu button next to the list.
 - Identifiers, comments, commit messages and PR descriptions are written in
   English.
 
