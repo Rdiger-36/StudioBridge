@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -11,12 +12,9 @@ import java.nio.charset.StandardCharsets;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
-import com.formdev.flatlaf.FlatLaf;
-
 import rdiger36.StudioBridge.gui.DialogOneButton;
-import rdiger36.StudioBridge.gui.DialogTwoButtons;
 import rdiger36.StudioBridge.gui.MainMenu;
-import rdiger36.StudioBridge.gui.SaveDialog;
+import rdiger36.StudioBridge.gui.UI;
 import rdiger36.StudioBridge.objects.Printer;
 
 /**
@@ -30,88 +28,6 @@ import rdiger36.StudioBridge.objects.Printer;
  */
 
 public class Config {
-	
-	/**
-	 * Displays a warning dialog if the current printer profile is new and contains
-	 * unsaved data. The user may choose to save the profile or continue without saving.
-	 *
-	 * <p>If the user chooses to save, a dialog is shown to enter a profile name.
-	 * The profile is then written to disk and the given {@link Printer} object is
-	 * updated accordingly.</p>
-	 *
-	 * @param mainFrame the window used for dialog positioning.
-	 * @param printer the printer object containing the unsaved profile data.
-	 * @return the name of the saved profile, or an empty string if the user chose
-	 *         not to save.
-	 */
-	public static String saveUnsavedNewProfile(JFrame mainFrame, Printer printer) {
-	    
-	    // Display a dialog that warns the user about unsaved profile changes.
-	    // The dialog has two buttons: I18n.t("profile.saveNew") and I18n.t("common.continueWithoutSaving").
-	    // The user's choice is stored in the variable 'response'.
-	    int response = new DialogTwoButtons(mainFrame, null, 
-	        new ImageIcon(MainMenu.class.getResource("/achtung.png")), 
-	        I18n.t("profile.unsavedNew"), 
-	        I18n.t("profile.saveNew"), 
-	        I18n.t("common.continueWithoutSaving")).showDialog();
-	    
-	    // If the user chooses to save the profile (response == 0):
-	    if (response == 0) {
-	        // Get the profile name by showing a save dialog.
-	        // The text from the 'txtName' field is used as the initial suggestion for the profile name.
-	        String profileName = new SaveDialog(mainFrame, printer.getProfileName(), I18n.t("common.save")).saveProfile();
-	        
-	        // The dialog returns null when it was closed without confirming.
-	        if (profileName == null || profileName.trim().equals("")) {
-	        	return "";
-	        }
-	        
-	        // Save the profile with the entered name and associated details (model, IP, serial number).
-	        printer.setProfileName(profileName.trim());
-	        if (!saveProfile(mainFrame, printer)) {
-	        	return "";
-	        }
-	        
-	        // Return the name of the saved profile.
-	        return printer.getProfileName();
-	    }
-	    
-	    // If the user chooses to continue without saving, return an empty string.
-	    return "";
-	}
-	
-	/**
-	 * Displays a dialog when an existing profile contains unsaved changes. The user
-	 * may choose to save or continue without saving.
-	 *
-	 * <p>If the user chooses to save, the changes are written to the profile file.</p>
-	 *
-	 * @param mainFrame the window used for dialog positioning.
-	 * @param printer the printer object representing the modified profile.
-	 * @return {@code true} if the profile was saved, {@code false} if the user chose
-	 *         not to save.
-	 */
-	public static boolean saveUnsavedProfile(JFrame mainFrame, Printer printer) {
-	    
-	    // Display a dialog warning the user that the current profile contains unsaved changes.
-	    // The dialog has two buttons: I18n.t("profile.saveChanges") and I18n.t("common.continueWithoutSaving").
-	    int response = new DialogTwoButtons(mainFrame, null, 
-	        new ImageIcon(MainMenu.class.getResource("/achtung.png")), 
-	        I18n.t("profile.unsavedChanges"), 
-	        I18n.t("profile.saveChanges"), 
-	        I18n.t("common.continueWithoutSaving")).showDialog();
-	    
-	    // If the user chooses to save the profile (response == 0):
-	    if (response == 0) {
-	        
-	        // Save the profile using the selected name and the provided profile details.
-	        // Return whether the profile has been saved.
-	        return saveProfile(mainFrame, printer);
-	    }
-	    
-	    // If the user chooses to continue without saving, return false.
-	    return false;
-	}
 	
 	/**
 	 * Writes the contents of a {@link Printer} profile to a configuration file.
@@ -182,42 +98,36 @@ public class Config {
 	 * @return a {@link Printer} object with the loaded data,
 	 *         or {@code null} if the file could not be read.
 	 */
-	public static Printer loadProfile(JFrame mainFrame, String profile) {   
-	    
-	    // Create a File object representing the configuration file.
-	    File configFile = new File(profile);        
-	    
-	    // Variable to hold each line read from the configuration file.
-	    String line = "";
-	    
-	    // Check if the configuration file exists.
-	    if (configFile.exists()) {  
-	    	Printer printer = new Printer(configFile.getName().replaceFirst("\\.sbp$", ""), "", "", "", "");
-	        
-	        // Open the configuration file for reading, it is closed automatically.
-	        try (BufferedReader inputStream = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8))) {
-	            
-	            // Read each line of the file until the end.
-	            while((line = inputStream.readLine()) != null) {
-	                
-	                /**
-	                 * Use the get_Conf() method to assign the values from the configuration file 
-	                 * to the appropriate variables (combo box and text fields). 
-	                 * Each line is split into a key-value pair, where the key is on the left side of '='
-	                 * and the value on the right.
-	                 */
-	                String[] parts = line.split("=", 2);
-	                getPrinterConf(parts[0], parts.length > 1 ? parts[1] : "", printer);
-	            }    
-	        } catch (Exception e) {
-	        	// Show error if reading the file has failed
-	        	new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("profile.readFailed"), I18n.t("common.ok")).showDialog();
-	        	return null;
-	        }
-            return printer;
-	    } else {
-	    	return null;
+	public static Printer loadProfile(JFrame mainFrame, String profile) {
+	    File configFile = new File(profile);
+	    if (!configFile.exists()) return null;
+	    try {
+	        return readProfile(configFile);
+	    } catch (IOException e) {
+	        // Show error if reading the file has failed
+	        new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("profile.readFailed"), I18n.t("common.ok")).showDialog();
+	        return null;
 	    }
+	}
+	
+	/**
+	 * Reads a profile file without showing anything, for the GUI and the command line alike.
+	 * The profile name is the file name without ".sbp"; every line is a key=value pair.
+	 *
+	 * @param configFile the profile file
+	 * @return the profile
+	 * @throws IOException if the file can not be read
+	 */
+	public static Printer readProfile(File configFile) throws IOException {
+	    Printer printer = new Printer(configFile.getName().replaceFirst("(?i)\\.sbp$", ""), "", "", "", "");
+	    try (BufferedReader inputStream = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8))) {
+	        String line;
+	        while ((line = inputStream.readLine()) != null) {
+	            String[] parts = line.split("=", 2);
+	            getPrinterConf(parts[0], parts.length > 1 ? parts[1] : "", printer);
+	        }
+	    }
+	    return printer;
 	}
 	
 	/**
@@ -301,7 +211,7 @@ public class Config {
 	    StringBuilder config = new StringBuilder();
 	    
 	    // Append the dark mode setting to the configuration.
-	    config.append("enableDarkmode=" + FlatLaf.isLafDark());
+	    config.append("theme=" + MainMenu.theme);
 	    config.append(System.getProperty("line.separator")); // Add a new line.
 	    
 	    // Append the custom profiles path to the configuration.
@@ -388,6 +298,9 @@ public class Config {
 	 * @param configType the settings key.
 	 * @param wert the settings value.
 	 */
+	// Whether the settings file has a theme entry, which wins over the older enableDarkmode
+	private static boolean themeLoaded = false;
+	
 	private static void getAppConf(String configType, String wert) {
 	    
 	    // Switch statement to assign the value to the correct field based on the configuration type.
@@ -395,7 +308,14 @@ public class Config {
 	        
 	    	// Set the enableDarkmode setting
 	        case "enableDarkmode": 
-	        	MainMenu.darkmode = Boolean.valueOf(wert);
+	        	// Setting of older versions, kept as fixed choice until a theme is stored
+	        	if (!themeLoaded) MainMenu.theme = Boolean.valueOf(wert) ? UI.THEME_DARK : UI.THEME_LIGHT;
+	        	break;
+	        
+	        // Set the theme: auto, light or dark
+	        case "theme":
+	        	MainMenu.theme = wert;
+	        	themeLoaded = true;
 	        	break;
 	        
 	        // Set the customProfilesPath setting

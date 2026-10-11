@@ -1,13 +1,9 @@
 package rdiger36.StudioBridge.functions;
 
-import java.io.File;
-import java.util.ArrayList;
-
-import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
-import rdiger36.StudioBridge.gui.DialogTwoButtons;
 import rdiger36.StudioBridge.gui.MainMenu;
+import rdiger36.StudioBridge.gui.ProfileManager;
 import rdiger36.StudioBridge.objects.Printer;
 
 /**
@@ -22,59 +18,26 @@ import rdiger36.StudioBridge.objects.Printer;
 public class Exit {
 
     /**
-     * Initiates the application shutdown sequence while ensuring that all
-     * unsaved profile data and user settings are correctly saved.
+     * Closes StudioBridge after offering to save what is entered and not saved yet.
      *
-     * <p>The method performs the following checks:</p>
-     * <ul>
-     *   <li>If the currently selected profile is a new, unsaved profile
-     *       containing data, the user is prompted to save it.</li>
-     *   <li>If the loaded profile has been modified, the user is prompted
-     *       to save the changes.</li>
-     *   <li>If imported profiles exist that have not yet been saved to the
-     *       filesystem, the user is warned accordingly.</li>
-     *   <li>Finally, user settings are saved and the application terminates.</li>
-     * </ul>
+     * <p>A new profile with data offers to save it under a name, an edited profile offers to save
+     * the changes. Closing such a dialog with the window button keeps StudioBridge open.
+     * Finally the settings are saved and the application ends.</p>
      *
-     * @param mainFrame the main application window used to display dialogs.
-     * @param profiles a list of all profile names currently loaded in the UI.
-     * @param printer the currently edited {@link Printer} object whose values
-     *                may need to be saved before exiting.
+     * @param mainFrame the main window, parent of the dialogs
+     * @param current the profile name and the values entered right now
+     * @param profiles saves the profile and keeps the profile list in step
      */
-    public static void closeApp(JFrame mainFrame, ArrayList<String> profiles, Printer printer) {
-
-        String importedProfileSaved = checkImportedProfiles(profiles);
-
-        switch (unsavedState(printer, MainMenu.mainPrinter)) {
+    public static void closeApp(JFrame mainFrame, Printer current, ProfileManager profiles) {
+        switch (unsavedState(current, MainMenu.mainPrinter)) {
             case NEW_PROFILE:
-                // A new profile with entered data that has never been saved
-                Config.saveUnsavedNewProfile(mainFrame, printer);
+                if (profiles.offerSaveNewOnExit(current) == ProfileManager.Choice.CANCEL) return;
                 break;
             case CHANGED_PROFILE:
-                // The selected profile was edited after it was loaded or saved
-                Config.saveUnsavedProfile(mainFrame, printer);
+                if (profiles.offerSaveChangesOnExit(current) == ProfileManager.Choice.CANCEL) return;
                 break;
             default:
-                if (importedProfileSaved.equals("oneUnsaved")) {
-                    Config.saveUnsavedNewProfile(mainFrame, printer);
-                }
                 break;
-        }
-
-        // Check if several imported profiles are unsaved
-        if (importedProfileSaved.equals("multipleUnsaved")) {
-            int result = new DialogTwoButtons(
-                    mainFrame,
-                    null,
-                    new ImageIcon(MainMenu.class.getResource("/achtung.png")),
-                    I18n.t("profile.unsavedImports"),
-                    I18n.t("common.yes"),
-                    I18n.t("common.no")
-            ).showDialog();
-
-            if (result == 0) {
-                return; // Abort exit
-            }
         }
 
         // Save user settings before exiting
@@ -83,7 +46,7 @@ public class Exit {
     }
 
     /** What would be lost when StudioBridge closes now. */
-    enum UnsavedState { NONE, NEW_PROFILE, CHANGED_PROFILE }
+    public enum UnsavedState { NONE, NEW_PROFILE, CHANGED_PROFILE }
 
     /**
      * Compares what is entered in the main window with the saved state of the selected profile.
@@ -93,7 +56,7 @@ public class Exit {
      * @return NEW_PROFILE for an unsaved new profile with data, CHANGED_PROFILE for a saved profile
      *         whose values were edited, NONE otherwise
      */
-    static UnsavedState unsavedState(Printer current, Printer saved) {
+    public static UnsavedState unsavedState(Printer current, Printer saved) {
         if (MainMenu.notAllowedProfileNames.contains(current.getProfileName())) {
             boolean hasData = !current.getIpAdress().trim().isEmpty()
                     || !current.getSerialNumber().trim().isEmpty()
@@ -112,42 +75,4 @@ public class Exit {
         return changed ? UnsavedState.CHANGED_PROFILE : UnsavedState.NONE;
     }
 
-    /**
-     * Checks whether imported profiles listed in the profile overview
-     * exist on disk as .sbp files. Profiles that do not have a corresponding
-     * file are considered unsaved.
-     *
-     * <p>The result indicates how many profiles are unsaved:</p>
-     * <ul>
-     *   <li>{@code "multipleUnsaved"} – more than one unsaved profile</li>
-     *   <li>{@code "oneUnsaved"} – exactly one unsaved profile</li>
-     *   <li>empty string – all profiles are saved</li>
-     * </ul>
-     *
-     * @param profiles a list of profile names displayed in the UI.
-     * @return a status string describing the number of unsaved profiles.
-     */
-    private static String checkImportedProfiles(ArrayList<String> profiles) {
-
-        // Directory where profiles are stored
-        String profDir = MainMenu.ProfilesDir + System.getProperty("file.separator");
-
-        int unsavedCounter = 0;
-
-        for (String profile : profiles) {
-            File profileFile = new File(profDir + profile + ".sbp");
-
-            if (!profileFile.exists()) {
-                unsavedCounter++;
-            }
-        }
-
-        if (unsavedCounter > 1) {
-            return "multipleUnsaved";
-        } else if (unsavedCounter == 1) {
-            return "oneUnsaved";
-        }
-
-        return "";
-    }
 }
