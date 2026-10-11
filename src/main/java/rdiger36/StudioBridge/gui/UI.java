@@ -6,6 +6,9 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.UIManager;
 
+import com.sun.jna.Library;
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Advapi32Util;
 import com.sun.jna.platform.win32.WinReg;
 import com.formdev.flatlaf.FlatLaf;
@@ -84,8 +87,10 @@ public class UI {
         try {
             String os = MainMenu.localMachine.getOs();
             if (os.equals("macos")) {
-                // Only set to "Dark" in dark mode, the key does not exist in light mode
-                return "Dark".equalsIgnoreCase(run("defaults", "read", "-g", "AppleInterfaceStyle"));
+                // Only set to "Dark" in dark mode, the key does not exist in light mode. Read through
+                // CoreFoundation: starting the "defaults" command before the window is built left the
+                // menu bar of StudioBridge empty until the mouse moved over it.
+                return "Dark".equalsIgnoreCase(macGlobalPreference("AppleInterfaceStyle"));
             }
             if (os.equals("windows")) {
                 return Advapi32Util.registryGetIntValue(WinReg.HKEY_CURRENT_USER,
@@ -110,6 +115,41 @@ public class UI {
         if (colorScheme != null && colorScheme.contains("prefer-dark")) return true;
         if (colorScheme != null && colorScheme.contains("prefer-light")) return false;
         return gtkTheme != null && gtkTheme.toLowerCase().contains("dark");
+    }
+
+    /** The few CoreFoundation functions needed to read a global macOS preference. */
+    private interface CoreFoundation extends Library {
+        int UTF8 = 0x08000100;
+
+        Pointer CFStringCreateWithCString(Pointer allocator, String text, int encoding);
+        Pointer CFPreferencesCopyAppValue(Pointer key, Pointer application);
+        Pointer CFGetTypeID(Pointer value);
+        Pointer CFStringGetTypeID();
+        boolean CFStringGetCString(Pointer text, byte[] buffer, long size, int encoding);
+        void CFRelease(Pointer value);
+    }
+
+    // A string value of the global macOS preferences, or null when it is not set
+    private static String macGlobalPreference(String key) {
+        CoreFoundation cf = Native.load("CoreFoundation", CoreFoundation.class);
+        Pointer cfKey = cf.CFStringCreateWithCString(null, key, CoreFoundation.UTF8);
+        // kCFPreferencesAnyApplication is the string "kCFPreferencesAnyApplication"
+        Pointer anyApp = cf.CFStringCreateWithCString(null, "kCFPreferencesAnyApplication", CoreFoundation.UTF8);
+        try {
+            Pointer value = cf.CFPreferencesCopyAppValue(cfKey, anyApp);
+            if (value == null) return null;
+            try {
+                if (!cf.CFGetTypeID(value).equals(cf.CFStringGetTypeID())) return null;
+                byte[] buffer = new byte[256];
+                return cf.CFStringGetCString(value, buffer, buffer.length, CoreFoundation.UTF8)
+                        ? Native.toString(buffer, "UTF-8") : null;
+            } finally {
+                cf.CFRelease(value);
+            }
+        } finally {
+            cf.CFRelease(cfKey);
+            cf.CFRelease(anyApp);
+        }
     }
 
     // Runs a command and returns its first output line, or null when it fails
