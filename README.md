@@ -28,21 +28,24 @@
 
 ---
 
-With StudioBridge it is possible to make Bambu Lab 3D Printers visible in Bambu Studio or Orca Slicer, that can not be automatically added by them.
-It is also possible to connect printers from other subnets or from accessible external networks (e.g. via VPN) or in your normal home network.
-There are many scripts for all kinds of systems, but many users feel more comfortable with a GUI. Therefore I developed StudioBridge, which is basically based on the scripts i found in countless forums.
+StudioBridge makes Bambu Lab 3D printers visible in Bambu Studio or Orca Slicer when the slicer can not find them on its own: printers in another subnet, behind a VPN, or in a home network where discovery does not work.
+There are many scripts for this, but many users feel more comfortable with a GUI. StudioBridge is based on the scripts found in countless forums and wraps them in a small app.
 
 # How it works
-StudioBridge sends a UDP request to your Slicer (Bambu Studio or Orca Slicer) with the printer data (IP address, serial number, printer type, printer name).
-Once all the data has been entered, it can be sent to your Slicer, making the printer visible. Now the printer can be accessed via the LAN access code. This means that all the usual functions are available.
 
-This Programm has nothing to do with Bambu Connect and it also doesn't replace it. It's only for the connection in your Slicer.
+StudioBridge sends the same UDP announcement a printer sends (IP address, serial number, model and name) to your slicer. The printer then shows up in Bambu Studio or Orca Slicer and is used with its LAN access code, with all the usual functions.
 
-With StudioBridge all printers of the Bambu Lab assortment can be added. It is also possible to create and save a profile for each printer.
+StudioBridge has nothing to do with Bambu Connect and does not replace it. It only makes the printer visible in your slicer.
 
-You have the option to send the package via broadcast or directly to Bambu Studio.
+# Features
 
-You can check if the printer would connect correctly in Bambu Studio with the function "Check Printer".
+- Every printer of the Bambu Lab range (A1, A1 Mini, A2L, P1P, P1S, P2S, X1, X1C, X1E, X2D, H2C, H2D, H2D Pro, H2S)
+- **Profiles** for each printer: save, rename, import and delete them from the menu next to the profile list
+- **Profile manager** (Settings → Profile manager): all profiles in one table, edit and save them, delete them, and send several printers at once
+- **Check printer**: tests whether the printer is reachable and accepts connections the way Bambu Studio needs it
+- **Sending mode**: as broadcast to the network (default) or only to Bambu Studio on this computer
+- **English and German**, light and dark mode, both following the system by default
+- **Command line** for scripts and autostart, see [Arguments](#arguments)
 
 Successfully tested on:
 - Windows 10/11 ARM and x86
@@ -52,33 +55,31 @@ Successfully tested on:
 > **Note for Intel Mac users:** Apple ends macOS support for Intel Macs, so native Intel (x86) builds are no longer provided. Intel Mac users can use the `.jar` release with Java 11 or later.
 
 # Requirements
-- min. Java 11 (only for .jar compiled release)
+- The installers (Windows, macOS) and the AppImage (Linux) need nothing else
+- The `.jar` release needs Java 11 or later, see [below](#installing-java-and-running-the-jar-file-only-for-using-jar)
 
 # Preview
-Lightmode
 
-![image](https://github.com/user-attachments/assets/d7f51a53-35d4-4e5d-b77d-9bf5a77eaf36) ![image](https://github.com/user-attachments/assets/8a1b0062-bc4d-4b25-8247-d3349b8b6b74)
+Main window in dark and light mode
 
+<p>
+  <img src="docs/screenshots/main-dark.png" width="318" alt="Main window in dark mode" />
+  <img src="docs/screenshots/main-light.png" width="318" alt="Main window in light mode" />
+</p>
 
-Darkmode
+The profile menu: new, import, rename and delete
 
-![image](https://github.com/user-attachments/assets/216cb8b1-8913-4d71-87af-b4356de9c614) ![image](https://github.com/user-attachments/assets/a41a6a8b-a3ae-4baf-92a9-1069df042c4c)
+<img src="docs/screenshots/profile-menu.png" width="318" alt="Profile menu next to the profile list" />
 
-Multiple Printer Setup
+The profile manager: edit, save, delete and send several printers
 
-![StudioBridge main window](https://github.com/user-attachments/assets/3a295a9c-2ca2-4d1d-ad1e-8e68909f9f84)
-![StudioBridge settings](https://github.com/user-attachments/assets/62ed0dd8-000d-4682-8399-c5b6229204ed)
+<img src="docs/screenshots/profile-manager.png" width="820" alt="Profile manager with all profiles in a table" />
 
-Printer Check
+Printer check
 
-![Printer_Check](https://github.com/user-attachments/assets/ccb139b0-e737-49a5-9b8c-0faf00316892)
+![Printer check](https://github.com/user-attachments/assets/ccb139b0-e737-49a5-9b8c-0faf00316892)
 
-If TCP Handshake is not working, then it helps to restart your printer.
-
-# Demo
-
-![StudioBridgeDemo](https://github.com/user-attachments/assets/e5e197ab-54bf-4a6d-bc40-dd46607597f8)
-
+If the TCP handshake fails, restarting the printer often helps.
 
 # Languages
 
