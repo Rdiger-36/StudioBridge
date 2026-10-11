@@ -1,4 +1,5 @@
 package rdiger36.StudioBridge.gui;
+import java.awt.Window;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -37,7 +38,8 @@ public class DialogTwoButtons {
      * @param button2Text The text for the second button.
      */
     public DialogTwoButtons(JFrame mainFrame, JDialog mainDial, ImageIcon icon, String message, String button1Text, String button2Text) {
-        dial = new JDialog();
+        // Owned by its parent: an ownerless dialog is blocked by a modal parent dialog and can not be clicked
+        dial = new JDialog(mainDial != null ? (Window) mainDial : mainFrame);
         dial.setResizable(false);
         dial.setTitle("StudioBridge");
         dial.setIconImage(Toolkit.getDefaultToolkit().getImage(DialogTwoButtons.class.getResource("/icon.png")));
