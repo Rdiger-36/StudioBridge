@@ -2,7 +2,14 @@
 Version 2.1.4
    - Breaking:
       - "Send packages directly" and --direct now do what they say. Since 2.0.0 the setting was inverted: with the checkbox ticked the package went out as a broadcast to 255.255.255.255, and with the default setting it was sent to localhost. Now the checkbox and --direct send to Bambu Studio on this computer, and the default is the broadcast to the network. With the default setting StudioBridge therefore switches from localhost to broadcast. If your printer no longer shows up, tick "Send packages directly" in the settings or start the CLI with --direct (PR #41)
+   - New Features:
+      - --broadcast sends the UDP package as broadcast for this run, also when "Send packages directly" is ticked in the settings. Together with --direct it can not be combined (PR #50)
+      - --version prints the version of StudioBridge (PR #50)
+      - --sendonly ends with exit code 1 when a package could not be sent, Bambu Studio is not running or no profile was found, and with 0 when every package was sent, so a script or an autostart can tell whether it worked (PR #50)
    - Fixes:
+      - --direct, --broadcast and --customProfilesDir only apply to the run they are given for. Until now they were written into the settings when the GUI was closed, so a single start with --direct switched the sending mode for good (PR #50)
+      - --selectedPrinters without --sendonly is reported as error instead of being ignored (PR #50)
+      - Profiles sent with --sendonly are read as UTF-8 like in the GUI (PR #50)
       - The send button sends the data currently entered. Until now it sent the last saved state of the profile, so a changed IP address was ignored after "Continue without saving", and declining to save a new profile sent an empty printer (PR #40)
       - Closing the "Save profile" dialog with the window button no longer crashes StudioBridge, and a new profile is no longer saved twice (PR #40)
       - Renaming a profile to its own name no longer deletes it. The old profile file is only removed once the profile has been saved under its new name, and renaming onto another existing profile asks before overwriting it (PR #44)

@@ -305,7 +305,8 @@ public class Config {
 	    config.append(System.getProperty("line.separator")); // Add a new line.
 	    
 	    // Append the custom profiles path to the configuration.
-	    config.append("customProfilesPath=" + MainMenu.ProfilesDir);
+	    // A directory given by --customProfilesDir only applies to that run, keep the saved one
+	    config.append("customProfilesPath=" + (MainMenu.useCustomProfilesDir ? MainMenu.savedProfilesDir : MainMenu.ProfilesDir));
 	    config.append(System.getProperty("line.separator")); // Add a new line.
 	    	    
 	    // Append the usage of the last used profile to the configuration.
@@ -321,7 +322,8 @@ public class Config {
 	    }
 	    
 	    // Append the usage of the mode for sending UDP packages to the configuration.
-	    config.append("directMode=" + MainMenu.directMode);
+	    // A mode given by --direct or --broadcast only applies to that run, keep the saved one
+	    config.append("directMode=" + (MainMenu.directModeFromArgs ? MainMenu.savedDirectMode : MainMenu.directMode));
 	    config.append(System.getProperty("line.separator")); // Add a new line.
 	    
 	    // Append the usage of the mode to show the jar info to the configuration.
