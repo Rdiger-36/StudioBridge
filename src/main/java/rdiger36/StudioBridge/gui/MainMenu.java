@@ -174,22 +174,27 @@ public class MainMenu {
                 continue;
             }
             
-            if (arg.startsWith("--customProfilesDir")) {
-            	ProfilesDir = arg.split("=")[1];
-            	useCustomProfilesDir = true;
-                continue;
+            if (arg.startsWith("--customProfilesDir=")) {
+            	String dir = argValue(arg);
+            	if (!dir.isEmpty()) {
+            		ProfilesDir = dir;
+            		useCustomProfilesDir = true;
+            		continue;
+            	}
             }
             
-            if (arg.startsWith("--selectedPrinters")) {
-            	String argProfiles = arg.split("=")[1];
-            	String[] profiles = argProfiles.split(",");
+            if (arg.startsWith("--selectedPrinters=")) {
+            	String argProfiles = arg.substring(arg.indexOf('=') + 1);
             	
-            	for (String profile : profiles) {
-            		profilesListCLI.add(profile);
+            	for (String profile : argProfiles.split(",")) {
+            		profile = stripQuotes(profile.trim());
+            		if (!profile.isEmpty()) profilesListCLI.add(profile);
             	}
             	
-            	useSpecificProfiles = true;
-                continue;
+            	if (!profilesListCLI.isEmpty()) {
+            		useSpecificProfiles = true;
+            		continue;
+            	}
             }
             
             unknown.add(arg);
@@ -221,6 +226,19 @@ public class MainMenu {
         	UI.changeLAF(darkmode); // Change the look and feel based on the dark mode setting
             startGUI();
         }
+    }
+    
+    // Returns the value of an argument like --name=value, without surrounding quotes
+    static String argValue(String arg) {
+    	return stripQuotes(arg.substring(arg.indexOf('=') + 1).trim());
+    }
+    
+    // Removes one pair of surrounding single or double quotes
+    private static String stripQuotes(String value) {
+    	if (value.length() >= 2 && (value.startsWith("'") && value.endsWith("'") || value.startsWith("\"") && value.endsWith("\""))) {
+    		return value.substring(1, value.length() - 1);
+    	}
+    	return value;
     }
     
     // print help as console output
