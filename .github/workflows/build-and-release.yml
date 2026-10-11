@@ -34,9 +34,9 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.value }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -96,9 +96,9 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -115,7 +115,7 @@ jobs:
           echo "$wixDir" >> $env:GITHUB_PATH
 
       - name: Download JAR
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: jar-input
           path: input
@@ -213,9 +213,9 @@ jobs:
             arch: aarch64
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -239,7 +239,7 @@ jobs:
           chmod +x appimagetool
 
       - name: Download JAR
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: jar-input
           path: input
@@ -339,9 +339,9 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: macos-latest   # arm64 — Apple Silicon (M-Series)
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -368,7 +368,7 @@ jobs:
       # icon.icns is pre-converted and stored in .github/packaging/icons/
 
       - name: Download JAR
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: jar-input
           path: input
@@ -500,12 +500,12 @@ jobs:
       pull-requests: read
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
 
       # Only CHANGELOG.md is needed, for the detailed changes of this version
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           sparse-checkout: CHANGELOG.md
           sparse-checkout-cone-mode: false
@@ -588,7 +588,7 @@ jobs:
           } > release-notes.md
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             artifacts/jar-release/*
