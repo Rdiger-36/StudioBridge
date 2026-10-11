@@ -26,6 +26,10 @@ Version 2.1.4
    - Maintenance:
       - The version shown in StudioBridge is taken from pom.xml, so a release only bumps it in one place (PR #42)
       - Typos in dialogs and CLI output fixed, outdated code documentation corrected, unused files removed (PR #45)
+      - The JAR runs on Java 11 and later, not only on Java 21. The build checks that no newer Java API is used (PR #46)
+      - Release notes list the merged pull requests by category and add the section of this changelog (PR #46)
+      - FlatLaf, JNA, org.json, the Maven plugins and the GitHub Actions are updated; Dependabot proposes updates weekly from now on (PR #47, PR #48, PR #49)
+      - Pull requests are built and tested automatically. A release fails early if its tag does not match the version, and the Linux build uses a fixed, checked version of appimagetool (PR #51)
 
 -----------------------------------------------------------------------------------------------
 Version 2.1.3
