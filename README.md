@@ -77,7 +77,7 @@ The profile manager: edit, save, delete and send several printers
 
 Test connection
 
-<img src="docs/screenshots/printer-check.png" width="607" alt="Printer check with both tests passed" />
+<img src="docs/screenshots/printer-check.png" width="478" alt="Connection test with both tests passed" />
 
 If the TCP handshake fails, restarting the printer often helps.
 
