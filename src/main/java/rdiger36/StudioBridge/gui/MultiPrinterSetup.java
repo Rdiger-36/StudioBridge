@@ -21,6 +21,11 @@ import java.awt.Component;
 import java.util.List;
 import javax.swing.JComboBox;
 import javax.swing.table.TableCellRenderer;
+import java.awt.BorderLayout;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import javax.swing.DefaultCellEditor;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -86,15 +91,26 @@ public class MultiPrinterSetup {
         // The model is picked from the same list as in the main window, not typed
         table.getColumnModel().getColumn(4).setCellEditor(new DefaultCellEditor(new ModelComboBox()));
         
-        // Shown as a combo box before it is clicked, so it is clear the model can be changed
+        // Shown with a drop-down arrow, in the colors of the table row, so it is clear the
+        // model can be changed
         table.getColumnModel().getColumn(4).setCellRenderer(new TableCellRenderer() {
-            private final JComboBox<String> box = new JComboBox<>();
+            private final JPanel cell = new JPanel(new BorderLayout());
+            private final JLabel text = new JLabel();
+            private final JLabel arrow = new JLabel(new FlatSVGIcon("icons/chevron.svg"));
+            {
+                text.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
+                arrow.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 4));
+                cell.add(text, BorderLayout.CENTER);
+                cell.add(arrow, BorderLayout.EAST);
+            }
 
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                box.removeAllItems();
-                box.addItem(value == null ? "" : value.toString());
-                return box;
+                text.setText(value == null ? "" : value.toString());
+                text.setFont(table.getFont());
+                text.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
+                cell.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+                return cell;
             }
         });
         table.setRowHeight(Math.max(table.getRowHeight(), new JComboBox<String>().getPreferredSize().height));

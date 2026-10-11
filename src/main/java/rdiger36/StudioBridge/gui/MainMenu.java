@@ -670,7 +670,8 @@ public class MainMenu {
         frmStudioBridge.getContentPane().setLayout(new MigLayout("", "[76.00px][]", "[35px:n,grow][10px:10px:10px][][][][][][10px:n][35px:n,grow]"));
 
         // Add informational label
-        JLabel lblInfo = new JLabel(I18n.t("main.info"));
+        // Wraps at a fixed width, so the text does not decide how wide the window is
+        JLabel lblInfo = new JLabel("<html><div style='width: 220px'>" + I18n.t("main.info") + "</div></html>");
         frmStudioBridge.getContentPane().add(lblInfo, "cell 0 0 2 1,growx,aligny center");
         
         // Separator
@@ -731,7 +732,8 @@ public class MainMenu {
         frmStudioBridge.getContentPane().add(separator_1, "cell 0 7 2 1,growx,aligny center");
         
         // Bottom row: copyright on the left, the actions on the right
-        JPanel pnlBottom = new JPanel(new MigLayout("insets 0", "[]push[][]", "[]"));
+        // Bottom row: both actions share the full width
+        JPanel pnlBottom = new JPanel(new MigLayout("insets 0", "[grow,sg action][grow,sg action]", "[]"));
         frmStudioBridge.getContentPane().add(pnlBottom, "cell 0 8 2 1,growx");
         
         // Button to send package
@@ -1055,20 +1057,8 @@ public class MainMenu {
         	if (importFile != null) profiles.importProfile(importFile);
         });
         
-        // Copyright button
-        JButton btnCopy = new JButton("© Niklas (Rdiger-36)");
-        btnCopy.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnCopy.setMargin(new Insets(0, 0, 0, 0));
-        btnCopy.setBorderPainted(false);
-        btnCopy.setContentAreaFilled(false);
-        btnCopy.setHorizontalAlignment(SwingConstants.LEFT);
-        btnCopy.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-        
-        // Action listener for copyright button
-        btnCopy.addActionListener(arg -> new ToolInfo(frmStudioBridge));
-        pnlBottom.add(btnCopy, "aligny center");
-        pnlBottom.add(btnSendPackage);
-        pnlBottom.add(btnCheckPrinter);
+        pnlBottom.add(btnSendPackage, "growx");
+        pnlBottom.add(btnCheckPrinter, "growx");
         
         // Action listener for deleting profiles
         miDeleteProfile.addActionListener(arg -> {
@@ -1125,11 +1115,15 @@ public class MainMenu {
 	        } 
         }
         
-        Desktop desktop = Desktop.getDesktop();
-        if (desktop.isSupported(Desktop.Action.APP_ABOUT)) {
-            desktop.setAboutHandler( e -> {
-            	new ToolInfo(frmStudioBridge);
-            } );
+        // Developer, links and icon credits: in the app menu on macOS, else in a Help menu
+        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.APP_ABOUT)) {
+            Desktop.getDesktop().setAboutHandler(e -> new ToolInfo(frmStudioBridge));
+        } else {
+            JMenu mnHelp = new JMenu(I18n.t("menu.help"));
+            JMenuItem mntmAbout = new JMenuItem(I18n.t("menu.about"));
+            mntmAbout.addActionListener(arg -> new ToolInfo(frmStudioBridge));
+            mnHelp.add(mntmAbout);
+            frmStudioBridge.getJMenuBar().add(mnHelp);
         }
         
         frmStudioBridge.pack();    
