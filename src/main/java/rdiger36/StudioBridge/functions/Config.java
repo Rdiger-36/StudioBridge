@@ -192,7 +192,7 @@ public class Config {
 	    
 	    // Check if the configuration file exists.
 	    if (configFile.exists()) {  
-	    	Printer printer = new Printer(configFile.getName().replace(".sbp", ""), "", "", "", "");
+	    	Printer printer = new Printer(configFile.getName().replaceFirst("\\.sbp$", ""), "", "", "", "");
 	        
 	        // Open the configuration file for reading, it is closed automatically.
 	        try (BufferedReader inputStream = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8))) {

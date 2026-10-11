@@ -92,9 +92,9 @@ public class Connectivity {
     }
 
     /**
-     * Attempts to checkPort 6000 of the printer to check network reachability.
+     * Opens a TCP connection to the MQTT port 8883 of the printer to check network reachability.
      *
-     * @param host The hostname or IP address to ping.
+     * @param host The hostname or IP address of the printer.
      * @return {@code true} if the host is reachable within 5 seconds,
      *         {@code false} otherwise.
      */

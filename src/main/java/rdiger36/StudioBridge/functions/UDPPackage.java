@@ -72,7 +72,7 @@ public class UDPPackage {
         	
         	UDPPackage.startBroadcast(printer.getSerialNumber(), message);
 
-            if (!multiMode && mainFrame != null) new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/success.png")), "<html>Package sent successfully.<br>The Printer will appear in the next 60 seconds in Bambu Studio.<br>You can close this Programm when your printer(s) appear in Bambu Studio</html>", "Ok").showDialog();
+            if (!multiMode && mainFrame != null) new DialogOneButton(mainFrame, null, new ImageIcon(MainMenu.class.getResource("/success.png")), "<html>Package sent successfully.<br>The Printer will appear in the next 60 seconds in Bambu Studio.<br>You can close this program when your printer(s) appear in Bambu Studio</html>", "Ok").showDialog();
 
         } catch (Exception e) {
             // Show a warning that the package could not be sent to Bambu Studio
@@ -84,10 +84,10 @@ public class UDPPackage {
     }
     
     /**
-     * Retrieves the first available UDP port from a list of specified ports (2021 or 1990).
+     * Finds the UDP port (2021 or 1990) on which Bambu Studio / Orca Slicer is listening.
      * Uses `lsof` on macOS, and Java socket binding on other operating systems.
      *
-     * @return the port number if available, or 0 if none are available.
+     * @return the first port that is in use by the slicer, or 0 if the slicer is not running.
      */
     public static int getAvailableUDPPort() {
         int[] portsToCheck = {2021, 1990};
@@ -103,10 +103,10 @@ public class UDPPackage {
                 isInUse = isUDPPortInUse(port);
             }
             if (isInUse) {
-                return port; // Return the first available port
+                return port; // The slicer is listening on this port
             }
         }
-        return 0; // Return 0 if no port is available
+        return 0; // The slicer is not running
     }
 
     /**

@@ -139,7 +139,7 @@ public class MainMenu {
         valid.put("Starting options:", "");
         valid.put("--noupdate", "Skip search for latest updates on startup");
         valid.put("--sendonly", "Start with no GUI, only send data from all printers to Bambu Studio");
-        valid.put("--direct", "Send UPD package directly to Bambu Studio, not over broadcast");
+        valid.put("--direct", "Send UDP package directly to Bambu Studio, not over broadcast");
         valid.put("--help", "Show help for StudioBridge");
 
         valid.put("", "");
@@ -486,7 +486,7 @@ public class MainMenu {
 	                                + " - " + printer.getIpAdress() + " - " + printer.getPrinterModel() + "\n";
 	                        errors.add(errorMsg);
 	                    } else {
-	                    	String successMsg = "Successfully sended package via " + sendOverMethod + " to Bambu Studio: " + printer.getPrinterName()
+	                    	String successMsg = "Successfully sent package via " + sendOverMethod + " to Bambu Studio: " + printer.getPrinterName()
 	                                + " - " + printer.getIpAdress() + " - " + printer.getPrinterModel() + "\n";
 	                        System.out.println((successMsg));
 	                    }
@@ -511,16 +511,20 @@ public class MainMenu {
 	
 	            // Overall message if everything went well
 	            if (errors.isEmpty()) {
-	                System.out.println("All Packages successfully sent. The printers(s) will appear in the nect 60 seconds in Bambu Studio.");
+	                System.out.println("All Packages successfully sent. The printer(s) will appear in the next 60 seconds in Bambu Studio.");
 	            }
-	            System.out.println("The programm stays online for the next 60 seconds and will exit automatically.");
+	            System.out.println("The program stays online for the next 60 seconds and will exit automatically.");
 	
 	        } else {
 	            System.err.println("Warning! Bambu Studio is not running!");
 	        }
         } else {
-            System.err.println("Warning! There are no useable profiles in your profiles directory:");
-            System.err.println(profilesDir);
+            if (useSpecificProfiles) {
+                System.err.println("Warning! None of the selected profiles could be used.");
+            } else {
+                System.err.println("Warning! There are no usable profiles in your profiles directory:");
+                System.err.println(profilesDir);
+            }
         }
     }
 
@@ -881,7 +885,7 @@ public class MainMenu {
                 	                		
                 		JnaFileChooser fc = new JnaFileChooser();
                         fc.setMode(Mode.Files);
-                        fc.setTitle("Choose profile save directory");
+                        fc.setTitle("Choose profile to import");
 
                         boolean returnValue = fc.showOpenDialog(frame);
                         if (returnValue) {
