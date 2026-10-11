@@ -12,8 +12,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -26,13 +24,11 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 import javax.swing.DefaultListCellRenderer;
-import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
@@ -54,8 +50,6 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
 import javax.swing.text.AbstractDocument;
 import net.miginfocom.swing.MigLayout;
 import rdiger36.StudioBridge.functions.*;
@@ -717,112 +711,9 @@ public class MainMenu {
         JLabel lblDevModel = new JLabel(I18n.t("main.model"));
         frmStudioBridge.getContentPane().add(lblDevModel, "flowx,cell 0 5,growx,aligny center");
 
-        String[] items = {
-        	    "A-Series", "A1", "A1 Mini", "A2L",
-        	    "H-Series", "H2C", "H2C (new revision)", "H2D", "H2D Pro", "H2S",
-        	    "P-Series", "P1P", "P1S", "P2S",
-        	    "X-Series", "X1", "X1C", "X1E", "X2D"
-        	};
-        
-        // Model selection combo box
-        JComboBox<String> cbxModel = new JComboBox<>(items);
-        cbxModel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        cbxModel.setMaximumRowCount(20);
-        
-    	// Rendering Categories bold
-        cbxModel.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(
-                    JList<?> list, Object value, int index,
-                    boolean isSelected, boolean cellHasFocus) {
-
-                JLabel lbl = (JLabel) super.getListCellRendererComponent(
-                        list, value, index, isSelected, cellHasFocus
-                );
-                
-                if (index == -1 && cbxModel.getSelectedIndex() == -1) {
-                    lbl.setText(I18n.t("main.selectModel"));
-                    return lbl;
-                }
-
-                String text = value.toString();
-                boolean isCategory = text.endsWith("-Series");
-                
-                // The series entries keep their English value, only the shown text is translated
-                if (isCategory) lbl.setText(I18n.t("main.modelSeries", "series", text.substring(0, text.indexOf('-'))));
-
-                if (index >= 0) {  
-                    if (isCategory) {
-                        lbl.setFont(lbl.getFont().deriveFont(Font.BOLD));
-                        lbl.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-                    } else {
-                        lbl.setFont(lbl.getFont().deriveFont(Font.PLAIN));
-                        lbl.setBorder(BorderFactory.createEmptyBorder(4, 20, 4, 4));
-                    }
-                } else { 
-                    lbl.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
-                    lbl.setFont(lbl.getFont().deriveFont(Font.PLAIN));
-                }
-
-                return lbl;
-            }
-        });
+        // Model selection combo box, series headers bold and not selectable
+        ModelComboBox cbxModel = new ModelComboBox();
         frmStudioBridge.getContentPane().add(cbxModel, "cell 1 5,growx");
-        cbxModel.setSelectedIndex(-1);
-        
-        
-        // Setting up preparation for combobox model for mouse and arrow keys 
-        AtomicInteger lastDirection = new AtomicInteger(0); 
-
-	    cbxModel.addKeyListener(new KeyAdapter() {
-	        @Override
-	        public void keyPressed(KeyEvent e) {
-	            if (e.getKeyCode() == KeyEvent.VK_UP) {
-	                lastDirection.set(-1);
-	            } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-	                lastDirection.set(1);
-	            }
-	        }
-	    });
-	
-	    cbxModel.addPopupMenuListener(new PopupMenuListener() {
-	        @Override public void popupMenuWillBecomeVisible(PopupMenuEvent e) {}
-	        @Override public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-	            lastDirection.set(0);
-	        }
-	        @Override public void popupMenuCanceled(PopupMenuEvent e) {}
-	    });
-	
-	    cbxModel.addActionListener(arg -> {
-	
-	    	int idx = cbxModel.getSelectedIndex();
-	    	if (idx < 0) return;
-	
-	        String selected = cbxModel.getItemAt(idx);
-	
-	        if (selected.endsWith("-Series")) {
-	
-	            if (idx == 0) {
-	                cbxModel.setSelectedIndex(idx + 1);
-	                return;
-	            }
-	
-	            if (lastDirection.get() == 0) {
-	                cbxModel.setSelectedIndex(idx + 1);
-	                return;
-	            }
-
-	            if (lastDirection.get() == 1) {
-	                cbxModel.setSelectedIndex(idx + 1);
-	                return;
-	            }
-	
-	            if (lastDirection.get() == -1) {
-	                cbxModel.setSelectedIndex(idx - 1);
-	            }
-	        }
-	    });
-
         
         // Printer name input field
         JLabel lblDevName = new JLabel(I18n.t("main.name"));
