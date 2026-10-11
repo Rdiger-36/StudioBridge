@@ -210,7 +210,7 @@ public class MainMenu {
         valid.put("Profile options:", "");
         valid.put("--customProfilesDir='/path/to/profiles/'",
                   "Load the profiles from this directory (only for this run)");
-        valid.put("--selectedPrinters='/path/to/profile.sbp/','/path/to/other/profile2.sbp/'",
+        valid.put("--selectedPrinters='/path/to/profile.sbp','/path/to/other/profile2.sbp'",
                   "Send only these profiles, comma-separated (requires --sendonly)");
 
 

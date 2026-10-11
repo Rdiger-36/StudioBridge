@@ -11,7 +11,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/github/v/release/Rdiger-36/StudioBridge?style=flat-square&label=version&color=blue" alt="version" />
-  <img src="https://img.shields.io/badge/Java-%E2%89%A521-ED8B00?style=flat-square&logo=openjdk&logoColor=white" alt="Java" />
+  <img src="https://img.shields.io/badge/Java-%E2%89%A511-ED8B00?style=flat-square&logo=openjdk&logoColor=white" alt="Java" />
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey?style=flat-square&color=orange" alt="platform" />
   <img src="https://img.shields.io/badge/license-GPL--3.0-green?style=flat-square" alt="license" />
   <img src="https://img.shields.io/github/actions/workflow/status/Rdiger-36/StudioBridge/build-and-release.yml?style=flat-square&label=build" alt="build" />
@@ -49,7 +49,7 @@ Successfully tested on:
 - Linux Ubuntu 25.10 ARM and x86
 - macOS M-Series (Apple Silicon)
 
-> **Note for Intel Mac users:** macOS 27 (September 2026) removes Rosetta 2 support. Native Intel (x86) builds are no longer provided. Intel Mac users can use the `.jar` release with Java 11+.
+> **Note for Intel Mac users:** Apple ends macOS support for Intel Macs, so native Intel (x86) builds are no longer provided. Intel Mac users can use the `.jar` release with Java 11 or later.
 
 # Requirements
 - min. Java 11 (only for .jar compiled release)
@@ -66,8 +66,8 @@ Darkmode
 
 Multiple Printer Setup
 
-![Bildschirmfoto 2025-02-05 um 00 04 00](https://github.com/user-attachments/assets/3a295a9c-2ca2-4d1d-ad1e-8e68909f9f84)
-![Bildschirmfoto 2025-02-05 um 00 03 04](https://github.com/user-attachments/assets/62ed0dd8-000d-4682-8399-c5b6229204ed)
+![StudioBridge main window](https://github.com/user-attachments/assets/3a295a9c-2ca2-4d1d-ad1e-8e68909f9f84)
+![StudioBridge settings](https://github.com/user-attachments/assets/62ed0dd8-000d-4682-8399-c5b6229204ed)
 
 Printer Check
 
@@ -121,7 +121,7 @@ Starting options:
 Profile options:
   --customProfilesDir='/path/to/profiles/'
       Load the profiles from this directory (only for this run)
-  --selectedPrinters='/path/to/profile.sbp/','/path/to/other/profile2.sbp/'
+  --selectedPrinters='/path/to/profile.sbp','/path/to/other/profile2.sbp'
       Send only these profiles, comma-separated (requires --sendonly)
 ```
 
@@ -161,35 +161,20 @@ The exit code is 0 when every package was sent and 1 otherwise, e.g. when Bambu 
 
 # Installing Java and Running the JAR File (Only for using .jar!)
 
-StudioBridge.jar is built in Java, so a Java Runtime Environment (JRE) is required to run the program. Below are simple instructions for installing Java on Windows, macOS, and Linux, as well as for launching the StudioBridge GUI.
+The installers and the AppImage bring their own Java. Only the `.jar` release needs Java 11 or later installed.
 
-Java Installation
+**Installing Java**
 
-Windows:
+- **Windows and macOS:** download a Java Runtime from [Adoptium](https://adoptium.net/) (Temurin, version 11 or later) and run the installer.
+- **Linux:** install OpenJDK from your package manager, e.g. `sudo apt install openjdk-21-jre` on Debian and Ubuntu.
+- Check it in a terminal with `java -version`.
 
-	1.	Visit the official Java website and download the latest Java Runtime Environment (JRE) for Windows.
-	2.	Run the downloaded installer file and follow the on-screen instructions to complete the installation.
-	3.	To confirm that Java is installed, you can search for “Java” in the Start menu. You should see options like “Java Control Panel” if installation was successful.
+**Running StudioBridge**
 
-macOS:
+1. Download `StudioBridge-<version>.jar` from the [releases page](https://github.com/Rdiger-36/StudioBridge/releases/latest).
+2. Double-click it, or start it in a terminal with `java -jar StudioBridge-<version>.jar`.
 
-	1.	Visit the official Java website and download the latest Java Runtime Environment (JRE) for macOS.
-	2.	Open the downloaded .dmg file and follow the instructions to install Java by dragging it into the Applications folder.
-	3.	After installation, open “System Preferences,” then “Java” to verify Java is installed and configured correctly.
-
-Linux:
-
-	1.	Most Linux distributions offer Java in their software repositories. Open the Software Center or Package Manager for your distribution and search for “OpenJDK” or “Java Runtime Environment.”
-	2.	Select the version you need (Java 8 or later) and install it.
-	3.	You can check if Java is installed by searching for it in the applications menu or checking for “Java” in system settings.
-
-Running the StudioBridge GUI
-
-	1.	Download the StudioBridge.jar file from the GitHub releases page.
-	2.	Locate the StudioBridge.jar file in your Downloads or specified folder.
-	3.	Double-click the .jar file to launch StudioBridge. This should open the GUI, allowing you to configure and use your 3D printers with Bambu Studio over LAN.
-
-If the .jar file does not open directly, ensure Java is properly installed, and check your system’s default settings for opening .jar files.
+If double-clicking does not open it, start it from the terminal; the command shows what is missing.
 
 # Support Me
 <a href="https://ko-fi.com/rdiger36"><img src="https://storage.ko-fi.com/cdn/kofi2.png?v=3" alt="Buy Me a Coffee at ko-fi.com" height="36" /></a>

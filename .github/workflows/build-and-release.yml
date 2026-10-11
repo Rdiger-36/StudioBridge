@@ -12,6 +12,12 @@ on:
 permissions:
   contents: read
 
+# A newer push to the same branch or pull request makes the older run pointless;
+# tag runs (releases) are never cancelled
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
 env:
   APP_NAME:    StudioBridge
   MAIN_JAR:    StudioBridge.jar
@@ -33,6 +39,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.value }}
+      # Numeric part only: jpackage (MSI and DMG) rejects suffixes like "-beta"
+      app_version: ${{ steps.version.outputs.app }}
     steps:
       - uses: actions/checkout@v7
 
@@ -44,7 +52,10 @@ jobs:
 
       - name: Get project version
         id: version
-        run: echo "value=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "value=${VERSION}" >> $GITHUB_OUTPUT
+          echo "app=${VERSION%%-*}" >> $GITHUB_OUTPUT
 
       # The release, its files and the CHANGELOG.md section are named after the
       # pom version, so a tag that does not match it would mix two versions.
@@ -141,7 +152,7 @@ jobs:
           jpackage `
             --type msi `
             --name "${{ env.APP_NAME }}" `
-            --app-version "${{ needs.build-jar.outputs.version }}" `
+            --app-version "${{ needs.build-jar.outputs.app_version }}" `
             --input input `
             --main-jar "${{ env.MAIN_JAR }}" `
             --icon .github/packaging/icons/icon.ico `
@@ -166,7 +177,7 @@ jobs:
           jpackage `
             --type app-image `
             --name "${{ env.APP_NAME }}" `
-            --app-version "${{ needs.build-jar.outputs.version }}" `
+            --app-version "${{ needs.build-jar.outputs.app_version }}" `
             --input input `
             --main-jar "${{ env.MAIN_JAR }}" `
             --icon .github/packaging/icons/icon.ico `
@@ -221,7 +232,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Install dependencies
-        run: sudo apt-get install -y libfuse2
+        run: sudo apt-get update && sudo apt-get install -y libfuse2
 
       # A fixed release with its checksum: AppImageKit is archived and its
       # "continuous" build could change or vanish between two releases.
@@ -259,7 +270,7 @@ jobs:
           jpackage \
             --type app-image \
             --name "${{ env.APP_NAME }}" \
-            --app-version "${{ needs.build-jar.outputs.version }}" \
+            --app-version "${{ needs.build-jar.outputs.app_version }}" \
             --input input \
             --main-jar "${{ env.MAIN_JAR }}" \
             --icon src/main/resources/icon.png \
@@ -321,9 +332,8 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────────
   # macOS — signed + notarized DMG  (arm64 / Apple Silicon only)
   #
-  # Intel (x86) support dropped: macOS 27 (September 2026) removes Rosetta 2,
-  # making x86 app execution on Apple Silicon impossible. Intel Macs cannot
-  # upgrade to macOS 27, so the x86 user base will effectively be zero.
+  # Intel (x86) support dropped: Apple ends macOS support for Intel Macs, so
+  # Intel users are pointed to the .jar release instead.
   #
   # Required secrets:
   #   MACOS_CERTIFICATE     — base64-encoded Developer ID Application .p12
@@ -449,7 +459,7 @@ jobs:
           jpackage \
             --type dmg \
             --name "${{ env.APP_NAME }}" \
-            --app-version "${{ needs.build-jar.outputs.version }}" \
+            --app-version "${{ needs.build-jar.outputs.app_version }}" \
             --input input \
             --main-jar "${{ env.MAIN_JAR }}" \
             --icon .github/packaging/icons/icon.icns \
