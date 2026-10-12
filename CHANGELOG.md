@@ -7,6 +7,7 @@ Version 2.3.0-beta.4
       - A new language applies right away: the window is built again in that language, at the same place and with what was entered, instead of asking for a restart (PR #64)
       - The installed versions update themselves: when a new version is available, "Install" downloads it, checks it against the SHA-256 checksum GitHub lists for the file and installs it. The MSI installs over the old one into the same folder and starts StudioBridge again, the AppImage replaces itself and restarts, under the name of the new version when the file name contains the version, else under its own name (so shortcuts and autostart entries keep working; PR #71), and on macOS the app in its folder is replaced and started again. Unsaved data is offered for saving first. The JAR and the portable ZIP open the release page as before (PR #64)
    - Fixes:
+      - After an update the AppImage starts again. The new version inherited a variable of the Java launcher and took itself for a restarted JVM, so it ended right away and nothing opened (PR #?)
       - Installing a new version on Windows replaces the installed one again. On Windows on ARM the old version stayed installed next to the new one, so "Apps" listed several StudioBridge entries; a bug in jpackage of Java 21 kept the installer from finding it. The packages are now built with Java 25 and bring a Java 25 runtime (PR #70)
    - Maintenance:
       - The packages are built with Java 25 instead of 21 (PR #70)
