@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------------------------------
-Version 2.3.0-beta.5
+Version 2.3.0
    - New Features:
       - Settings → "Include beta versions" also offers beta versions as updates. They are published as pre-releases on GitHub, with the same packages as a release, and bring new features earlier. Settings → "Check for updates" looks for a new version right away and says so when StudioBridge is up to date, also when the check at startup is turned off with --noupdate. The update dialog names the new version (PR #64)
       - The settings menu is grouped: appearance and language, then the two options for profiles and sending, then the profile manager and the profiles folder, then the updates. Menu entries have icons where they fit, and the check marks of the options stand in the same column as those icons, also in the macOS menu bar (PR #64)

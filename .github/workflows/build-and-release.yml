@@ -583,7 +583,7 @@ jobs:
 
           # The section of CHANGELOG.md for exactly this version: everything
           # between its "Version <x>" line and the next separator. An exact
-          # string compare, so 2.3.0 can not match the heading of 2.3.0-beta.5.
+          # string compare, so 2.3.0 can not match the heading of 2.3.0-beta.
           NOTES="$(awk -v v="Version ${VERSION}" '
             $0 == v { found = 1; next }
             found && /^---/ { exit }
