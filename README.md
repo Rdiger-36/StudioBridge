@@ -50,7 +50,7 @@ StudioBridge has nothing to do with Bambu Connect and does not replace it. It on
 
 Successfully tested on:
 - Windows 10/11 ARM and x86
-- Linux Ubuntu 25.10 ARM and x86
+- Linux Ubuntu 25.10 and 26.04 ARM and x86
 - macOS M-Series (Apple Silicon)
 
 > **Note for Intel Mac users:** Apple ends macOS support for Intel Macs, so native Intel (x86) builds are no longer provided. Intel Mac users can use the `.jar` release with Java 11 or later.
