@@ -36,7 +36,8 @@ jobs:
   # Runs on every pull request and push to main (CI check) and on tag pushes (release)
   # ─────────────────────────────────────────────────────────────────────────
   build-jar:
-    runs-on: ubuntu-latest
+    # Pinned, so a new Ubuntu does not change the build unnoticed
+    runs-on: ubuntu-26.04
     outputs:
       version: ${{ steps.version.outputs.value }}
       # Numeric part only: jpackage (MSI and DMG) rejects suffixes like "-beta"
@@ -127,13 +128,25 @@ jobs:
 
       # icon.ico is pre-converted and stored in .github/packaging/icons/
 
+      # The binaries of the WiX release with their checksum. The Chocolatey package
+      # first enables .NET Framework 3.5 through Windows Update, which took about
+      # 16 minutes; candle and light only need .NET Framework 4, which Windows has.
       - name: Install WiX toolset (ARM64 only — not pre-installed on windows-11-arm)
         if: matrix.arch == 'arm64'
         shell: pwsh
+        env:
+          WIX_URL: https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip
+          WIX_SHA256: 6ac824e1642d6f7277d0ed7ea09411a508f6116ba6fae0aa5f2c7daa2ff43d31
         run: |
-          choco install wixtoolset --version 3.14.1 --no-progress -y
-          $wixDir = Get-ChildItem "C:\Program Files (x86)\WiX Toolset*\bin" |
-            Select-Object -First 1 -ExpandProperty FullName
+          $zip = "$env:RUNNER_TEMP\wix314-binaries.zip"
+          $wixDir = "$env:RUNNER_TEMP\wix"
+          Invoke-WebRequest -Uri $env:WIX_URL -OutFile $zip
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash
+          if ($hash -ne $env:WIX_SHA256) {
+            Write-Error "Checksum of wix314-binaries.zip is $hash, expected $env:WIX_SHA256"
+            exit 1
+          }
+          Expand-Archive $zip -DestinationPath $wixDir
           echo "$wixDir" >> $env:GITHUB_PATH
 
       - name: Download JAR
@@ -230,9 +243,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: ubuntu-latest
+          - runner: ubuntu-26.04
             arch: x86_64
-          - runner: ubuntu-24.04-arm
+          - runner: ubuntu-26.04-arm
             arch: aarch64
     runs-on: ${{ matrix.runner }}
     steps:
@@ -242,9 +255,6 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y libfuse2
 
       # A fixed release with its checksum: AppImageKit is archived and its
       # "continuous" build could change or vanish between two releases.
@@ -333,6 +343,7 @@ jobs:
           install -m 0644 src/main/resources/icon.png \
             "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${{ env.APP_NAME }}.png"
 
+          # Extract and run: appimagetool works without FUSE, so libfuse2 is not needed
           ARCH=${{ matrix.arch }} APPIMAGE_EXTRACT_AND_RUN=1 \
             ./appimagetool "${APPDIR}" \
             "${{ env.APP_NAME }}-${VERSION}-${{ matrix.arch }}.AppImage"
@@ -536,7 +547,7 @@ jobs:
   release:
     needs: [ build-jar, build-windows, build-linux, build-macos ]
     if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: write
       pull-requests: read
