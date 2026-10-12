@@ -69,4 +69,16 @@ public class InstallerTest {
     public void writesLowerCaseHex() {
         assertEquals("00ff7f80", Installer.toHex(new byte[] { 0, (byte) 0xff, 0x7f, (byte) 0x80 }));
     }
+
+    @Test
+    public void appImageWithVersionInItsNameGetsTheNewName() {
+        assertEquals("StudioBridge-2.3.0-beta.4-aarch64.AppImage",
+                Installer.appImageName("StudioBridge-2.3.0-beta.3-aarch64.AppImage", "2.3.0-beta.3", "StudioBridge-2.3.0-beta.4-aarch64.AppImage"));
+    }
+
+    @Test
+    public void appImageNamedByTheUserKeepsItsName() {
+        assertEquals("StudioBridge.AppImage",
+                Installer.appImageName("StudioBridge.AppImage", "2.3.0-beta.3", "StudioBridge-2.3.0-beta.4-x86_64.AppImage"));
+    }
 }

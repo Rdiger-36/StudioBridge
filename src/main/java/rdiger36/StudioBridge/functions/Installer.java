@@ -44,8 +44,9 @@ import rdiger36.StudioBridge.objects.LocalMachine;
  * <ul>
  *   <li>MSI: msiexec installs the new MSI over the old one, into the same folder, and
  *       StudioBridge is started again.</li>
- *   <li>AppImage: the new file replaces the running one under the same name, so shortcuts
- *       and autostart entries keep working, and is started.</li>
+ *   <li>AppImage: the new file replaces the running one and is started. A file name with the
+ *       version in it gets the name of the new release file; a name without, chosen by the user,
+ *       stays, so shortcuts and autostart entries keep working.</li>
  *   <li>DMG: the app bundle can not replace itself while it runs, so {@link Updater} does
  *       it from a copy of this JAR after StudioBridge has ended, and starts the new app.</li>
  * </ul>
@@ -161,6 +162,18 @@ public class Installer {
         if (!digest.startsWith("sha256:")) return null;
         String hex = digest.substring("sha256:".length()).toLowerCase();
         return hex.matches("[0-9a-f]{64}") ? hex : null;
+    }
+
+    /**
+     * The file name of the updated AppImage.
+     *
+     * @param current the name of the running AppImage
+     * @param localVersion the version of the running StudioBridge
+     * @param releaseName the name of the new release file
+     * @return the name of the release file if the current name contains the version, else the current name
+     */
+    static String appImageName(String current, String localVersion, String releaseName) {
+        return current.contains(localVersion) ? releaseName : current;
     }
 
     /** The AppImage file StudioBridge runs from. */
@@ -306,9 +319,12 @@ public class Installer {
                     startMsiInstall(file);
                     break;
                 case APPIMAGE:
-                    Path target = appImage();
+                    Path running = appImage();
+                    Path target = running.resolveSibling(appImageName(running.getFileName().toString(), MainMenu.version, fileName));
                     if (!file.toFile().setExecutable(true)) throw new IOException("Can not make " + file + " executable");
                     Files.move(file, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                    // The running image stays mounted, so its file can go
+                    if (!target.equals(running)) Files.deleteIfExists(running);
                     start(new ProcessBuilder(target.toString()));
                     break;
                 case DMG:
