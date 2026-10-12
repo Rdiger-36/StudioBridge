@@ -34,6 +34,12 @@ printer would send. `mvn package` builds the fat JAR and runs the tests.
   sets `-Dstudiobridge.dist=msi|appimage|dmg`, and the release file is found by
   the end of its name (`Installer.assetSuffix`). Renaming a release file breaks
   the update of every installation already out there.
+  An update runs the code of the installed version, so a change to the update
+  itself only shows from the update after the release that brings it; testing
+  it takes two pre-releases.
+- The packages are built with JDK 25 (Temurin, Microsoft OpenJDK on Windows on
+  ARM, which Temurin does not build). jpackage of JDK 21 made MSIs on Windows on
+  ARM that did not remove the installed version (JDK-8311104).
 - A beta is a pre-release: pom version `<x>-beta.<n>`, tag `v.<x>-beta.<n>`. The
   release job marks a tag with `-` as pre-release and builds every package.
   Windows gets `<x>.<n>` as version, because an MSI only replaces an installed

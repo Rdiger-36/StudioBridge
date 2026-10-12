@@ -45,6 +45,7 @@ StudioBridge has nothing to do with Bambu Connect and does not replace it. It on
 - **Test connection**: checks whether the printer is reachable and accepts connections the way Bambu Studio needs it
 - **Sending mode**: as broadcast to the network (default) or only to Bambu Studio on this computer
 - **English and German**, light and dark mode, both following the system by default
+- **Updates install themselves** (installers and AppImage), with an optional **beta channel**, see [Updates](#updates)
 - **Command line** for scripts and autostart, see [Arguments](#arguments)
 
 Successfully tested on:
@@ -94,11 +95,37 @@ The GUI is available in English and German. **Settings → Language** picks one:
 - **Automatic (system language)** (default): follows the language of the operating system, English when it is not available.
 - **A fixed language**: always that one.
 
-The new language is used after StudioBridge has been restarted. The output of the command line stays English.
+The new language applies right away: the window is built again in that language, with what you have entered. The output of the command line stays English.
 
 **Settings → Appearance** works the same way: "Automatic (system setting)" (default) follows the light or dark mode of the operating system, "Light" and "Dark" fix it. It changes right away.
 
 To add a language, copy `src/main/resources/i18n/en.properties` to `<code>.properties` (e.g. `fr.properties`), set `_name` to the language's name in itself, translate the values and add the code to `I18n.LANGUAGES`. Placeholders in braces (`{name}`, `{ip}`) must stay in place. Keys missing from a language fall back to English; `I18nTest` checks that every language has every English key with the same placeholders.
+
+# Updates
+
+StudioBridge looks for a new version on GitHub when it starts (not with `--noupdate`). **Settings → Check for updates** looks right away and also tells you when you already have the latest version.
+
+When a new version is available, the installed versions install it themselves with **Install**:
+
+| Package | What happens |
+|---|---|
+| Windows (MSI) | Windows asks for administrator rights, installs the new version into the same folder and starts StudioBridge again |
+| macOS (DMG) | StudioBridge closes, the app in its folder is replaced and started again |
+| Linux (AppImage) | The new file replaces the old one and is started. A file name with the version in it (`StudioBridge-2.3.0-x86_64.AppImage`) gets the name of the new version; a name you chose yourself (`StudioBridge.AppImage`) stays, so shortcuts and autostart entries keep working |
+| JAR, Windows ZIP | **Download** opens the release page, replace the file yourself |
+
+- Every download is checked against the SHA-256 checksum GitHub lists for the file before anything is replaced.
+- Before StudioBridge closes for the update, it offers to save a profile you have not saved yet, just like when you close it.
+- Without write access to the folder of the app or the AppImage, the dialog shows **Download** instead of **Install**. If a download or an installation fails, StudioBridge offers the release page.
+- Updating installs itself from 2.3.0 on. Coming from 2.2.0 or older, install 2.3.0 once by hand.
+
+**Beta channel**
+
+Tick **Settings → Include beta versions** to also get beta versions. They are published as [pre-releases](https://github.com/Rdiger-36/StudioBridge/releases) and bring new features earlier, but may still contain bugs. Untick it to stay on the regular versions: you then get the next regular version, which is always newer than the betas before it.
+
+On Windows a beta shows a fourth number in "Apps": 2.4.0-beta.2 is listed as 2.4.0.2.
+
+> **Windows on ARM, older versions:** before 2.3.0 the installer for Windows on ARM did not remove the installed version, so "Apps" may list StudioBridge several times. Uninstall all of them once and install the current version; from then on an update replaces the old version.
 
 # Arguments
 
@@ -132,7 +159,7 @@ Profile options:
       Send only these profiles, comma-separated (requires --sendonly)
 ```
 
---direct, --broadcast and --customProfilesDir only apply to the run they are given for. The settings chosen in the GUI stay as they are.
+--direct, --broadcast and --customProfilesDir only apply to the run they are given for. The settings chosen in the GUI stay as they are. With --sendonly an available update is only mentioned in the output, it is never installed.
 
 Examples (macOS):
 ```bash
