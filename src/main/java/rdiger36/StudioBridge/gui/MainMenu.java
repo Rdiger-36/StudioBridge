@@ -27,6 +27,7 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.Box;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
@@ -1185,15 +1186,20 @@ public class MainMenu {
 	        } 
         }
         
-        // Developer, links and icon credits: in the app menu on macOS, else in a Help menu
+        // Developer, links and icon credits: in the app menu on macOS, else an info button at the right
+        // end of the menu bar, which Windows shows in the title bar next to the window buttons
         if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.APP_ABOUT)) {
             Desktop.getDesktop().setAboutHandler(e -> new ToolInfo(frmStudioBridge));
         } else {
-            JMenu mnHelp = new JMenu(I18n.t("menu.help"));
-            JMenuItem mntmAbout = new JMenuItem(I18n.t("menu.about"), new FlatSVGIcon("icons/info.svg"));
-            mntmAbout.addActionListener(arg -> new ToolInfo(frmStudioBridge));
-            mnHelp.add(mntmAbout);
-            frmStudioBridge.getJMenuBar().add(mnHelp);
+            JButton btnAbout = new JButton(new FlatSVGIcon("icons/info.svg"));
+            btnAbout.putClientProperty(FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
+            btnAbout.setToolTipText(I18n.t("menu.about"));
+            btnAbout.setFocusable(false);
+            btnAbout.addActionListener(arg -> new ToolInfo(frmStudioBridge));
+            menuBar.add(Box.createHorizontalGlue());
+            menuBar.add(btnAbout);
+            // The window is too narrow for menu, title and buttons in one title bar
+            frmStudioBridge.getRootPane().putClientProperty(FlatClientProperties.TITLE_BAR_SHOW_TITLE, false);
         }
         
         frmStudioBridge.pack();    
