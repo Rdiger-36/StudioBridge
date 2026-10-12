@@ -30,6 +30,15 @@ printer would send. `mvn package` builds the fat JAR and runs the tests.
   note saying so instead.
 - The version lives only in `pom.xml`; the application reads it from the
   filtered `version.properties`.
+- The installed packages update themselves (`Installer`): their jpackage call
+  sets `-Dstudiobridge.dist=msi|appimage|dmg`, and the release file is found by
+  the end of its name (`Installer.assetSuffix`). Renaming a release file breaks
+  the update of every installation already out there.
+- A beta is a pre-release: pom version `<x>-beta.<n>`, tag `v.<x>-beta.<n>`. The
+  release job marks a tag with `-` as pre-release and builds every package.
+  Windows gets `<x>.<n>` as version, because an MSI only replaces an installed
+  version with a different number; so `<n>` keeps counting across one version
+  (`beta.1`, `beta.2`, `rc.3`), never starting again at 1.
 
 ## Code
 

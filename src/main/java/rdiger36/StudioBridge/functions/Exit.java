@@ -20,21 +20,33 @@ public class Exit {
     /**
      * Closes StudioBridge after offering to save what is entered and not saved yet.
      *
+     * @param mainFrame the main window, parent of the dialogs
+     * @param current the profile name and the values entered right now
+     * @param profiles saves the profile and keeps the profile list in step
+     * @see #prepareExit(JFrame, Printer, ProfileManager)
+     */
+    public static void closeApp(JFrame mainFrame, Printer current, ProfileManager profiles) {
+        if (prepareExit(mainFrame, current, profiles)) System.exit(0);
+    }
+
+    /**
+     * Offers to save what is entered and not saved yet, and saves the settings, before StudioBridge ends.
+     *
      * <p>A new profile with data offers to save it under a name, an edited profile offers to save
-     * the changes. Closing such a dialog with the window button keeps StudioBridge open.
-     * Finally the settings are saved and the application ends.</p>
+     * the changes. Closing such a dialog with the window button keeps StudioBridge open.</p>
      *
      * @param mainFrame the main window, parent of the dialogs
      * @param current the profile name and the values entered right now
      * @param profiles saves the profile and keeps the profile list in step
+     * @return true if StudioBridge may end, false if the user cancelled
      */
-    public static void closeApp(JFrame mainFrame, Printer current, ProfileManager profiles) {
+    public static boolean prepareExit(JFrame mainFrame, Printer current, ProfileManager profiles) {
         switch (unsavedState(current, MainMenu.mainPrinter)) {
             case NEW_PROFILE:
-                if (profiles.offerSaveNewOnExit(current) == ProfileManager.Choice.CANCEL) return;
+                if (profiles.offerSaveNewOnExit(current) == ProfileManager.Choice.CANCEL) return false;
                 break;
             case CHANGED_PROFILE:
-                if (profiles.offerSaveChangesOnExit(current) == ProfileManager.Choice.CANCEL) return;
+                if (profiles.offerSaveChangesOnExit(current) == ProfileManager.Choice.CANCEL) return false;
                 break;
             default:
                 break;
@@ -42,7 +54,7 @@ public class Exit {
 
         // Save user settings before exiting
         Config.saveUserSettings(mainFrame);
-        System.exit(0);
+        return true;
     }
 
     /** What would be lost when StudioBridge closes now. */

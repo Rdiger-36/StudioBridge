@@ -41,6 +41,10 @@ jobs:
       version: ${{ steps.version.outputs.value }}
       # Numeric part only: jpackage (MSI and DMG) rejects suffixes like "-beta"
       app_version: ${{ steps.version.outputs.app }}
+      # Windows: a pre-release adds its number as fourth part, "2.3.0-beta.2" is 2.3.0.2.
+      # The MSI replaces an installed version only if the two differ, so a beta and
+      # its release (2.3.0.2 and 2.3.0) must not share one number.
+      win_version: ${{ steps.version.outputs.win }}
     steps:
       - uses: actions/checkout@v7
 
@@ -56,6 +60,13 @@ jobs:
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "value=${VERSION}" >> $GITHUB_OUTPUT
           echo "app=${VERSION%%-*}" >> $GITHUB_OUTPUT
+          if [[ "${VERSION}" == *-* ]]; then
+            PRE="${VERSION#*-}"
+            NUMBER="$(echo "${PRE}" | grep -o '[0-9]*$' || true)"
+            echo "win=${VERSION%%-*}.${NUMBER:-1}" >> $GITHUB_OUTPUT
+          else
+            echo "win=${VERSION}" >> $GITHUB_OUTPUT
+          fi
 
       # The release, its files and the CHANGELOG.md section are named after the
       # pom version, so a tag that does not match it would mix two versions.
@@ -152,12 +163,13 @@ jobs:
           jpackage `
             --type msi `
             --name "${{ env.APP_NAME }}" `
-            --app-version "${{ needs.build-jar.outputs.app_version }}" `
+            --app-version "${{ needs.build-jar.outputs.win_version }}" `
             --input input `
             --main-jar "${{ env.MAIN_JAR }}" `
             --icon .github/packaging/icons/icon.ico `
             --runtime-image runtime `
             --java-options "${{ env.JAVA_OPTS }}" `
+            --java-options "-Dstudiobridge.dist=msi" `
             --copyright "${{ env.COPYRIGHT }}" `
             --vendor "${{ env.VENDOR }}" `
             --description "${{ env.DESCRIPTION }}" `
@@ -177,7 +189,7 @@ jobs:
           jpackage `
             --type app-image `
             --name "${{ env.APP_NAME }}" `
-            --app-version "${{ needs.build-jar.outputs.app_version }}" `
+            --app-version "${{ needs.build-jar.outputs.win_version }}" `
             --input input `
             --main-jar "${{ env.MAIN_JAR }}" `
             --icon .github/packaging/icons/icon.ico `
@@ -275,7 +287,8 @@ jobs:
             --main-jar "${{ env.MAIN_JAR }}" \
             --icon src/main/resources/icon.png \
             --runtime-image runtime \
-            --java-options "${{ env.JAVA_OPTS }}"
+            --java-options "${{ env.JAVA_OPTS }}" \
+            --java-options "-Dstudiobridge.dist=appimage"
 
       - name: Package as AppImage
         run: |
@@ -465,6 +478,7 @@ jobs:
             --icon .github/packaging/icons/icon.icns \
             --runtime-image runtime \
             --java-options "${{ env.JAVA_OPTS }}" \
+            --java-options "-Dstudiobridge.dist=dmg" \
             --copyright "${{ env.COPYRIGHT }}" \
             --vendor "${{ env.VENDOR }}" \
             --description "${{ env.DESCRIPTION }}" \
