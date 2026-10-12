@@ -385,8 +385,15 @@ public class Installer {
                 macBundle().toString()));
     }
 
-    /** Starts a process that outlives StudioBridge. */
+    /**
+     * Starts a process that outlives StudioBridge.
+     *
+     * <p>The launcher of jpackage on Linux sets {@code _JPACKAGE_LAUNCHER} for the JVM. A launcher
+     * that inherits it takes itself for a restart of the JVM and leaves out the application, so a
+     * restarted StudioBridge would not open; the variable is removed.</p>
+     */
     private static void start(ProcessBuilder builder) throws IOException {
+        builder.environment().remove("_JPACKAGE_LAUNCHER");
         builder.redirectOutput(ProcessBuilder.Redirect.DISCARD)
                .redirectError(ProcessBuilder.Redirect.DISCARD)
                .start();
