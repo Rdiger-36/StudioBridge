@@ -202,6 +202,8 @@ public class Config {
 	 *     <li>Last used profile name (optional)</li>
 	 *     <li>Direct mode flag</li>
 	 *     <li>Show JAR info flag</li>
+	 *     <li>Language</li>
+	 *     <li>Beta updates flag</li>
 	 * </ul>
 	 *
 	 * @param mainFrame the frame used to display possible error dialogs.
@@ -242,6 +244,10 @@ public class Config {
 	    
 	    // Append the language of the GUI ("auto" follows the operating system) to the configuration.
 	    config.append("language=" + MainMenu.language);
+	    config.append(System.getProperty("line.separator")); // Add a new line.
+	    
+	    // Append whether beta versions (pre-releases) are offered as updates to the configuration.
+	    config.append("betaUpdates=" + MainMenu.betaUpdates);
 	    config.append(System.getProperty("line.separator")); // Add a new line.
 	    
 	    /** 
@@ -346,6 +352,11 @@ public class Config {
 	        // Set the language of the GUI
 	        case "language":
 	        	MainMenu.language = wert;
+	        	break;
+	        
+	        // Set whether beta versions are offered as updates
+	        case "betaUpdates":
+	        	MainMenu.betaUpdates = Boolean.valueOf(wert);
 	        	break;
 	        
 	        // Default case if no known configuration type is found (does nothing).

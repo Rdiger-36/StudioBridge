@@ -10,8 +10,6 @@ import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -33,7 +31,6 @@ import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -81,6 +78,9 @@ public class MainMenu {
     
     // Set boolean for checking updates on startup
     public static boolean checkForUpdate = true;
+    
+    // Whether beta versions (pre-releases on GitHub) are offered as updates
+    public static boolean betaUpdates = false;
     
     // Theme setting: "auto" follows the light or dark mode of the operating system, else "light" or "dark"
     public static String theme = UI.THEME_AUTO;
@@ -159,6 +159,11 @@ public class MainMenu {
     private static String selectedModel(JComboBox<String> cbxModel) {
     	Object selected = cbxModel.getSelectedItem();
     	return selected == null ? "" : selected.toString();
+    }
+    
+    // What is entered in the main window right now
+    private static Printer currentPrinter(JComboBox<String> cbxProfile, JTextField txtName, JTextField txtIP, JTextField txtSerial, JComboBox<String> cbxModel) {
+    	return new Printer(selectedProfile(cbxProfile), txtName.getText(), txtIP.getText(), txtSerial.getText(), selectedModel(cbxModel));
     }
     
     // The selected profile, or NEW_PROFILE when the list has no selection
@@ -514,7 +519,7 @@ public class MainMenu {
     	
     	if (directMode) sendOverMethod = "localhost";
     	
-    	if (checkForUpdate) Update.checkVersion(null);
+    	if (checkForUpdate) Update.checkVersion(null, null, false);
     	
     	// prepare profiles or profile directory
         String profilesDir = ProfilesDir;
@@ -653,6 +658,22 @@ public class MainMenu {
      * @param frame The parent JFrame to center the main menu.
      */
     public MainMenu(boolean darkmode, JFrame frame) {
+        this(darkmode, frame, null);
+    }
+
+    /**
+     * Builds the main window, at start or again for a new language.
+     *
+     * <p>Built again, the window takes the place of the previous one and shows what was entered
+     * there. The steps of the start (looking for updates, the JAR hint, the hint without
+     * profiles) are left out then.</p>
+     *
+     * @param darkmode A boolean indicating whether dark mode should be enabled.
+     * @param frame The previous window when built again, else the parent JFrame to center the main menu.
+     * @param entered What was entered in the previous window, or null at start.
+     */
+    private MainMenu(boolean darkmode, JFrame frame, Printer entered) {
+        boolean rebuild = entered != null;
 //        UI.changeLAF(darkmode); // Change the look and feel based on the dark mode setting
         
         printerMap = new HashMap<String, Printer>();
@@ -766,7 +787,7 @@ public class MainMenu {
         
         // Theme menu: automatic (light or dark mode of the operating system), light or dark
         JMenu mnTheme = new JMenu(I18n.t("menu.theme"));
-        mnSettings.add(mnTheme);
+        mnTheme.setIcon(new FlatSVGIcon("icons/theme.svg"));
         ButtonGroup themeGroup = new ButtonGroup();
         String[][] themeChoices = {
         	{UI.THEME_AUTO, I18n.t("menu.themeAuto")},
@@ -797,39 +818,36 @@ public class MainMenu {
         	mnTheme.add(item);
         }
         
-        JCheckBoxMenuItem cbxmntmRememberLastProfile = new JCheckBoxMenuItem(I18n.t("menu.rememberLastProfile"));
-        cbxmntmRememberLastProfile.setSelected(rememberLastUsedProfile);
-        mnSettings.add(cbxmntmRememberLastProfile);
+        // Check marks as icons, in line with the icons of the other entries
+        CheckMenuItem cbxmntmRememberLastProfile = new CheckMenuItem(I18n.t("menu.rememberLastProfile"), rememberLastUsedProfile);
         
-        cbxmntmRememberLastProfile.addItemListener(new ItemListener() {
+        cbxmntmRememberLastProfile.addActionListener(new ActionListener() {
             @Override
-            public void itemStateChanged(ItemEvent e) {
-                rememberLastUsedProfile = cbxmntmRememberLastProfile.isSelected();
+            public void actionPerformed(ActionEvent e) {
+                rememberLastUsedProfile = cbxmntmRememberLastProfile.isChecked();
             }
         });
         
-        JCheckBoxMenuItem cbxmntmSetSendingMode = new JCheckBoxMenuItem(I18n.t("menu.sendDirectly"));
-        cbxmntmSetSendingMode.setSelected(directMode);
-        mnSettings.add(cbxmntmSetSendingMode);
+        CheckMenuItem cbxmntmSetSendingMode = new CheckMenuItem(I18n.t("menu.sendDirectly"), directMode);
         
-        cbxmntmSetSendingMode.addItemListener(new ItemListener() {
+        cbxmntmSetSendingMode.addActionListener(new ActionListener() {
             @Override
-            public void itemStateChanged(ItemEvent e) {
+            public void actionPerformed(ActionEvent e) {
             	
-            	if (cbxmntmSetSendingMode.isSelected()) {
+            	if (cbxmntmSetSendingMode.isChecked()) {
             		new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("mode.direct"), I18n.t("common.ok")).showDialog();
             	} else {
             		new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("mode.broadcast"), I18n.t("common.ok")).showDialog();
             	}
             	
-                directMode = cbxmntmSetSendingMode.isSelected();
+                directMode = cbxmntmSetSendingMode.isChecked();
                 directModeFromArgs = false; // A choice in the menu is saved again
             }
         });
         
         // Language menu: automatic (language of the operating system) or one of the shipped languages
         JMenu mnLanguage = new JMenu(I18n.t("menu.language"));
-        mnSettings.add(mnLanguage);
+        mnLanguage.setIcon(new FlatSVGIcon("icons/language.svg"));
         ButtonGroup languageGroup = new ButtonGroup();
         List<String> languageChoices = new ArrayList<>();
         languageChoices.add(I18n.AUTO);
@@ -840,17 +858,20 @@ public class MainMenu {
         	item.addActionListener(arg -> {
         		if (code.equals(language)) return;
         		language = code;
-        		// The texts are set when the window is built, so a new language needs a restart
-        		new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("language.restart"), I18n.t("common.ok")).showDialog();
+        		// The texts are set when the window is built, so the window is built again,
+        		// with what is entered right now
+        		applyLanguage();
+        		Printer current = currentPrinter(cbxProfile, txtName, txtIP, txtSerial, cbxModel);
+        		SwingUtilities.invokeLater(() -> {
+        			new MainMenu(darkmode, frmStudioBridge, current);
+        			frmStudioBridge.dispose();
+        		});
         	});
         	languageGroup.add(item);
         	mnLanguage.add(item);
         }
         
-        mnSettings.add(new JSeparator());
-        
-        JMenuItem mntmChangeProfilesPath = new JMenuItem(I18n.t("menu.profilesPath"));
-        mnSettings.add(mntmChangeProfilesPath);
+        JMenuItem mntmChangeProfilesPath = new JMenuItem(I18n.t("menu.profilesPath"), new FlatSVGIcon("icons/folder.svg"));
         
         // Action listener for changing the profiles path
         mntmChangeProfilesPath.addActionListener(new ActionListener() {
@@ -877,10 +898,38 @@ public class MainMenu {
             }
         });
         
-        JMenuItem mntmMultiPrinterSetup = new JMenuItem(I18n.t("menu.multiPrinter"));
-        mnSettings.add(mntmMultiPrinterSetup);
+        JMenuItem mntmMultiPrinterSetup = new JMenuItem(I18n.t("menu.multiPrinter"), new FlatSVGIcon("icons/profiles.svg"));
         
         mntmMultiPrinterSetup.addActionListener(arg -> new MultiPrinterSetup(frmStudioBridge, profiles));
+        
+        JMenuItem mntmCheckUpdates = new JMenuItem(I18n.t("menu.checkUpdates"), new FlatSVGIcon("icons/update.svg"));
+        
+        // The check asks GitHub, so it runs outside the Event Dispatch Thread; also with --noupdate
+        mntmCheckUpdates.addActionListener(arg -> new Thread(() -> Update.checkVersion(frmStudioBridge,
+        		() -> Exit.prepareExit(frmStudioBridge, currentPrinter(cbxProfile, txtName, txtIP, txtSerial, cbxModel), profiles),
+        		true), "update-check").start());
+        
+        CheckMenuItem cbxmntmBetaUpdates = new CheckMenuItem(I18n.t("menu.betaUpdates"), betaUpdates);
+        
+        cbxmntmBetaUpdates.addActionListener(arg -> {
+        	betaUpdates = cbxmntmBetaUpdates.isChecked();
+        	if (betaUpdates) {
+        		new DialogOneButton(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("update.betaInfo"), I18n.t("common.ok")).showDialog();
+        	}
+        });
+        
+        // Settings menu: look, sending, profiles, updates
+        mnSettings.add(mnTheme);
+        mnSettings.add(mnLanguage);
+        mnSettings.addSeparator();
+        mnSettings.add(cbxmntmRememberLastProfile);
+        mnSettings.add(cbxmntmSetSendingMode);
+        mnSettings.addSeparator();
+        mnSettings.add(mntmMultiPrinterSetup);
+        mnSettings.add(mntmChangeProfilesPath);
+        mnSettings.addSeparator();
+        mnSettings.add(mntmCheckUpdates);
+        mnSettings.add(cbxmntmBetaUpdates);
         
         // Action listener for sending the data package
         btnSendPackage.addActionListener(arg -> {
@@ -1010,6 +1059,23 @@ public class MainMenu {
         
         getAllProfiles(frmStudioBridge, cbxProfile); // Load all profiles into the combo box
         
+        if (rebuild) {
+        	// Selecting the profile loads it, then what was entered goes over it
+        	if (printerMap.containsKey(entered.getProfileName())) {
+        		cbxProfile.setSelectedItem(entered.getProfileName());
+        	} else {
+        		cbxProfile.setSelectedIndex(-1);
+        	}
+        	txtName.setText(entered.getPrinterName());
+        	txtIP.setText(entered.getIpAdress());
+        	txtSerial.setText(entered.getSerialNumber());
+        	if (entered.getPrinterModel().isEmpty()) {
+        		cbxModel.setSelectedIndex(-1);
+        	} else {
+        		cbxModel.setSelectedItem(entered.getPrinterModel());
+        	}
+        }
+        
         JButton btnSaveProfile = new JButton("");
         btnSaveProfile.setToolTipText(I18n.t("profile.saveChanges"));
         btnSaveProfile.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -1098,9 +1164,13 @@ public class MainMenu {
         });
         
 
-        if(checkForUpdate) new Thread(() -> Update.checkVersion(frmStudioBridge), "update-check").start(); // Check for updates, if it is not disabled by --noupdate argument at startup
+        // Check for updates, if it is not disabled by --noupdate argument at startup.
+        // Installing one closes StudioBridge, after offering to save what is entered.
+        if(checkForUpdate && !rebuild) new Thread(() -> Update.checkVersion(frmStudioBridge,
+        		() -> Exit.prepareExit(frmStudioBridge, currentPrinter(cbxProfile, txtName, txtIP, txtSerial, cbxModel), profiles),
+        		false), "update-check").start();
         
-        if (jarInfo) {
+        if (jarInfo && !rebuild) {
         
 	        int response = new DialogTwoButtons(frmStudioBridge, null, new ImageIcon(MainMenu.class.getResource("/achtung.png")), I18n.t("jar.info"), I18n.t("jar.openGithub"), I18n.t("jar.neverShow")).showDialog();
 	        
@@ -1120,17 +1190,18 @@ public class MainMenu {
             Desktop.getDesktop().setAboutHandler(e -> new ToolInfo(frmStudioBridge));
         } else {
             JMenu mnHelp = new JMenu(I18n.t("menu.help"));
-            JMenuItem mntmAbout = new JMenuItem(I18n.t("menu.about"));
+            JMenuItem mntmAbout = new JMenuItem(I18n.t("menu.about"), new FlatSVGIcon("icons/info.svg"));
             mntmAbout.addActionListener(arg -> new ToolInfo(frmStudioBridge));
             mnHelp.add(mntmAbout);
             frmStudioBridge.getJMenuBar().add(mnHelp);
         }
         
         frmStudioBridge.pack();    
+        if (rebuild) frmStudioBridge.setLocation(frame.getLocation());
         frmStudioBridge.setVisible(true);    
         
         // First start: no profile yet, so explain what to enter
-        if (printerMap.isEmpty()) {
+        if (printerMap.isEmpty() && !rebuild) {
         	SwingUtilities.invokeLater(() -> new DialogOneButton(frmStudioBridge, null, Resize.setNewImageIconSize(new ImageIcon(MainMenu.class.getResource("/icon.png")), 48, 48), I18n.t("start.noProfiles"), I18n.t("common.ok")).showDialog());
         }
     }

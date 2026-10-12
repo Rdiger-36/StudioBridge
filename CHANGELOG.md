@@ -1,4 +1,11 @@
 -----------------------------------------------------------------------------------------------
+Version 2.3.0
+   - New Features:
+      - Settings → "Include beta versions" also offers beta versions as updates. They are published as pre-releases on GitHub, with the same packages as a release, and bring new features earlier. Settings → "Check for updates" looks for a new version right away and says so when StudioBridge is up to date, also when the check at startup is turned off with --noupdate. The update dialog names the new version (PR #64)
+      - The settings menu is grouped: appearance and language, then the two options for profiles and sending, then the profile manager and the profiles folder, then the updates. Menu entries have icons where they fit, and the check marks of the options stand in the same column as those icons, also in the macOS menu bar (PR #64)
+      - A new language applies right away: the window is built again in that language, at the same place and with what was entered, instead of asking for a restart (PR #64)
+      - The installed versions update themselves: when a new version is available, "Install" downloads it, checks it against the SHA-256 checksum GitHub lists for the file and installs it. The MSI installs over the old one into the same folder and starts StudioBridge again, the AppImage replaces itself under the same file name (so shortcuts and autostart entries keep working) and restarts, and on macOS the app in its folder is replaced and started again. Unsaved data is offered for saving first. The JAR and the portable ZIP open the release page as before (PR #64)
+-----------------------------------------------------------------------------------------------
 Version 2.2.0
    - Breaking:
       - "Send to this computer only" (formerly "Send packages directly") and --direct now do what they say. Since 2.0.0 the setting was inverted: with the checkbox ticked the package went out as a broadcast to 255.255.255.255, and with the default setting it was sent to localhost. Now the checkbox and --direct send to Bambu Studio on this computer, and the default is the broadcast to the network. With the default setting StudioBridge therefore switches from localhost to broadcast. If your printer no longer shows up, tick "Send to this computer only" in the settings or start the CLI with --direct (PR #41)

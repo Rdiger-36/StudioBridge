@@ -104,4 +104,17 @@ public class ConfigTest {
             MainMenu.savePath = oldSavePath;
         }
     }
+
+    @Test
+    public void betaUpdatesAreSaved() throws Exception {
+        boolean old = MainMenu.betaUpdates;
+        try {
+            MainMenu.betaUpdates = true;
+            assertTrue(saveSettings().contains("betaUpdates=true"));
+            MainMenu.betaUpdates = false;
+            assertTrue(saveSettings().contains("betaUpdates=false"));
+        } finally {
+            MainMenu.betaUpdates = old;
+        }
+    }
 }
