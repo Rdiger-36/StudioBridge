@@ -1,4 +1,9 @@
 -----------------------------------------------------------------------------------------------
+Version 2.3.1
+   - Maintenance:
+      - MigLayout, which arranges the windows, is updated from 5.2 to 11.5.1. The windows look the same; the two buttons at the bottom of the main window keep their full height, which the new version would have reduced by a few pixels (PR #77)
+      - The versions-maven-plugin of the build is updated to 2.23.0 (PR #76)
+-----------------------------------------------------------------------------------------------
 Version 2.3.0
    - New Features:
       - Settings → "Include beta versions" also offers beta versions as updates. They are published as pre-releases on GitHub, with the same packages as a release, and bring new features earlier. Settings → "Check for updates" looks for a new version right away and says so when StudioBridge is up to date, also when the check at startup is turned off with --noupdate. The update dialog names the new version (PR #64)

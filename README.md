@@ -176,7 +176,7 @@ Examples (Windows):
 
 With --sendonly the output looks like this:
 ```
-*** StudioBridge by Rdiger-36 v.2.3.0 ***
+*** StudioBridge by Rdiger-36 v.2.3.1 ***
 
 Found 2 profile(s)!
 Try to send all of them to Bambu Studio
