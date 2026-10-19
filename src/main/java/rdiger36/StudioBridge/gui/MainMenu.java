@@ -755,7 +755,7 @@ public class MainMenu {
         
         // Bottom row: copyright on the left, the actions on the right
         // Bottom row: both actions share the full width
-        JPanel pnlBottom = new JPanel(new MigLayout("insets 0", "[grow,sg action][grow,sg action]", "[]"));
+        JPanel pnlBottom = new JPanel(new MigLayout("insets 0, novisualpadding", "[grow,sg action]3[grow,sg action]", "[]"));
         frmStudioBridge.getContentPane().add(pnlBottom, "cell 0 8 2 1,growx");
         
         // Button to send package
