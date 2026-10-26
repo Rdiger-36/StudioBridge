@@ -22,7 +22,7 @@
         <json.version>20260814</json.version>
         <junit.version>4.13.2</junit.version>
         <jnafilechooser.version>1.1.2</jnafilechooser.version>
-        <miglayout.version>11.5.1</miglayout.version>
+        <miglayout.version>11.5.2</miglayout.version>
     </properties>
 
     <repositories>
