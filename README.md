@@ -39,7 +39,7 @@ StudioBridge has nothing to do with Bambu Connect and does not replace it. It on
 
 # Features
 
-- Every printer of the Bambu Lab range (A1, A1 Mini, A2L, P1P, P1S, P2S, X1, X1C, X1E, X2D, H2C, H2D, H2D Pro, H2S)
+- Every printer of the Bambu Lab range (A1, A1 Mini, A2L, P1P, P1S, P2S, X1, X1C, X1E, X2D, H2C, H2D, H2D Pro, H2S, H3C)
 - **Profiles** for each printer: save, rename, import and delete them from the menu next to the profile list
 - **Profile manager** (Settings → Profile manager): all profiles in one table, edit and save them, delete them, and send several printers at once
 - **Test connection**: checks whether the printer is reachable and accepts connections the way Bambu Studio needs it

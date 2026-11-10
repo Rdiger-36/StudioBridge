@@ -1,4 +1,8 @@
 -----------------------------------------------------------------------------------------------
+Version 2.3.2
+   - New Features:
+      - Support for the Bambu Lab H3C (model number N10) (PR #81)
+-----------------------------------------------------------------------------------------------
 Version 2.3.1
    - Maintenance:
       - MigLayout, which arranges the windows, is updated from 5.2 to 11.5.1. The windows look the same; the two buttons at the bottom of the main window keep their full height, which the new version would have reduced by a few pixels (PR #77)
