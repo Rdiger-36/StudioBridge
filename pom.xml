@@ -16,7 +16,7 @@
         <main.class>rdiger36.StudioBridge.gui.MainMenu</main.class>
 
         <!-- Dependency Versions -->
-        <flatlaf.version>3.7.2</flatlaf.version>
+        <flatlaf.version>3.8</flatlaf.version>
         <commons-io.version>2.22.0</commons-io.version>
         <jna.version>5.19.1</jna.version>
         <json.version>20260814</json.version>
