@@ -28,7 +28,7 @@ public class ModelComboBox extends JComboBox<String> {
     /** The models in the order of the list, each series starts with its header ("X-Series"). */
     public static final String[] ITEMS = {
         "A-Series", "A1", "A1 Mini", "A2L",
-        "H-Series", "H2C", "H2C (new revision)", "H2D", "H2D Pro", "H2S",
+        "H-Series", "H2C", "H2C (new revision)", "H2D", "H2D Pro", "H2S", "H3C",
         "P-Series", "P1P", "P1S", "P2S",
         "X-Series", "X1", "X1C", "X1E", "X2D"
     };

@@ -11,7 +11,7 @@ public class ModelsTest {
 
     private static final String[] MODELS = {
         "A1", "A1 Mini", "A2L", "P1P", "P1S", "P2S", "X1", "X1C", "X1E", "X2D",
-        "H2C", "H2C (new revision)", "H2D", "H2D Pro", "H2S"
+        "H2C", "H2C (new revision)", "H2D", "H2D Pro", "H2S", "H3C"
     };
 
     @Test
@@ -26,6 +26,7 @@ public class ModelsTest {
         assertEquals("3DPrinter-X1-Carbon", Models.getModelFromName("X1C"));
         assertEquals("N2S", Models.getModelFromName("A1"));
         assertEquals("O1D", Models.getModelFromName("H2D"));
+        assertEquals("N10", Models.getModelFromName("H3C"));
     }
 
     @Test
