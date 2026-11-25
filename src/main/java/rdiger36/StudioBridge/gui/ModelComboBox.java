@@ -29,7 +29,7 @@ public class ModelComboBox extends JComboBox<String> {
     public static final String[] ITEMS = {
         "A-Series", "A1", "A1 Mini", "A2L",
         "H-Series", "H2C", "H2C (new revision)", "H2D", "H2D Pro", "H2S", "H3C",
-        "P-Series", "P1P", "P1S", "P2S",
+        "P-Series", "P1P", "P1S", "P2S", "P3C",
         "X-Series", "X1", "X1C", "X1E", "X2D"
     };
 

@@ -11,7 +11,7 @@ public class ModelsTest {
 
     private static final String[] MODELS = {
         "A1", "A1 Mini", "A2L", "P1P", "P1S", "P2S", "X1", "X1C", "X1E", "X2D",
-        "H2C", "H2C (new revision)", "H2D", "H2D Pro", "H2S", "H3C"
+        "H2C", "H2C (new revision)", "H2D", "H2D Pro", "H2S", "H3C", "P3C"
     };
 
     @Test
@@ -27,6 +27,7 @@ public class ModelsTest {
         assertEquals("N2S", Models.getModelFromName("A1"));
         assertEquals("O1D", Models.getModelFromName("H2D"));
         assertEquals("N10", Models.getModelFromName("H3C"));
+        assertEquals("N11", Models.getModelFromName("P3C"));
     }
 
     @Test
