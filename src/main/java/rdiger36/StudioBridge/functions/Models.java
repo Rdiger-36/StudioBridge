@@ -26,6 +26,7 @@ public class Models {
             case "H2D Pro": model = "O1E"; break;
             case "H2S": model = "O1S"; break;
             case "H3C": model = "N10"; break;
+            case "P3C": model = "N11"; break;
             default: break;
         }
         return model;
@@ -56,6 +57,7 @@ public class Models {
 	        case "O1E": model = "H2D Pro"; break;
 	        case "O1S": model = "H2S"; break;
 	        case "N10": model = "H3C"; break;
+	        case "N11": model = "P3C"; break;
             default: break;
         }
         return model;

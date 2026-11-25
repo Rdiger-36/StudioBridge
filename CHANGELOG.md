@@ -1,4 +1,8 @@
 -----------------------------------------------------------------------------------------------
+Version 2.3.3
+   - New Features:
+      - Support for the Bambu Lab P3C (model number N11) (PR #85)
+-----------------------------------------------------------------------------------------------
 Version 2.3.2
    - New Features:
       - Support for the Bambu Lab H3C (model number N10) (PR #81)
